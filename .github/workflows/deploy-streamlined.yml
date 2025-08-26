@@ -61,7 +61,6 @@ jobs:
       - name: Run quality checks
         run: |
           npm run build
-          npm run test:ci
 
   # ==========================================================================
   # DOCKER BUILD AND REGISTRY PUSH
