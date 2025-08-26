@@ -31,7 +31,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: vcern/wat-backend
+  IMAGE_NAME: imatrixgiggs/wat-backend
   NODE_VERSION: '22'
 
 jobs:
