@@ -1,0 +1,384 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "./generated/prisma"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================================
+// ENUMS - Type Safety and Consistency
+// =============================================================================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+  REJECTED
+}
+
+enum GameType {
+  DAILY_CHALLENGE
+  PVP_MATCH
+  PVP_COMPUTER
+  PRACTICE
+}
+
+enum GameStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum SessionStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+// =============================================================================
+// CORE USER MODEL - Optimized with Denormalized Metrics
+// =============================================================================
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid()
+  email     String     @unique
+  username  String     @unique @db.VarChar(50)
+  firstName String     @db.VarChar(50)
+  lastName  String     @db.VarChar(50)
+  phone     String?    @unique @db.VarChar(20)
+  avatar    String?
+  status    UserStatus @default(ACTIVE)
+
+  // Denormalized performance metrics
+  totalScore    Int   @default(0)
+  gamesPlayed   Int   @default(0)
+  gamesWon      Int   @default(0)
+  winRate       Float @default(0.0)
+  currentStreak Int   @default(0)
+  bestStreak    Int   @default(0)
+
+  // Timestamps
+  lastActive DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relationships
+  sessions               UserSession[]
+  passwordResetTokens    PasswordResetToken[]
+  sentFriendRequests     Friendship[]           @relation("FriendRequester")
+  receivedFriendRequests Friendship[]           @relation("FriendReceiver")
+  gameParticipations     GameParticipant[]
+  dailyChallengeAnswers  DailyChallengeAnswer[]
+  leaderboardEntry       Leaderboard?
+
+  // Indexes for performance
+  @@index([email])
+  @@index([username])
+  @@index([totalScore(sort: Desc)])
+  @@index([status])
+  @@index([lastActive])
+}
+
+// =============================================================================
+// PASSWORD RESET SYSTEM - Secure Token Management
+// =============================================================================
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.Uuid()
+  userId    String   @db.Uuid()
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes for performance and cleanup
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@index([used])
+}
+
+// =============================================================================
+// SESSION MANAGEMENT - Security and State Tracking
+// =============================================================================
+
+model UserSession {
+  id           String        @id @default(uuid()) @db.Uuid()
+  userId       String        @db.Uuid()
+  sessionToken String        @unique
+  deviceInfo   Json?
+  ipAddress    String?
+  userAgent    String?
+  status       SessionStatus @default(ACTIVE)
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  lastActivity DateTime @default(now())
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+// =============================================================================
+// FRIENDSHIP SYSTEM - Optimized Social Features
+// =============================================================================
+
+model Friendship {
+  id          String           @id @default(uuid()) @db.Uuid()
+  requesterId String           @db.Uuid()
+  receiverId  String           @db.Uuid()
+  status      FriendshipStatus @default(PENDING)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver  User @relation("FriendReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  // Constraints and Indexes
+  @@unique([requesterId, receiverId])
+  @@index([requesterId, status])
+  @@index([receiverId, status])
+}
+
+// =============================================================================
+// GAME SESSION ARCHITECTURE - Multiplayer Support
+// =============================================================================
+
+model GameSession {
+  id           String     @id @default(uuid()) @db.Uuid()
+  roomCode     String?    @unique
+  gameType     GameType
+  status       GameStatus @default(WAITING)
+  maxPlayers   Int        @default(2)
+  currentRound Int        @default(0)
+  totalRounds  Int        @default(5)
+  maxMistakes  Int        @default(12)
+
+  // Game Configuration
+  difficulty String @default("medium")
+  timeLimit  Int? // seconds per round
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  startedAt DateTime?
+  endedAt   DateTime?
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  participants GameParticipant[]
+  rounds       GameRound[]
+
+  // Indexes
+  @@index([gameType, status])
+  @@index([roomCode])
+  @@index([createdAt])
+}
+
+model GameParticipant {
+  id            String @id @default(uuid()) @db.Uuid()
+  gameSessionId String @db.Uuid()
+  userId        String @db.Uuid()
+
+  // Game State
+  position     Int     @default(0) // player order
+  isReady      Boolean @default(false)
+  isConnected  Boolean @default(true)
+  finalScore   Int     @default(0)
+  finalRank    Int?
+  mistakeCount Int     @default(0)
+
+  // Timestamps
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  // Relationships
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scores      GameScore[]
+
+  // Constraints and Indexes
+  @@unique([gameSessionId, userId])
+  @@index([gameSessionId])
+  @@index([userId])
+}
+
+model GameRound {
+  id            String @id @default(uuid()) @db.Uuid()
+  gameSessionId String @db.Uuid()
+  roundNumber   Int
+
+  // Round Content
+  verse        String
+  blanks       Json // {"blank1": "love", "blank2": "home"}
+  emojiMapping Json // {"❤️": "love", "🏘️": "home"}
+  correctBook  String
+  correctRef   String
+  context      String?
+
+  // Round State
+  startedAt DateTime?
+  endedAt   DateTime?
+
+  // Relationships
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  scores      GameScore[]
+
+  // Constraints and Indexes
+  @@unique([gameSessionId, roundNumber])
+  @@index([gameSessionId])
+}
+
+model GameScore {
+  id            String @id @default(uuid()) @db.Uuid()
+  participantId String @db.Uuid()
+  roundId       String @db.Uuid()
+
+  // Scoring Details
+  blanksScore    Int @default(0)
+  contextScore   Int @default(0)
+  bookScore      Int @default(0)
+  referenceScore Int @default(0)
+  timeBonus      Int @default(0)
+  streakBonus    Int @default(0)
+  totalScore     Int @default(0)
+
+  // Performance Metrics
+  timeSpent    Int // milliseconds
+  mistakesMade Int @default(0)
+  hintsUsed    Int @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relationships
+  participant GameParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  round       GameRound       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([participantId])
+  @@index([roundId])
+}
+
+// =============================================================================
+// DAILY CHALLENGE SYSTEM
+// =============================================================================
+
+model DailyChallenge {
+  id   String   @id @default(uuid()) @db.Uuid()
+  date DateTime @unique @db.Date
+
+  // Challenge Content
+  verse        String
+  blanks       Json // {"blank1": "love", "blank2": "home"}
+  emojiMapping Json // {"❤️": "love", "🏘️": "home"}
+  correctBook  String
+  correctRef   String
+  context      String?
+
+  // Challenge Configuration
+  difficulty  String @default("medium")
+  maxAttempts Int    @default(3)
+  timeLimit   Int? // seconds
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relationships
+  answers DailyChallengeAnswer[]
+
+  // Indexes
+  @@index([date])
+  @@index([isActive])
+}
+
+model DailyChallengeAnswer {
+  id          String @id @default(uuid()) @db.Uuid()
+  challengeId String @db.Uuid()
+  userId      String @db.Uuid()
+
+  // Answer Details
+  userAnswers Json // {"blank1": "user_answer1", "blank2": "user_answer2"}
+  isCorrect   Boolean @default(false)
+  score       Int     @default(0)
+  timeSpent   Int // milliseconds
+  hintsUsed   Int     @default(0)
+
+  // Timestamps
+  completedAt DateTime @default(now())
+
+  // Relationships
+  challenge DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Constraints and Indexes
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@index([userId])
+  @@index([completedAt])
+}
+
+// =============================================================================
+// LEADERBOARD SYSTEM - Optimized Rankings
+// =============================================================================
+
+model Leaderboard {
+  id     String @id @default(uuid()) @db.Uuid()
+  userId String @unique @db.Uuid()
+
+  // Ranking Metrics (Denormalized for performance)
+  globalRank    Int
+  weeklyRank    Int?
+  monthlyRank   Int?
+  totalScore    Int
+  gamesPlayed   Int
+  gamesWon      Int
+  winRate       Float
+  currentStreak Int
+  bestStreak    Int
+
+  // Timestamps
+  lastUpdated DateTime @default(now())
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([globalRank])
+  @@index([weeklyRank])
+  @@index([monthlyRank])
+  @@index([totalScore(sort: Desc)])
+  @@index([lastUpdated])
+}

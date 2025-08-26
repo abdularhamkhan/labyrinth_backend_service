@@ -1,0 +1,177 @@
+# =============================================================================
+# 🐳 DOCKER COMPOSE - WAT BACKEND DEVELOPMENT & PRODUCTION
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # 🔴 REDIS - PRESENCE TRACKING & CACHING
+  # ===========================================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: wat-game-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - wat_network
+
+  # ===========================================================================
+  # 🚀 WAT BACKEND - MAIN APPLICATION (PRODUCTION)
+  # ===========================================================================
+  wat-game-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: wat-game-backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - REDIS_URL=redis://redis:6379
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - OPTIMIZE_API_KEY=${OPTIMIZE_API_KEY}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wat_network
+
+  # ===========================================================================
+  # 🛠️ WAT BACKEND - DEVELOPMENT MODE
+  # ===========================================================================
+  wat-backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: wat-backend-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - REDIS_URL=redis://redis:6379
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - OPTIMIZE_API_KEY=${OPTIMIZE_API_KEY}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - /app/node_modules
+    command: npm run dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wat_network
+    profiles:
+      - development
+
+  # ===========================================================================
+  # 🔧 PRISMA STUDIO - DATABASE ADMIN INTERFACE
+  # ===========================================================================
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: wat-prisma-studio
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+    volumes:
+      - ./prisma:/app/prisma
+    command: npx prisma studio --port 5555 --hostname 0.0.0.0
+    networks:
+      - wat_network
+    profiles:
+      - tools
+      - development
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  wat_network:
+    driver: bridge
+
+# =============================================================================
+# 🎯 USAGE COMMANDS & PROFILES
+# =============================================================================
+#
+# 🚀 PRODUCTION MODE (default):
+# docker-compose up -d
+# 
+# 🛠️ DEVELOPMENT MODE (with hot reload):
+# docker-compose --profile development up -d
+# 
+# 🔧 DEVELOPMENT + TOOLS (includes Prisma Studio):
+# docker-compose --profile development --profile tools up -d
+# 
+# 📊 PRISMA STUDIO ONLY:
+# docker-compose --profile tools up prisma-studio -d
+#
+# 🗺️ REBUILD CONTAINERS:
+# docker-compose up --build -d
+#
+# 📈 VIEW LOGS:
+# docker-compose logs -f wat-game-backend
+# docker-compose logs -f wat-backend-dev
+#
+# 🗑️ CLEANUP:
+# docker-compose down -v --remove-orphans
+#
+# 🏥 DATABASE OPERATIONS (in development):
+# docker-compose --profile development exec wat-backend-dev npx prisma migrate dev
+# docker-compose --profile development exec wat-backend-dev npx prisma db seed
+# docker-compose --profile development exec wat-backend-dev npx prisma generate
+#
+# =============================================================================
