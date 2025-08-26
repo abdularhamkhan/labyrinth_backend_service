@@ -90,8 +90,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 
 # Copy environment template (never actual secrets!)
-COPY --chown=nodejs:nodejs .env.example .env.example 2>/dev/null || \
-    echo "# Environment variables template\n# Copy this to .env and fill with your values" > .env.example
+RUN echo "# Environment variables template" > .env.example && \
+    echo "# Copy this to .env and fill with your values" >> .env.example
 
 # Switch to non-root user for security
 USER nodejs
