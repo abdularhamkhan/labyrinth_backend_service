@@ -38,22 +38,27 @@ import { VALIDATION_ERRORS } from "../constants/error";
 export const signupSchema = z.object({
   userEmail: z
     .string()
+    .trim()
+    .toLowerCase()
     .max(255, "Email must not exceed 255 characters")
     .email(VALIDATION_ERRORS.INVALID_EMAIL_FORMAT.message),
 
   username: z
     .string()
+    .trim()
+    .toLowerCase()
     .min(3, "Username must be at least 3 characters")
     .max(50, "Username must not exceed 50 characters")
-    .regex(/^[a-zA-Z0-9_-]+$/, VALIDATION_ERRORS.INVALID_USERNAME_FORMAT.message)
-    .trim()
-    .toLowerCase(),
+    .regex(/^[a-z][a-z0-9_-]{2,49}$/, VALIDATION_ERRORS.INVALID_USERNAME_FORMAT.message),
 
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
     .max(128, "Password must not exceed 128 characters")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, VALIDATION_ERRORS.INVALID_PASSWORD_FORMAT.message),
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,128}$/,
+      VALIDATION_ERRORS.INVALID_PASSWORD_FORMAT.message
+    ),
 
   firstName: z
     .string()
@@ -77,9 +82,14 @@ export const signupSchema = z.object({
 
   phone: z
     .string()
-    .min(10, "Phone number must be at least 10 characters")
-    .max(20, "Phone number must not exceed 20 characters")
-    .regex(/^\+?[1-9]\d{1,14}$/, VALIDATION_ERRORS.INVALID_PHONE_FORMAT.message)
+    .regex(/^\d{10}$/, "Phone number must be exactly 10 digits")
+    .transform((val) => {
+      // Format as (XXX) XXX-XXXX
+      if (val.length === 10) {
+        return `(${val.slice(0, 3)}) ${val.slice(3, 6)}-${val.slice(6)}`;
+      }
+      return val;
+    })
     .optional()
     .or(z.literal("")),
 });
@@ -97,7 +107,7 @@ export type signupInputTypes = z.infer<typeof signupSchema>;
  * - password: User's password
  */
 export const loginSchema = z.object({
-  emailOrUsername: z.string().min(1, "Email or username is required"),
+  emailOrUsername: z.string().trim().toLowerCase().min(1, "Email or username is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
@@ -114,7 +124,7 @@ export type loginInputTypes = z.infer<typeof loginSchema>;
  * - otp: 6-digit OTP code
  */
 export const verifyOtpSchema = z.object({
-  email: z.string().email("Please provide a valid email address"),
+  email: z.string().trim().toLowerCase().email("Please provide a valid email address"),
   otp: z.string().length(6, "OTP must be exactly 6 digits"),
 });
 
@@ -126,7 +136,7 @@ export type verifyOtpInputTypes = z.infer<typeof verifyOtpSchema>;
  * Validates email for initiating password reset.
  */
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Please provide a valid email address"),
+  email: z.string().trim().toLowerCase().email("Please provide a valid email address"),
 });
 
 export type forgotPasswordInputTypes = z.infer<typeof forgotPasswordSchema>;
@@ -134,10 +144,12 @@ export type forgotPasswordInputTypes = z.infer<typeof forgotPasswordSchema>;
 /**
  * RESET PASSWORD SCHEMA
  *
- * Validates token and new password for resetting password.
+ * Validates OTP and new password for resetting password.
+ * Uses 6-digit OTP instead of magic link tokens.
  */
 export const resetPasswordSchema = z.object({
-  token: z.string().min(20, "Invalid reset token"),
+  email: z.string().trim().toLowerCase().email("Please provide a valid email address"),
+  otp: z.string().length(6, "OTP must be exactly 6 digits"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -146,3 +158,9 @@ export const resetPasswordSchema = z.object({
 });
 
 export type resetPasswordInputTypes = z.infer<typeof resetPasswordSchema>;
+
+export const forgotUsernameSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Please provide a valid email address"),
+});
+
+export type forgotUsernameInputTypes = z.infer<typeof forgotUsernameSchema>;

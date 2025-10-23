@@ -20,12 +20,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.12.0
- * Query Engine version: 8047c96bbd92db98a2abc7c9323ce77c02c89dbc
+ * Prisma Client JS version: 6.17.1
+ * Query Engine version: 272a37d34178c2894197e17273bf937f25acdeac
  */
 Prisma.prismaVersion = {
-  client: "6.12.0",
-  engine: "8047c96bbd92db98a2abc7c9323ce77c02c89dbc"
+  client: "6.17.1",
+  engine: "272a37d34178c2894197e17273bf937f25acdeac"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -124,157 +124,237 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   username: 'username',
+  passwordHash: 'passwordHash',
   firstName: 'firstName',
   lastName: 'lastName',
-  phone: 'phone',
+  dateOfBirth: 'dateOfBirth',
+  lastActive: 'lastActive',
+  gitHubProfile: 'gitHubProfile',
+  education: 'education',
+  maxDailySwipes: 'maxDailySwipes',
   avatar: 'avatar',
   status: 'status',
   totalScore: 'totalScore',
-  gamesPlayed: 'gamesPlayed',
-  gamesWon: 'gamesWon',
-  winRate: 'winRate',
-  currentStreak: 'currentStreak',
-  bestStreak: 'bestStreak',
-  lastActive: 'lastActive',
+  techStackId: 'techStackId',
+  demographicId: 'demographicId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
-exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+exports.Prisma.PreferencesScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  token: 'token',
-  expiresAt: 'expiresAt',
-  used: 'used',
+  preferredTechStackId: 'preferredTechStackId',
+  preferredDemographicId: 'preferredDemographicId',
   createdAt: 'createdAt',
-  usedAt: 'usedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
-exports.Prisma.UserSessionScalarFieldEnum = {
+exports.Prisma.MatchScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  sessionToken: 'sessionToken',
-  deviceInfo: 'deviceInfo',
-  ipAddress: 'ipAddress',
-  userAgent: 'userAgent',
+  matchStatus: 'matchStatus',
+  preferencesId: 'preferencesId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.MatchUserScalarFieldEnum = {
+  id: 'id',
+  matchId: 'matchId',
+  userId: 'userId'
+};
+
+exports.Prisma.MatchProjectScalarFieldEnum = {
+  id: 'id',
+  matchId: 'matchId',
+  projectId: 'projectId'
+};
+
+exports.Prisma.SwipeScalarFieldEnum = {
+  id: 'id',
+  isRightSwipe: 'isRightSwipe',
+  swiperId: 'swiperId',
+  swipeeUserId: 'swipeeUserId',
+  swipeeProjectId: 'swipeeProjectId',
+  matchId: 'matchId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.DemographicScalarFieldEnum = {
+  id: 'id',
+  country: 'country',
+  languages: 'languages',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.TechStackScalarFieldEnum = {
+  id: 'id',
+  frameworks: 'frameworks',
+  languages: 'languages',
+  tools: 'tools',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ProjectScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  workspaceId: 'workspaceId',
+  chatId: 'chatId',
+  mediaId: 'mediaId',
+  analyticsId: 'analyticsId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ProjectTechStackScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  techStackId: 'techStackId'
+};
+
+exports.Prisma.WorkspaceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.RoleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  roleName: 'roleName',
+  projectId: 'projectId',
+  permissions: 'permissions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.UserRoleScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  roleId: 'roleId',
+  assignedAt: 'assignedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.TaskScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  taskName: 'taskName',
+  description: 'description',
+  userId: 'userId',
+  assignedToId: 'assignedToId',
   status: 'status',
+  dueDate: 'dueDate',
+  roleId: 'roleId',
+  projectId: 'projectId',
   createdAt: 'createdAt',
-  expiresAt: 'expiresAt',
-  lastActivity: 'lastActivity'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ChatScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  name: 'name',
+  lastMessageAt: 'lastMessageAt',
+  projectId: 'projectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ChatParticipantScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  chatId: 'chatId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.UserChatScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  chatId: 'chatId',
+  unreadCount: 'unreadCount',
+  lastReadAt: 'lastReadAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.MessageScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  messageType: 'messageType',
+  mediaUrl: 'mediaUrl',
+  senderId: 'senderId',
+  chatId: 'chatId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.MediaScalarFieldEnum = {
+  id: 'id',
+  filename: 'filename',
+  originalName: 'originalName',
+  mimeType: 'mimeType',
+  size: 'size',
+  width: 'width',
+  height: 'height',
+  duration: 'duration',
+  url: 'url',
+  thumbnailUrl: 'thumbnailUrl',
+  cdnUrl: 'cdnUrl',
+  category: 'category',
+  storageProvider: 'storageProvider',
+  storageKey: 'storageKey',
+  bucketName: 'bucketName',
+  uploadedBy: 'uploadedBy',
+  tags: 'tags',
+  metadata: 'metadata',
+  projectId: 'projectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.AnalyticsScalarFieldEnum = {
+  id: 'id',
+  stats: 'stats',
+  projectId: 'projectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.FriendshipScalarFieldEnum = {
   id: 'id',
   requesterId: 'requesterId',
-  receiverId: 'receiverId',
+  recipientId: 'recipientId',
   status: 'status',
+  message: 'message',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.GameSessionScalarFieldEnum = {
-  id: 'id',
-  roomCode: 'roomCode',
-  gameType: 'gameType',
-  status: 'status',
-  maxPlayers: 'maxPlayers',
-  currentRound: 'currentRound',
-  totalRounds: 'totalRounds',
-  maxMistakes: 'maxMistakes',
-  difficulty: 'difficulty',
-  timeLimit: 'timeLimit',
-  createdAt: 'createdAt',
-  startedAt: 'startedAt',
-  endedAt: 'endedAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.GameParticipantScalarFieldEnum = {
-  id: 'id',
-  gameSessionId: 'gameSessionId',
-  userId: 'userId',
-  position: 'position',
-  isReady: 'isReady',
-  isConnected: 'isConnected',
-  finalScore: 'finalScore',
-  finalRank: 'finalRank',
-  mistakeCount: 'mistakeCount',
-  joinedAt: 'joinedAt',
-  leftAt: 'leftAt'
-};
-
-exports.Prisma.GameRoundScalarFieldEnum = {
-  id: 'id',
-  gameSessionId: 'gameSessionId',
-  roundNumber: 'roundNumber',
-  verse: 'verse',
-  blanks: 'blanks',
-  emojiMapping: 'emojiMapping',
-  correctBook: 'correctBook',
-  correctRef: 'correctRef',
-  context: 'context',
-  startedAt: 'startedAt',
-  endedAt: 'endedAt'
-};
-
-exports.Prisma.GameScoreScalarFieldEnum = {
-  id: 'id',
-  participantId: 'participantId',
-  roundId: 'roundId',
-  blanksScore: 'blanksScore',
-  contextScore: 'contextScore',
-  bookScore: 'bookScore',
-  referenceScore: 'referenceScore',
-  timeBonus: 'timeBonus',
-  streakBonus: 'streakBonus',
-  totalScore: 'totalScore',
-  timeSpent: 'timeSpent',
-  mistakesMade: 'mistakesMade',
-  hintsUsed: 'hintsUsed',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.DailyChallengeScalarFieldEnum = {
-  id: 'id',
-  date: 'date',
-  verse: 'verse',
-  blanks: 'blanks',
-  emojiMapping: 'emojiMapping',
-  correctBook: 'correctBook',
-  correctRef: 'correctRef',
-  context: 'context',
-  difficulty: 'difficulty',
-  maxAttempts: 'maxAttempts',
-  timeLimit: 'timeLimit',
-  isActive: 'isActive',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.DailyChallengeAnswerScalarFieldEnum = {
-  id: 'id',
-  challengeId: 'challengeId',
-  userId: 'userId',
-  userAnswers: 'userAnswers',
-  isCorrect: 'isCorrect',
-  score: 'score',
-  timeSpent: 'timeSpent',
-  hintsUsed: 'hintsUsed',
-  completedAt: 'completedAt'
-};
-
-exports.Prisma.LeaderboardScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  globalRank: 'globalRank',
-  weeklyRank: 'weeklyRank',
-  monthlyRank: 'monthlyRank',
-  totalScore: 'totalScore',
-  gamesPlayed: 'gamesPlayed',
-  gamesWon: 'gamesWon',
-  winRate: 'winRate',
-  currentStreak: 'currentStreak',
-  bestStreak: 'bestStreak',
-  lastUpdated: 'lastUpdated'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -306,17 +386,27 @@ exports.Prisma.JsonNullValueFilter = {
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
 };
-exports.UserStatus = exports.$Enums.UserStatus = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  SUSPENDED: 'SUSPENDED',
-  DELETED: 'DELETED'
+exports.TaskStatus = exports.$Enums.TaskStatus = {
+  PENDING: 'PENDING',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  BLOCKED: 'BLOCKED'
 };
 
-exports.SessionStatus = exports.$Enums.SessionStatus = {
-  ACTIVE: 'ACTIVE',
-  EXPIRED: 'EXPIRED',
-  TERMINATED: 'TERMINATED'
+exports.MediaCategory = exports.$Enums.MediaCategory = {
+  USER_AVATAR: 'USER_AVATAR',
+  PROJECT_IMAGE: 'PROJECT_IMAGE',
+  CHAT_MEDIA: 'CHAT_MEDIA',
+  PROJECT_FILE: 'PROJECT_FILE',
+  WORKSPACE_BANNER: 'WORKSPACE_BANNER',
+  SYSTEM_ASSET: 'SYSTEM_ASSET'
+};
+
+exports.StorageProvider = exports.$Enums.StorageProvider = {
+  SUPABASE: 'SUPABASE',
+  CLOUDINARY: 'CLOUDINARY',
+  AWS_S3: 'AWS_S3',
+  LOCAL: 'LOCAL'
 };
 
 exports.FriendshipStatus = exports.$Enums.FriendshipStatus = {
@@ -326,33 +416,28 @@ exports.FriendshipStatus = exports.$Enums.FriendshipStatus = {
   REJECTED: 'REJECTED'
 };
 
-exports.GameType = exports.$Enums.GameType = {
-  DAILY_CHALLENGE: 'DAILY_CHALLENGE',
-  PVP_MATCH: 'PVP_MATCH',
-  PVP_COMPUTER: 'PVP_COMPUTER',
-  PRACTICE: 'PRACTICE'
-};
-
-exports.GameStatus = exports.$Enums.GameStatus = {
-  WAITING: 'WAITING',
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED'
-};
-
 exports.Prisma.ModelName = {
   User: 'User',
-  PasswordResetToken: 'PasswordResetToken',
-  UserSession: 'UserSession',
-  Friendship: 'Friendship',
-  GameSession: 'GameSession',
-  GameParticipant: 'GameParticipant',
-  GameRound: 'GameRound',
-  GameScore: 'GameScore',
-  DailyChallenge: 'DailyChallenge',
-  DailyChallengeAnswer: 'DailyChallengeAnswer',
-  Leaderboard: 'Leaderboard'
+  Preferences: 'Preferences',
+  Match: 'Match',
+  MatchUser: 'MatchUser',
+  MatchProject: 'MatchProject',
+  Swipe: 'Swipe',
+  Demographic: 'Demographic',
+  TechStack: 'TechStack',
+  Project: 'Project',
+  ProjectTechStack: 'ProjectTechStack',
+  Workspace: 'Workspace',
+  Role: 'Role',
+  UserRole: 'UserRole',
+  Task: 'Task',
+  Chat: 'Chat',
+  ChatParticipant: 'ChatParticipant',
+  UserChat: 'UserChat',
+  Message: 'Message',
+  Media: 'Media',
+  Analytics: 'Analytics',
+  Friendship: 'Friendship'
 };
 
 /**

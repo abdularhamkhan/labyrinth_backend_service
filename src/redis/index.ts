@@ -14,8 +14,8 @@
 // REDIS CONFIGURATION AND CLIENTS
 // =============================================================================
 
-export {
-  productionRedisManager as redisManager,
+import {
+  ProductionRedisManager,
   productionRedisClients as redisClients,
   sessionRedis,
   cacheRedis,
@@ -51,7 +51,6 @@ export {
   WriteThroughCache,
   CacheAsideStrategy,
   WriteBehindCache,
-  LeaderboardCache,
   CacheInvalidation,
 } from "./strategies/cachingStrategies";
 
@@ -93,10 +92,8 @@ export {
 // INTERNAL IMPORTS FOR UTILITY FUNCTIONS
 // =============================================================================
 
-import {
-  productionRedisManager,
-  checkRedisHealth as healthCheck,
-} from "./config/redis.production.config";
+const healthCheck = checkRedisHealth;
+const redisManager = ProductionRedisManager;
 
 // Import queue manager with error handling
 let queueMgr: any;
@@ -151,11 +148,31 @@ export const shutdownRedis = async (): Promise<void> => {
     }
 
     // Disconnect Redis clients
-    await productionRedisManager.disconnect();
+    const manager = new ProductionRedisManager();
+    await manager.disconnect();
 
     console.log("✅ Redis services shutdown complete");
   } catch (error) {
     console.error("❌ Error during Redis shutdown:", error);
     throw error;
   }
+};
+
+// =============================================================================
+// EXPORT REDIS CLIENTS
+// =============================================================================
+
+export {
+  sessionRedis,
+  cacheRedis,
+  pubsubRedis,
+  queueRedis,
+  gameStateRedis,
+  ProductionRedisManager,
+  checkRedisHealth,
+  getRedisStats,
+  getRedisMetrics,
+  getRedisAlerts,
+  clearRedisAlerts,
+  redisClients,
 };

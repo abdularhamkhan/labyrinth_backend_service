@@ -1,0 +1,303 @@
+{
+	"openapi": "3.0.3",
+	"info": {
+		"title": "Labyrinth Backend Service API",
+		"version": "1.0.0",
+		"description": "Production-ready API documentation for Labyrinth platform. All endpoints, request/response schemas, and error handling are documented."
+	},
+	"servers": [
+        { "url": "http://localhost:3001/api", "description": "Development server" },
+        { "url": "https://api.labyrinth.com/v1", "description": "Production server" }
+	],
+	"tags": [
+		{ "name": "Auth", "description": "Authentication and user management" },
+		{ "name": "Chat", "description": "Chat and messaging" },
+		{ "name": "Friends", "description": "Friendship and social features" },
+		{ "name": "Matchmaking", "description": "User and project recommendations" },
+		{ "name": "Media", "description": "Media upload and management" },
+		{ "name": "Project", "description": "Project and collaboration" },
+		{ "name": "User", "description": "User profile and preferences" }
+	],
+	"paths": {
+		"/auth/signup": {
+			"post": {
+				"tags": ["Auth"],
+				"summary": "Register a new user",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/Signup" }
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "User registered successfully",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } }
+					},
+					"400": { "description": "Validation error" }
+				}
+			}
+		},
+		"/auth/login": {
+			"post": {
+				"tags": ["Auth"],
+				"summary": "Login user",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/Login" }
+						}
+					}
+				},
+				"responses": {
+					"200": { "description": "Login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+					"401": { "description": "Invalid credentials" }
+				}
+			}
+		},
+		"/chat/direct": {
+			"post": {
+				"tags": ["Chat"],
+				"summary": "Create direct chat",
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateDirectChat" } } }
+				},
+				"responses": {
+					"201": { "description": "Chat created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Chat" } } } }
+				}
+			}
+		},
+		"/chat/{chatId}/messages": {
+			"get": {
+				"tags": ["Chat"],
+				"summary": "Get chat messages",
+				"parameters": [
+					{ "name": "chatId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+					{ "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+					{ "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 100 } }
+				],
+				"responses": {
+					"200": { "description": "List of messages", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } } } } }
+				}
+			},
+			"post": {
+				"tags": ["Chat"],
+				"summary": "Send message",
+				"parameters": [ { "name": "chatId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendMessage" } } }
+				},
+				"responses": {
+					"201": { "description": "Message sent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Message" } } } }
+				}
+			}
+		},
+		"/friends/request": {
+			"post": {
+				"tags": ["Friends"],
+				"summary": "Send friend request",
+				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendFriendRequest" } } } },
+				"responses": { "201": { "description": "Request sent" }, "400": { "description": "Validation error" } }
+			}
+		},
+		"/matchmaking/user-recommendations": {
+			"get": {
+				"tags": ["Matchmaking"],
+				"summary": "Get user recommendations",
+				"parameters": [ { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } } ],
+				"responses": { "200": { "description": "List of recommendations", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/UserRecommendation" } } } } } }
+			}
+		},
+		"/media/init": {
+			"post": {
+				"tags": ["Media"],
+				"summary": "Initialize media storage",
+				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MediaInit" } } } },
+				"responses": { "201": { "description": "Storage initialized" } }
+			}
+		},
+		"/project": {
+			"post": {
+				"tags": ["Project"],
+				"summary": "Create project",
+				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateProject" } } } },
+				"responses": { "201": { "description": "Project created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } } } }
+			}
+		},
+		"/user/profile": {
+			"get": {
+				"tags": ["User"],
+				"summary": "Get user profile",
+				"responses": { "200": { "description": "User profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserProfile" } } } } }
+			},
+			"put": {
+				"tags": ["User"],
+				"summary": "Update user profile",
+				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateUserProfile" } } } },
+				"responses": { "200": { "description": "Profile updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserProfile" } } } } }
+			}
+		}
+    
+	},
+	"components": {
+		"schemas": {
+			"Signup": {
+				"type": "object",
+				"properties": {
+					"userEmail": { "type": "string", "format": "email" },
+					"username": { "type": "string" },
+					"password": { "type": "string", "format": "password" },
+					"firstName": { "type": "string" },
+					"lastName": { "type": "string" },
+					"phone": { "type": "string" }
+				},
+				"required": ["userEmail", "username", "password", "firstName", "lastName"]
+			},
+			"Login": {
+				"type": "object",
+				"properties": {
+					"userEmail": { "type": "string", "format": "email" },
+					"password": { "type": "string", "format": "password" }
+				},
+				"required": ["userEmail", "password"]
+			},
+			"AuthResponse": {
+				"type": "object",
+				"properties": {
+					"token": { "type": "string" },
+					"user": { "$ref": "#/components/schemas/UserProfile" }
+				}
+			},
+			"CreateDirectChat": {
+				"type": "object",
+				"properties": {
+					"targetUserId": { "type": "string", "format": "uuid" }
+				},
+				"required": ["targetUserId"]
+			},
+			"Chat": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"participants": { "type": "array", "items": { "$ref": "#/components/schemas/ChatParticipant" } },
+					"createdAt": { "type": "string", "format": "date-time" }
+				}
+			},
+			"ChatParticipant": {
+				"type": "object",
+				"properties": {
+					"userId": { "type": "string", "format": "uuid" },
+					"chatId": { "type": "string", "format": "uuid" },
+					"user": { "$ref": "#/components/schemas/UserProfile" }
+				}
+			},
+			"Message": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"content": { "type": "string" },
+					"messageType": { "type": "string", "enum": ["TEXT", "IMAGE", "FILE"] },
+					"mediaUrl": { "type": "string", "format": "url" },
+					"senderId": { "type": "string", "format": "uuid" },
+					"chatId": { "type": "string", "format": "uuid" },
+					"createdAt": { "type": "string", "format": "date-time" },
+					"updatedAt": { "type": "string", "format": "date-time" },
+					"deletedAt": { "type": "string", "format": "date-time" },
+					"sender": { "$ref": "#/components/schemas/UserProfile" }
+				}
+			},
+			"SendMessage": {
+				"type": "object",
+				"properties": {
+					"content": { "type": "string" },
+					"messageType": { "type": "string", "enum": ["TEXT", "IMAGE", "FILE"] },
+					"mediaUrl": { "type": "string", "format": "url" }
+				},
+				"required": ["content"]
+			},
+			"SendFriendRequest": {
+				"type": "object",
+				"properties": {
+					"recipientId": { "type": "string", "format": "uuid" }
+				},
+				"required": ["recipientId"]
+			},
+			"UserRecommendation": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"username": { "type": "string" },
+					"firstName": { "type": "string" },
+					"lastName": { "type": "string" },
+					"education": { "type": "string" },
+					"gitHubProfile": { "type": "string" },
+					"techStack": { "type": "object" },
+					"demographic": { "type": "object" },
+					"compatibilityScore": { "type": "number" },
+					"projectsCount": { "type": "integer" },
+					"workspacesCount": { "type": "integer" },
+					"swipesCount": { "type": "integer" },
+					"lastActive": { "type": "string", "format": "date-time" }
+				}
+			},
+			"MediaInit": {
+				"type": "object",
+				"properties": {
+					"folder": { "type": "string" },
+					"quality": { "type": "integer", "minimum": 1, "maximum": 100 }
+				}
+			},
+			"CreateProject": {
+				"type": "object",
+				"properties": {
+					"title": { "type": "string" },
+					"description": { "type": "string" },
+					"workspaceName": { "type": "string" },
+					"workspaceDescription": { "type": "string" },
+					"techStackIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }
+				},
+				"required": ["title", "description", "workspaceName"]
+			},
+			"Project": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"title": { "type": "string" },
+					"description": { "type": "string" },
+					"workspaceName": { "type": "string" },
+					"createdAt": { "type": "string", "format": "date-time" }
+				}
+			},
+			"UserProfile": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"email": { "type": "string", "format": "email" },
+					"username": { "type": "string" },
+					"firstName": { "type": "string" },
+					"lastName": { "type": "string" },
+					"dateOfBirth": { "type": "string", "format": "date" },
+					"lastActive": { "type": "string", "format": "date-time" },
+					"gitHubProfile": { "type": "string" },
+					"education": { "type": "string" },
+					"createdAt": { "type": "string", "format": "date-time" },
+					"updatedAt": { "type": "string", "format": "date-time" }
+				}
+			},
+			"UpdateUserProfile": {
+				"type": "object",
+				"properties": {
+					"firstName": { "type": "string" },
+					"lastName": { "type": "string" },
+					"username": { "type": "string" }
+				}
+			}
+      
+		}
+	}
+}

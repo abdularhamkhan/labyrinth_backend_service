@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import supabase from "../config/supabase";
+import { AuthRequest } from "../types/auth.types";
 
 /**
  * =============================================================================
@@ -22,17 +23,7 @@ import supabase from "../config/supabase";
  * =============================================================================
  */
 
-// Extend Request interface to include user data
-// This allows TypeScript to recognize req.user in controllers
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string; // Supabase user ID
-    email: string; // User's email address
-    aud: string; // Token audience (usually 'authenticated')
-    role: string; // User role (usually 'authenticated')
-    isAnonymous: boolean; // Whether user is anonymous
-  };
-}
+// Using centralized AuthRequest type from types/auth.types
 
 /**
  * =============================================================================
@@ -49,7 +40,7 @@ interface AuthenticatedRequest extends Request {
  * @param next - Express next function to continue to next middleware/controller
  */
 export const authenticateUser = async (
-  req: AuthenticatedRequest,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -129,7 +120,7 @@ export const authenticateUser = async (
  * @param next - Express next function to continue to next middleware/controller
  */
 export const optionalAuth = async (
-  req: AuthenticatedRequest,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -179,7 +170,7 @@ export const optionalAuth = async (
  * @returns Middleware function
  */
 export const requireRole = (allowedRoles: string[]) => {
-  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     // First, ensure user is authenticated
     if (!req.user) {
       return res.status(401).json({
@@ -205,8 +196,11 @@ export const requireRole = (allowedRoles: string[]) => {
   };
 };
 
-// Export the extended Request interface for use in controllers
-export type { AuthenticatedRequest };
+// Note: AuthRequest type is imported from types/auth.types
+// This provides centralized type definitions for authenticated requests
+
+// Main auth middleware alias (used throughout the application)
+export const authMiddleware = authenticateUser;
 
 /**
  * =============================================================================
@@ -226,9 +220,9 @@ export type { AuthenticatedRequest };
  *    router.delete('/users/:id', authenticateUser, requireRole(['admin', 'moderator']), deleteUser);
  *
  * 4. IN CONTROLLER:
- *    import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+ *    import { AuthRequest } from '../types/auth.types';
  *
- *    const getUserProfile = async (req: AuthenticatedRequest, res: Response) => {
+ *    const getUserProfile = async (req: AuthRequest, res: Response) => {
  *        const userId = req.user!.id; // TypeScript knows user exists
  *        const userEmail = req.user!.email;
  *        // ... controller logic

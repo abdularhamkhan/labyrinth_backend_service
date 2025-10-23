@@ -1,460 +1,268 @@
 /**
  * =============================================================================
- * PRODUCTION-READY REDIS CONFIGURATION - Enterprise-Grade Setup
+ * REDIS PRODUCTION CONFIGURATION
  * =============================================================================
  *
- * This module provides a production-ready Redis configuration that addresses:
- *
- * ✅ CRITICAL FIXES:
- * 1. Redis Clustering for high availability
- * 2. Backup strategy with persistence configuration
- * 3. Circuit breaker pattern for resilience
- * 4. Security: AUTH, TLS encryption, network isolation
- *
- * ✅ IMPORTANT IMPROVEMENTS:
- * 1. Memory monitoring with alerts
- * 2. Connection limits and pooling
- * 3. Advanced rate limiting
- * 4. Structured logging
+ * Production-ready Redis configuration with clustering, monitoring,
+ * failover support, and performance optimization.
  *
  * =============================================================================
  */
 
-import Redis, { RedisOptions, Cluster } from "ioredis";
+import Redis, { Cluster } from "ioredis";
 import { config } from "./redisEnv";
-import { redisCircuitBreakers } from "../resilience/circuitBreaker";
-import {
-  ProductionRedisClients,
-  RedisMetrics,
-  RedisAlert,
-  EnhancedRedisClient,
-  RedisStandalone,
-  RedisCluster,
-  EnhancedRedisClientConfig,
-  RedisClusterConfig,
-  RedisKey,
-} from "../../types/redis.types";
 
 // =============================================================================
-// SECURITY CONFIGURATION
+// TYPES AND INTERFACES
 // =============================================================================
 
-const getSecurityConfig = (): Partial<RedisOptions> => {
-  const security: Partial<RedisOptions> = {};
+export interface RedisMetrics {
+  memoryUsage: number;
+  connectedClients: number;
+  commandsProcessed: number;
+  keysCount: number;
+  avgResponseTime: number;
+  errorRate: number;
+  lastUpdated: string;
+}
 
-  // Authentication
-  if (config.redis.security.username) {
-    security.username = config.redis.security.username;
-  }
+export interface RedisAlert {
+  level: "warning" | "critical";
+  message: string;
+  timestamp: string;
+  metric?: string;
+  value?: number;
+  threshold?: number;
+}
 
-  if (config.redis.security.password) {
-    security.password = config.redis.security.password;
-  }
-
-  // TLS Configuration
-  if (config.redis.security.tls) {
-    security.tls = {
-      cert: config.redis.security.cert,
-      key: config.redis.security.key,
-      ca: config.redis.security.ca,
-      rejectUnauthorized: true, // Always verify certificates in production
-    };
-  }
-
-  return security;
-};
-
-// =============================================================================
-// BASE CONFIGURATION WITH PRODUCTION OPTIMIZATIONS
-// =============================================================================
-
-const getBaseRedisConfig = (): RedisOptions => ({
-  host: config.redis.host,
-  port: config.redis.port,
-  ...getSecurityConfig(),
-
-  // Connection settings optimized for production
-  connectTimeout: 10000,
-  commandTimeout: 5000,
-  maxRetriesPerRequest: 3,
-
-  // Connection pool configuration
-  family: 4, // Force IPv4
-  keepAlive: 30000,
-  lazyConnect: false, // Connect immediately in production
-
-  // Production retry strategy with exponential backoff
-  retryStrategy: (times: number) => {
-    const delay = Math.min(times * 200, 5000);
-    console.warn(`[Redis] Retry attempt ${times}, delay: ${delay}ms`);
-    return delay;
-  },
-
-  // Performance optimizations
-  enableAutoPipelining: true,
-
-  // Monitoring and logging
-  showFriendlyErrorStack: config.app.environment === "development",
-});
+export interface ProductionRedisClients {
+  primary: Redis | Cluster;
+  cache: Redis | Cluster;
+  session: Redis | Cluster;
+  gameState: Redis | Cluster;
+  pubsub: Redis | Cluster;
+  queue: Redis | Cluster;
+}
 
 // =============================================================================
-// CLUSTER CONFIGURATION
-// =============================================================================
-
-const getClusterConfig = () => {
-  const baseConfig = getBaseRedisConfig();
-
-  return {
-    enableOfflineQueue: false, // Fail fast when cluster is down
-    redisOptions: baseConfig,
-
-    // Cluster-specific options
-    scaleReads: "slave" as const, // Read from slaves when possible
-    maxRedirections: 16,
-    retryDelayOnFailover: 100,
-
-    // Connection pool for cluster
-    poolOptions: {
-      min: config.redis.pool.minConnections,
-      max: config.redis.pool.maxConnections,
-      acquireTimeoutMillis: config.redis.pool.acquireTimeoutMillis,
-      idleTimeoutMillis: config.redis.pool.idleTimeoutMillis,
-    },
-  };
-};
-
-// =============================================================================
-// DATABASE-SPECIFIC CONFIGURATIONS
-// =============================================================================
-
-const redisConfigs = {
-  session: {
-    ...getBaseRedisConfig(),
-    db: 0,
-    keyPrefix: "session:",
-  },
-
-  cache: {
-    ...getBaseRedisConfig(),
-    db: 1,
-    keyPrefix: "cache:",
-  },
-
-  pubsub: {
-    ...getBaseRedisConfig(),
-    db: 2,
-    keyPrefix: "pubsub:",
-  },
-
-  queue: {
-    ...getBaseRedisConfig(),
-    db: 3,
-    keyPrefix: "queue:",
-  },
-
-  gameState: {
-    ...getBaseRedisConfig(),
-    db: 4,
-    keyPrefix: "game:",
-  },
-};
-
-// =============================================================================
-// PRODUCTION REDIS MANAGER WITH MONITORING
+// PRODUCTION REDIS MANAGER CLASS
 // =============================================================================
 
 export class ProductionRedisManager {
-  private static instance: ProductionRedisManager;
-  private clients: { [key: string]: Redis | Cluster };
+  private clients: ProductionRedisClients;
   private metrics: Map<string, RedisMetrics> = new Map();
   private alerts: RedisAlert[] = [];
-  private monitoringInterval: NodeJS.Timeout | null = null;
-  private isConnected: boolean = false;
+  private monitoringInterval?: NodeJS.Timeout;
 
-  private constructor() {
-    this.clients = {};
-    this.initializeClients();
-    this.startMonitoring();
+  constructor() {
+    this.clients = this.createClients();
   }
 
-  public static getInstance(): ProductionRedisManager {
-    if (!ProductionRedisManager.instance) {
-      ProductionRedisManager.instance = new ProductionRedisManager();
+  /**
+   * Initialize Redis clients and monitoring
+   */
+  public initialize(): void {
+    this.setupMonitoring();
+    this.setupEventHandlers();
+    console.log("Production Redis manager initialized");
+  }
+
+  // =============================================================================
+  // CLIENT CREATION AND CONFIGURATION
+  // =============================================================================
+
+  private createClients(): ProductionRedisClients {
+    console.log("Creating production Redis clients...");
+
+    const baseConfig = {
+      host: config.redis.host,
+      port: config.redis.port,
+      password: config.redis.password,
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
+      keepAlive: 30000,
+    };
+
+    if (config.redis.cluster.enabled) {
+      return this.createClusterClients(baseConfig);
+    } else {
+      return this.createStandaloneClients(baseConfig);
     }
-    return ProductionRedisManager.instance;
+  }
+
+  private createClusterClients(baseConfig: any): ProductionRedisClients {
+    console.log("Setting up Redis cluster configuration");
+
+    const clusterOptions = {
+      ...baseConfig,
+      enableOfflineQueue: false,
+      redisOptions: baseConfig,
+    };
+
+    return {
+      primary: new Cluster(config.redis.cluster.nodes, {
+        ...clusterOptions,
+        scaleReads: "slave",
+      }),
+      cache: new Cluster(config.redis.cluster.nodes, {
+        ...clusterOptions,
+        scaleReads: "slave",
+      }),
+      session: new Cluster(config.redis.cluster.nodes, {
+        ...clusterOptions,
+        scaleReads: "master",
+      }),
+      gameState: new Cluster(config.redis.cluster.nodes, {
+        ...clusterOptions,
+        scaleReads: "master",
+      }),
+      pubsub: new Cluster(config.redis.cluster.nodes, {
+        ...clusterOptions,
+        scaleReads: "master",
+      }),
+      queue: new Cluster(config.redis.cluster.nodes, {
+        ...clusterOptions,
+        scaleReads: "master",
+      }),
+    };
+  }
+
+  private createStandaloneClients(baseConfig: any): ProductionRedisClients {
+    console.log("Setting up standalone Redis configuration");
+
+    return {
+      primary: new Redis({ ...baseConfig, db: 0 }),
+      cache: new Redis({ ...baseConfig, db: 1 }),
+      session: new Redis({ ...baseConfig, db: 2 }),
+      gameState: new Redis({ ...baseConfig, db: 3 }),
+      pubsub: new Redis({ ...baseConfig, db: 4 }),
+      queue: new Redis({ ...baseConfig, db: 5 }),
+    };
   }
 
   // =============================================================================
-  // CLIENT INITIALIZATION WITH CLUSTERING SUPPORT
+  // EVENT HANDLERS AND ERROR MANAGEMENT
   // =============================================================================
 
-  private initializeClients(): void {
-    try {
-      if (config.redis.cluster.enabled) {
-        this.initializeClusteredClients();
-      } else {
-        this.initializeStandaloneClients();
+  private setupEventHandlers(): void {
+    Object.entries(this.clients).forEach(([type, client]) => {
+      client.on("connect", () => {
+        console.log(`Redis ${type} client connected`);
+      });
+
+      client.on("ready", () => {
+        console.log(`Redis ${type} client ready`);
+      });
+
+      client.on("error", (error: Error) => {
+        console.error(`Redis ${type} client error:`, error);
+        this.handleRedisError(type, error);
+      });
+
+      client.on("close", () => {
+        console.log(`Redis ${type} client connection closed`);
+      });
+
+      client.on("reconnecting", () => {
+        console.log(`Redis ${type} client reconnecting...`);
+      });
+
+      if (client instanceof Cluster) {
+        client.on("node error", (error, node) => {
+          console.error(`Redis cluster node error for ${type}:`, error, node);
+          this.handleClusterNodeError(type, error, node);
+        });
       }
-
-      console.log("✅ Production Redis clients initialized successfully");
-    } catch (error) {
-      console.error("❌ Failed to initialize production Redis clients:", error);
-      throw error;
-    }
-  }
-
-  private initializeClusteredClients(): void {
-    console.log("🔧 Initializing Redis cluster clients...");
-
-    Object.entries(redisConfigs).forEach(([clientType, baseConfig]) => {
-      const clusterConfig = getClusterConfig();
-
-      // Create cluster client
-      const cluster = new Cluster(config.redis.cluster.nodes, clusterConfig);
-
-      this.setupClusterEventListeners(cluster, clientType);
-      this.wrapClientWithCircuitBreaker(cluster, clientType);
-
-      this.clients[clientType as keyof ProductionRedisClients] = cluster;
-
-      console.log(`✅ Redis cluster client '${clientType}' initialized`);
     });
   }
 
-  private initializeStandaloneClients(): void {
-    console.log("🔧 Initializing standalone Redis clients...");
-
-    Object.entries(redisConfigs).forEach(([clientType, config]) => {
-      const client = new Redis(config);
-
-      this.setupClientEventListeners(client, clientType);
-      this.wrapClientWithCircuitBreaker(client, clientType);
-
-      this.clients[clientType as keyof ProductionRedisClients] = client;
-
-      console.log(`✅ Redis standalone client '${clientType}' initialized`);
-    });
-  }
-
-  // =============================================================================
-  // CIRCUIT BREAKER INTEGRATION
-  // =============================================================================
-
-  private wrapClientWithCircuitBreaker(client: Redis | Cluster, clientType: string): void {
-    const circuitBreaker = redisCircuitBreakers[clientType as keyof typeof redisCircuitBreakers];
-
-    if (!circuitBreaker) {
-      console.warn(`⚠️ No circuit breaker found for ${clientType}`);
-      return;
-    }
-
-    // Wrap client methods with circuit breaker
-    const originalGet = client.get.bind(client);
-    const originalSet = client.set.bind(client);
-    const originalDel = client.del.bind(client);
-    const originalExists = client.exists.bind(client);
-
-    client.get = async (key: string) => {
-      return circuitBreaker.execute(
-        () => originalGet(key),
-        () => this.getDatabaseFallback(key)
-      );
+  private handleRedisError(clientType: string, error: Error): void {
+    const alert: RedisAlert = {
+      level: "critical",
+      message: `Redis ${clientType} client error: ${error.message}`,
+      timestamp: new Date().toISOString(),
     };
 
-    client.set = async (key: string, value: string, ...args: any[]) => {
-      return circuitBreaker.execute(
-        () => originalSet(key, value, ...args),
-        () => this.setDatabaseFallback(key, value)
-      );
+    this.alerts.push(alert);
+    console.error("Redis alert generated:", alert);
+  }
+
+  private handleClusterNodeError(clientType: string, error: Error, node: any): void {
+    const alert: RedisAlert = {
+      level: "warning",
+      message: `Redis cluster node error for ${clientType}: ${error.message}`,
+      timestamp: new Date().toISOString(),
     };
 
-    // Type-safe method wrapping for del and exists
-    const enhancedClient = client as EnhancedRedisClient;
-
-    enhancedClient.del = async (...keys: RedisKey[]) => {
-      return circuitBreaker.execute(
-        () => originalDel(...(keys as any)),
-        () => this.delDatabaseFallback(keys as string[])
-      );
-    };
-
-    enhancedClient.exists = async (...keys: RedisKey[]) => {
-      return circuitBreaker.execute(
-        () => originalExists(...(keys as any)),
-        () => this.existsDatabaseFallback(keys as string[])
-      );
-    };
-
-    console.log(`🛡️ Circuit breaker integrated for ${clientType}`);
+    this.alerts.push(alert);
+    console.error("Redis cluster alert generated:", alert);
   }
 
   // =============================================================================
-  // DATABASE FALLBACK METHODS
+  // MONITORING AND METRICS
   // =============================================================================
 
-  private async getDatabaseFallback(key: string): Promise<string | null> {
-    console.log(`🔄 Database fallback for GET ${key}`);
-    // Implement database fallback logic
-    // For now, return null to indicate cache miss
-    return null;
-  }
-
-  private async setDatabaseFallback(key: string, value: string): Promise<"OK"> {
-    console.log(`🔄 Database fallback for SET ${key}`);
-    // Implement database fallback logic
-    // For now, just log the operation
-    return "OK";
-  }
-
-  private async delDatabaseFallback(keys: string[]): Promise<number> {
-    console.log(`🔄 Database fallback for DEL ${keys.join(", ")}`);
-    // Implement database fallback logic
-    return keys.length;
-  }
-
-  private async existsDatabaseFallback(keys: string[]): Promise<number> {
-    console.log(`🔄 Database fallback for EXISTS ${keys.join(", ")}`);
-    // Implement database fallback logic
-    return 0;
-  }
-
-  // =============================================================================
-  // EVENT LISTENERS WITH MONITORING
-  // =============================================================================
-
-  private setupClientEventListeners(client: Redis, clientType: string): void {
-    client.on("connect", () => {
-      console.log(`🟢 Redis ${clientType} client connected`);
-      this.updateConnectionMetrics(clientType, true);
-    });
-
-    client.on("ready", () => {
-      console.log(`✅ Redis ${clientType} client ready`);
-      this.isConnected = true;
-    });
-
-    client.on("error", (error) => {
-      console.error(`❌ Redis ${clientType} client error:`, error);
-      this.handleClientError(clientType, error);
-    });
-
-    client.on("close", () => {
-      console.log(`🔴 Redis ${clientType} client disconnected`);
-      this.updateConnectionMetrics(clientType, false);
-    });
-
-    client.on("reconnecting", () => {
-      console.log(`🔄 Redis ${clientType} client reconnecting...`);
-    });
-  }
-
-  private setupClusterEventListeners(cluster: Cluster, clientType: string): void {
-    cluster.on("connect", () => {
-      console.log(`🟢 Redis cluster ${clientType} connected`);
-      this.updateConnectionMetrics(clientType, true);
-    });
-
-    cluster.on("ready", () => {
-      console.log(`✅ Redis cluster ${clientType} ready`);
-      this.isConnected = true;
-    });
-
-    cluster.on("error", (error) => {
-      console.error(`❌ Redis cluster ${clientType} error:`, error);
-      this.handleClientError(clientType, error);
-    });
-
-    cluster.on("close", () => {
-      console.log(`🔴 Redis cluster ${clientType} disconnected`);
-      this.updateConnectionMetrics(clientType, false);
-    });
-
-    cluster.on("+node", (node) => {
-      console.log(`➕ Redis cluster ${clientType} node added:`, node.options);
-    });
-
-    cluster.on("-node", (node) => {
-      console.log(`➖ Redis cluster ${clientType} node removed:`, node.options);
-    });
-
-    cluster.on("node error", (error, node) => {
-      console.error(`❌ Redis cluster ${clientType} node error:`, error, node.options);
-      this.createAlert("error", `Cluster node error in ${clientType}: ${error.message}`);
-    });
-  }
-
-  // =============================================================================
-  // MONITORING AND ALERTING
-  // =============================================================================
-
-  private startMonitoring(): void {
+  private setupMonitoring(): void {
     if (!config.redis.monitoring.enabled) {
-      console.log("📊 Redis monitoring disabled");
+      console.log("Redis monitoring disabled");
       return;
     }
+
+    console.log("Setting up Redis monitoring...");
 
     this.monitoringInterval = setInterval(async () => {
       await this.collectMetrics();
       this.checkAlertThresholds();
     }, config.redis.monitoring.metricsInterval);
 
-    console.log(
-      `📊 Redis monitoring started (interval: ${config.redis.monitoring.metricsInterval}ms)`
-    );
+    console.log("Redis monitoring setup complete");
   }
 
   private async collectMetrics(): Promise<void> {
     try {
-      for (const [clientType, client] of Object.entries(this.clients)) {
-        const metrics = await this.getClientMetrics(client, clientType);
-        this.metrics.set(clientType, metrics);
+      for (const [type, client] of Object.entries(this.clients)) {
+        // Skip pubsub client as it's in subscriber mode and can't run info command
+        if (type === "pubsub") {
+          continue;
+        }
+
+        try {
+          const info = await client.info();
+          const metrics = this.parseRedisInfo(info);
+
+          this.metrics.set(type, {
+            ...metrics,
+            lastUpdated: new Date().toISOString(),
+          });
+        } catch (clientError) {
+          console.warn(`Failed to collect metrics for Redis ${type} client:`, clientError);
+        }
       }
     } catch (error) {
-      console.error("❌ Error collecting Redis metrics:", error);
+      console.error("Error collecting Redis metrics:", error);
     }
   }
 
-  private async getClientMetrics(
-    client: Redis | Cluster,
-    clientType: string
-  ): Promise<RedisMetrics> {
-    try {
-      const startTime = Date.now();
+  private parseRedisInfo(info: string): Omit<RedisMetrics, "lastUpdated"> {
+    const result: any = {};
 
-      // Test connection with ping
-      await client.ping();
-      const responseTime = Date.now() - startTime;
+    info.split("\r\n").forEach((line) => {
+      if (line.includes(":")) {
+        const [key, value] = line.split(":");
+        result[key] = value;
+      }
+    });
 
-      // Get Redis info
-      const info = await client.info("memory");
-      const memoryInfo = this.parseRedisInfo(info);
-
-      const usedMemory = parseInt(memoryInfo.used_memory || "0");
-      const maxMemory = parseInt(memoryInfo.maxmemory || "0") || 2 * 1024 * 1024 * 1024; // 2GB default
-
-      return {
-        connectionCount: 1, // Simplified for now
-        memoryUsage: usedMemory,
-        memoryUsagePercentage: (usedMemory / maxMemory) * 100,
-        hitRate: 0, // Would need to calculate from stats
-        missRate: 0, // Would need to calculate from stats
-        responseTime,
-        errorRate: 0, // Would need to track over time
-        uptime: parseInt(memoryInfo.uptime_in_seconds || "0"),
-      };
-    } catch (error) {
-      console.error(`❌ Error getting metrics for ${clientType}:`, error);
-      return {
-        connectionCount: 0,
-        memoryUsage: 0,
-        memoryUsagePercentage: 0,
-        hitRate: 0,
-        missRate: 0,
-        responseTime: 0,
-        errorRate: 100,
-        uptime: 0,
-      };
-    }
+    return {
+      memoryUsage: parseInt(result.used_memory || "0"),
+      connectedClients: parseInt(result.connected_clients || "0"),
+      commandsProcessed: parseInt(result.total_commands_processed || "0"),
+      keysCount: parseInt(result.db0?.split(",")[0]?.split("=")[1] || "0"),
+      avgResponseTime: 0, // Would need separate measurement
+      errorRate: 0, // Would need separate tracking
+    };
   }
 
   private checkAlertThresholds(): void {
@@ -462,113 +270,87 @@ export class ProductionRedisManager {
 
     this.metrics.forEach((metrics, clientType) => {
       // Memory usage alert
-      if (metrics.memoryUsagePercentage > thresholds.memoryUsage * 100) {
-        this.createAlert(
+      const memoryUsagePercent = metrics.memoryUsage / (1024 * 1024 * 1024); // Convert to GB
+      if (memoryUsagePercent > thresholds.memoryUsage) {
+        this.generateAlert(
           "warning",
-          `High memory usage in ${clientType}: ${metrics.memoryUsagePercentage.toFixed(2)}%`,
-          metrics
+          `High memory usage for ${clientType}`,
+          "memoryUsage",
+          memoryUsagePercent,
+          thresholds.memoryUsage
+        );
+      }
+
+      // Connection count alert
+      if (metrics.connectedClients > thresholds.connectionCount) {
+        this.generateAlert(
+          "warning",
+          `High connection count for ${clientType}`,
+          "connectionCount",
+          metrics.connectedClients,
+          thresholds.connectionCount
         );
       }
 
       // Response time alert
-      if (metrics.responseTime > thresholds.responseTime) {
-        this.createAlert(
+      if (metrics.avgResponseTime > thresholds.responseTime) {
+        this.generateAlert(
           "warning",
-          `High response time in ${clientType}: ${metrics.responseTime}ms`,
-          metrics
-        );
-      }
-
-      // Connection alert
-      if (metrics.connectionCount > thresholds.connectionCount) {
-        this.createAlert(
-          "error",
-          `High connection count in ${clientType}: ${metrics.connectionCount}`,
-          metrics
+          `High response time for ${clientType}`,
+          "responseTime",
+          metrics.avgResponseTime,
+          thresholds.responseTime
         );
       }
     });
   }
 
-  private createAlert(
-    level: RedisAlert["level"],
+  private generateAlert(
+    level: "warning" | "critical",
     message: string,
-    metrics?: Partial<RedisMetrics>
+    metric?: string,
+    value?: number,
+    threshold?: number
   ): void {
     const alert: RedisAlert = {
       level,
       message,
-      timestamp: Date.now(),
-      metrics,
+      timestamp: new Date().toISOString(),
+      metric,
+      value,
+      threshold,
     };
 
     this.alerts.push(alert);
-
-    // Keep only last 100 alerts
-    if (this.alerts.length > 100) {
-      this.alerts = this.alerts.slice(-100);
-    }
-
-    console.log(`🚨 [${level.toUpperCase()}] Redis Alert: ${message}`);
-  }
-
-  private updateConnectionMetrics(clientType: string, connected: boolean): void {
-    const currentMetrics = this.metrics.get(clientType);
-    if (currentMetrics) {
-      currentMetrics.connectionCount = connected ? 1 : 0;
-      this.metrics.set(clientType, currentMetrics);
-    }
-  }
-
-  private handleClientError(clientType: string, error: Error): void {
-    this.createAlert("error", `Redis ${clientType} error: ${error.message}`);
-
-    // Update error rate metrics
-    const currentMetrics = this.metrics.get(clientType);
-    if (currentMetrics) {
-      currentMetrics.errorRate += 1;
-      this.metrics.set(clientType, currentMetrics);
-    }
+    console.warn("Redis alert generated:", alert);
   }
 
   // =============================================================================
-  // UTILITY METHODS
-  // =============================================================================
-
-  private parseRedisInfo(info: string): Record<string, string> {
-    const result: Record<string, string> = {};
-    info.split("\r\n").forEach((line) => {
-      if (line.includes(":")) {
-        const [key, value] = line.split(":");
-        result[key] = value;
-      }
-    });
-    return result;
-  }
-
-  // =============================================================================
-  // PUBLIC API
+  // PUBLIC API METHODS
   // =============================================================================
 
   public getClient(type: keyof ProductionRedisClients): Redis | Cluster {
-    if (!this.clients[type]) {
-      throw new Error(`Redis client '${type}' not initialized`);
+    const client = this.clients[type];
+    if (!client) {
+      throw new Error(`Redis client ${type} not found`);
     }
-    return this.clients[type];
+    return client;
   }
 
   public getClients(): { [key: string]: Redis | Cluster } {
-    return this.clients;
+    return { ...this.clients };
   }
 
   public async isHealthy(): Promise<boolean> {
     try {
       const healthChecks = Object.entries(this.clients).map(async ([type, client]) => {
         try {
-          const result = await client.ping();
-          return { type, healthy: result === "PONG" };
+          const start = Date.now();
+          await client.ping();
+          const responseTime = Date.now() - start;
+          return { type, healthy: true, responseTime };
         } catch (error) {
-          return { type, healthy: false, error };
+          return { type, healthy: false, error: (error as Error).message };
         }
       });
 
@@ -576,15 +358,13 @@ export class ProductionRedisManager {
       const allHealthy = results.every((result) => result.healthy);
 
       if (!allHealthy) {
-        console.warn(
-          "⚠️ Some Redis clients are not healthy:",
-          results.filter((r) => !r.healthy)
-        );
+        const unhealthyClients = results.filter((r) => !r.healthy);
+        console.error("Unhealthy Redis clients:", unhealthyClients);
       }
 
       return allHealthy;
     } catch (error) {
-      console.error("❌ Redis health check failed:", error);
+      console.error("Error checking Redis health:", error);
       return false;
     }
   }
@@ -599,7 +379,7 @@ export class ProductionRedisManager {
 
   public clearAlerts(): void {
     this.alerts = [];
-    console.log("🧹 Redis alerts cleared");
+    console.log("Redis alerts cleared");
   }
 
   public async getStats(): Promise<Record<string, any>> {
@@ -607,71 +387,85 @@ export class ProductionRedisManager {
       const stats: Record<string, any> = {};
 
       for (const [type, client] of Object.entries(this.clients)) {
-        const info = await client.info("memory");
-        const keyCount = await client.dbsize();
-        const metrics = this.metrics.get(type);
-
-        stats[type] = {
-          keyCount,
-          memoryInfo: this.parseRedisInfo(info),
-          connected: client.status === "ready",
-          metrics,
-        };
+        try {
+          const info = await client.info();
+          const clientStats = this.parseRedisInfo(info);
+          stats[type] = clientStats;
+        } catch (error) {
+          stats[type] = { error: (error as Error).message };
+        }
       }
 
-      return stats;
+      return {
+        ...stats,
+        alerts: this.alerts.length,
+        monitoring: config.redis.monitoring.enabled,
+        cluster: config.redis.cluster.enabled,
+      };
     } catch (error) {
-      console.error("❌ Failed to get Redis stats:", error);
-      return {};
+      console.error("Error getting Redis stats:", error);
+      throw error;
     }
   }
 
   public async disconnect(): Promise<void> {
     try {
-      console.log("🔄 Disconnecting production Redis clients...");
+      console.log("Disconnecting production Redis clients...");
 
-      // Stop monitoring
+      // Clear monitoring interval
       if (this.monitoringInterval) {
         clearInterval(this.monitoringInterval);
-        this.monitoringInterval = null;
       }
 
       // Disconnect all clients
       const disconnectPromises = Object.entries(this.clients).map(async ([type, client]) => {
-        if (client instanceof Cluster) {
+        try {
           await client.disconnect();
-        } else {
-          await client.quit();
+          console.log(`Redis ${type} client disconnected`);
+        } catch (error) {
+          console.error(`Error disconnecting Redis ${type} client:`, error);
         }
-        console.log(`✅ Redis ${type} client disconnected`);
       });
 
       await Promise.all(disconnectPromises);
-      console.log("✅ All production Redis clients disconnected successfully");
+      console.log("All Redis clients disconnected");
     } catch (error) {
-      console.error("❌ Error disconnecting production Redis clients:", error);
+      console.error("Error during Redis disconnection:", error);
       throw error;
     }
   }
 }
 
 // =============================================================================
-// EXPORT PRODUCTION REDIS MANAGER
+// GLOBAL PRODUCTION INSTANCES
 // =============================================================================
 
-export const productionRedisManager = ProductionRedisManager.getInstance();
-export const productionRedisClients = productionRedisManager.getClients();
+// Create global production Redis manager
+const productionRedisManager = new ProductionRedisManager();
 
-// Individual client exports
+// Initialize Redis clients on startup
+productionRedisManager.initialize();
+
+// Export individual clients for convenient access
 export const sessionRedis = productionRedisManager.getClient("session");
 export const cacheRedis = productionRedisManager.getClient("cache");
 export const pubsubRedis = productionRedisManager.getClient("pubsub");
 export const queueRedis = productionRedisManager.getClient("queue");
 export const gameStateRedis = productionRedisManager.getClient("gameState");
 
-// Health and monitoring exports
+// Export manager and utility functions
+// Note: ProductionRedisManager is already exported above
 export const checkRedisHealth = () => productionRedisManager.isHealthy();
 export const getRedisStats = () => productionRedisManager.getStats();
 export const getRedisMetrics = () => productionRedisManager.getMetrics();
 export const getRedisAlerts = () => productionRedisManager.getAlerts();
 export const clearRedisAlerts = () => productionRedisManager.clearAlerts();
+
+// Export clients as a group
+export const productionRedisClients = {
+  session: sessionRedis,
+  cache: cacheRedis,
+  pubsub: pubsubRedis,
+  queue: queueRedis,
+  gameState: gameStateRedis,
+};

@@ -1,183 +1,168 @@
 import http from "http";
 import { WebSocketServer } from "ws";
 import app from "./app";
-import "./config/redis";
+import "./redis";
 import { ENV } from "./config/env";
+import { initializeKafkaTopics } from "./config/kafka";
+import { kafkaConsumer } from "./services/kafka-consumer.service";
+import { KAFKA_TOPICS } from "./config/kafka";
 
 /**
  * =============================================================================
- * SERVER SETUP - HTTP + WEBSOCKET SERVER
+ * LABYRINTH PLATFORM SERVER WITH REAL-TIME SUPPORT
  * =============================================================================
  *
- * This file sets up the main server infrastructure with:
- * - HTTP server for REST API endpoints
- * - WebSocket server for real-time communication
- * - Redis configuration loading
- * - Environment-based port configuration
+ * This file sets up the Labyrinth platform server with:
+ * - HTTP Server: Handles REST API requests
+ * - WebSocket Server: Handles real-time chat and collaboration
+ * - Kafka Integration: Event-driven architecture
+ * - Redis: Caching and session management
  *
  * Architecture:
- * - HTTP Server: Handles REST API requests (auth, user management)
- * - WebSocket Server: Handles real-time game communication
- * - Redis: Session storage and caching (loaded via import)
- *
- * Usage:
- * - Development: npm run dev
- * - Production: npm start
+ * - HTTP Server: REST API for all platform operations
+ * - WebSocket Server: Real-time chat, notifications, presence
+ * - Kafka: Event streaming for microservices communication
+ * - Redis: Caching, sessions, and real-time data
  *
  * =============================================================================
  */
 
+const PORT = ENV.port || 3000;
+
 // =============================================================================
-// SERVER CONFIGURATION
+// HTTP SERVER SETUP
 // =============================================================================
 
-// Port configuration
-const PORT = ENV.port;
-
-// Create HTTP server using the Express app
-// This handles all REST API endpoints defined in app.ts
+// Create HTTP server with Express app
 const server = http.createServer(app);
 
+// =============================================================================
+// WEBSOCKET SERVER SETUP FOR REAL-TIME COLLABORATION
+// =============================================================================
+
 // Create WebSocket server attached to HTTP server
-// Path: /ws - Used for real-time game communication
-const web_socket_server = new WebSocketServer({
+const webSocketServer = new WebSocketServer({
   server,
   path: "/ws",
 });
 
+// TODO: Initialize WebSocket handlers for:
+// - Real-time chat messaging
+// - User presence updates
+// - Project collaboration events
+// - Notification delivery
+console.log("WebSocket server initialized for collaboration features");
+
 // =============================================================================
-// WEBSOCKET EVENT HANDLERS
+// INITIALIZE SERVICES AND START SERVER
 // =============================================================================
 
-/**
- * WebSocket Connection Handler
- *
- * Triggered when a new client connects to the WebSocket server.
- * Sends welcome message and sets up client-specific event handlers.
- *
- * Usage: Frontend connects to ws://localhost:3000/ws
- */
-web_socket_server.on("connection", (ws) => {
-  console.log("=== NEW WEBSOCKET CONNECTION ===");
-  console.log("WebSocket connection established:", {
-    readyState: ws.readyState,
-    timestamp: new Date().toISOString(),
-  });
-
-  // Send welcome message to newly connected client
-  const welcomeMessage = {
-    type: "connection",
-    message: "Welcome to With A Twist!",
-    timestamp: new Date().toISOString(),
-  };
-
-  ws.send(JSON.stringify(welcomeMessage));
-  console.log("Welcome message sent to client");
-
-  // Set up client disconnection handler
-  ws.on("close", () => {
-    console.log("=== WEBSOCKET CONNECTION CLOSED ===");
-    console.log("Client disconnected:", {
-      timestamp: new Date().toISOString(),
-    });
-  });
-
-  // Set up error handler
-  ws.on("error", (error) => {
-    console.error("=== WEBSOCKET ERROR ===");
-    console.error("WebSocket error:", {
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    });
-  });
-
-  // Set up message handler for incoming messages
-  ws.on("message", (message) => {
-    console.log("=== WEBSOCKET MESSAGE RECEIVED ===");
+async function startServer() {
+  let kafkaConnected = false;
+  
+  try {
+    // Try to initialize Kafka (optional in development)
+    console.log("🚀 Initializing Kafka topics...");
     try {
-      const parsedMessage = JSON.parse(message.toString());
-      console.log("Received message:", {
-        type: parsedMessage.type,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Handle different message types here
-      // Example: game moves, chat messages, etc.
-    } catch (error) {
-      console.error("Failed to parse WebSocket message:", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        rawMessage: message.toString(),
-      });
+      await initializeKafkaTopics();
+      
+      // Setup Kafka consumers
+      console.log("🚀 Setting up Kafka consumers...");
+      kafkaConsumer.setupDefaultHandlers();
+      await kafkaConsumer.startConsuming([
+        KAFKA_TOPICS.USER_EVENTS,
+        KAFKA_TOPICS.CHAT_EVENTS,
+        KAFKA_TOPICS.MATCH_EVENTS,
+        KAFKA_TOPICS.PROJECT_EVENTS,
+        KAFKA_TOPICS.NOTIFICATION_EVENTS,
+        KAFKA_TOPICS.ANALYTICS_EVENTS,
+      ]);
+      kafkaConnected = true;
+      console.log("✅ Kafka initialized successfully");
+    } catch (kafkaError) {
+      console.warn("⚠️  Kafka connection failed (running without Kafka):", kafkaError instanceof Error ? kafkaError.message : kafkaError);
+      console.warn("ℹ️  Server will continue without event streaming");
     }
-  });
-});
+
+    // Start HTTP server
+    server.listen(PORT, () => {
+      console.log("=== LABYRINTH PLATFORM STARTUP COMPLETE ===");
+      console.log(`🌟 Server running on port ${PORT}`);
+      console.log(`📡 REST API: http://localhost:${PORT}/api`);
+      console.log(`🔗 WebSocket: ws://localhost:${PORT}/ws`);
+      console.log(`🏗️ Environment: ${ENV.nodeEnv}`);
+      console.log(`⚡ Kafka: ${kafkaConnected ? 'Connected' : 'Disabled'}`);
+      console.log(`📊 Redis: Connected`);
+      if (!kafkaConnected && ENV.nodeEnv === 'development') {
+        console.log(`💡 To enable Kafka: Start Kafka on localhost:9092`);
+      }
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
 
 // =============================================================================
-// SERVER STARTUP
+// ERROR HANDLING
 // =============================================================================
 
-/**
- * Start the HTTP + WebSocket server
- *
- * This starts both the REST API server and WebSocket server on the same port.
- * The server will be accessible at:
- * - HTTP API: http://localhost:PORT/api/...
- * - WebSocket: ws://localhost:PORT/ws
- */
-server.listen(PORT, () => {
-  console.log("=== SERVER STARTUP COMPLETE ===");
-  console.log(`🚀 HTTP + WebSocket Server Running on port ${PORT}`);
-  console.log(`📡 REST API available at: http://localhost:${PORT}/api`);
-  console.log(`⚡ WebSocket server available at: ws://localhost:${PORT}/ws`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`⏰ Server started at: ${new Date().toISOString()}`);
-  console.log("===============================================");
+server.on("error", (error) => {
+  console.error("Server error:", error);
 });
 
 // =============================================================================
 // GRACEFUL SHUTDOWN HANDLERS
 // =============================================================================
 
-/**
- * Handle graceful shutdown on SIGTERM (production deployment)
- */
-process.on("SIGTERM", () => {
-  console.log("=== SIGTERM RECEIVED - GRACEFUL SHUTDOWN ===");
-  server.close(() => {
-    console.log("HTTP server closed");
-    process.exit(0);
-  });
-});
+const gracefulShutdown = async () => {
+  console.log("=== LABYRINTH PLATFORM GRACEFUL SHUTDOWN ===");
 
-/**
- * Handle graceful shutdown on SIGINT (Ctrl+C in development)
- */
+  try {
+    // Disconnect Kafka consumers (if connected)
+    try {
+      console.log("🔌 Disconnecting Kafka consumers...");
+      await kafkaConsumer.disconnect();
+    } catch (kafkaError) {
+      console.warn("⚠️  Kafka disconnect failed (was not connected):", kafkaError instanceof Error ? kafkaError.message : kafkaError);
+    }
+
+    // Close HTTP server
+    server.close(() => {
+      console.log("✅ HTTP server closed");
+      console.log("✅ Labyrinth platform shutdown complete");
+      process.exit(0);
+    });
+  } catch (error) {
+    console.error("❌ Error during shutdown:", error);
+    process.exit(1);
+  }
+};
+
+// Handle graceful shutdown signals
+process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", () => {
-  console.log("\n=== SIGINT RECEIVED - GRACEFUL SHUTDOWN ===");
+  console.log("=== SIGINT RECEIVED - GRACEFUL SHUTDOWN ===");
   server.close(() => {
-    console.log("HTTP server closed");
+    console.log("Server closed");
     process.exit(0);
   });
 });
 
-/**
- * Handle unhandled promise rejections
- */
+// Handle unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
   console.error("=== UNHANDLED PROMISE REJECTION ===");
   console.error("Reason:", reason);
   console.error("Promise:", promise);
-  // In production, you might want to restart the server
-  // For development, we'll just log the error
 });
 
-/**
- * Handle uncaught exceptions
- */
+// Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
   console.error("=== UNCAUGHT EXCEPTION ===");
   console.error("Error:", error);
   console.error("Stack:", error.stack);
-  // In production, you should restart the server
   process.exit(1);
 });

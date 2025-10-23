@@ -1,5 +1,6 @@
 import supabase, { supabaseAdmin } from "../config/supabase";
 import { prisma } from "../config/prisma";
+import { resend } from "../config/resend";
 import {
   AUTH_ERRORS,
   USER_ERRORS,
@@ -18,8 +19,16 @@ import {
   verifyOtpInputTypes,
   forgotPasswordInputTypes,
   resetPasswordInputTypes,
+  forgotUsernameInputTypes,
 } from "../schemas/auth.schema";
 import { markUserOnline } from "./presence.service";
+import { AuthAudit, AuditEventType } from "../utils/audit";
+import { accountSecurity } from "../utils/accountSecurity";
+// Password reset handled entirely by Supabase Auth
+// Note: We'll use Supabase's native email functionality instead of custom email utility
+import { Request } from "express";
+import { ENV } from "../config/env";
+import { kafkaProducer } from "./kafka-producer.service";
 
 /**
  * =============================================================================
@@ -48,29 +57,66 @@ import { markUserOnline } from "./presence.service";
  * =============================================================================
  */
 
-export const signupService = async ({
-  userEmail,
-  password,
-  username,
-  firstName,
-  lastName,
-}: signupInputTypes) => {
+export const signupService = async (
+  req: Request,
+  { userEmail, password, username, firstName, lastName }: signupInputTypes
+) => {
   try {
-    // Check if user already exists in the database
+    // Check OTP cooldown - prevent rapid OTP requests
+    const otpCooldownKey = `otp_cooldown:${userEmail.toLowerCase()}`;
+    const lastOtpRequest = await accountSecurity.redis.get(otpCooldownKey);
+
+    if (lastOtpRequest) {
+      const timeLeft = await accountSecurity.redis.ttl(otpCooldownKey);
+      throw new AuthenticationError(
+        `Please wait ${timeLeft} seconds before requesting another verification code.`,
+        "OTP_COOLDOWN_ACTIVE"
+      );
+    }
+
+    // Check for suspicious activity before proceeding
+    const suspiciousActivity = await accountSecurity.detectSuspiciousActivity(req);
+    if (suspiciousActivity.isSuspicious) {
+      AuthAudit.signupSuccess(req, "blocked", userEmail);
+      throw new AuthenticationError(
+        "Signup blocked due to suspicious activity.",
+        "SIGNUP_BLOCKED_SUSPICIOUS"
+      );
+    }
+
+    // STEP 1: VALIDATE DATA FIRST - Don't let Supabase create users until validation passes
+
+    // Check if user already exists in the database (case-insensitive)
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ email: userEmail }, { username }],
+        OR: [
+          {
+            email: {
+              equals: userEmail.toLowerCase(),
+              mode: "insensitive",
+            },
+          },
+          {
+            username: {
+              equals: username.toLowerCase(),
+              mode: "insensitive",
+            },
+          },
+        ],
       },
       select: { id: true, email: true, username: true },
     });
 
     if (existingUser) {
-      if (existingUser.email === userEmail) {
-        throw new ConflictError(
+      // Log duplicate signup attempt
+      AuthAudit.otpEvent(AuditEventType.SIGNUP_DUPLICATE, req, userEmail, false);
+
+      if (existingUser.email?.toLowerCase() === userEmail.toLowerCase()) {
+        throw new AuthenticationError(
           USER_ERRORS.EMAIL_ALREADY_EXISTS.message,
           USER_ERRORS.EMAIL_ALREADY_EXISTS.code
         );
-      } else if (existingUser.username === username) {
+      } else if (existingUser.username?.toLowerCase() === username.toLowerCase()) {
         throw new ConflictError(
           USER_ERRORS.USERNAME_ALREADY_EXISTS.message,
           USER_ERRORS.USERNAME_ALREADY_EXISTS.code
@@ -78,17 +124,59 @@ export const signupService = async ({
       }
     }
 
-    // Attempt to sign up with Supabase (sending OTP)
+    // STEP 2: Check if user exists in Supabase Auth (prevents duplicate Supabase users)
+    try {
+      const { data: existingSupabaseUsers } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000, // This is not ideal for large scale, but works for now
+      });
+
+      const existingSupabaseUser = existingSupabaseUsers.users.find(
+        (user) => user.email?.toLowerCase() === userEmail.toLowerCase()
+      );
+
+      if (existingSupabaseUser) {
+        throw new AuthenticationError(
+          USER_ERRORS.EMAIL_ALREADY_EXISTS.message,
+          USER_ERRORS.EMAIL_ALREADY_EXISTS.code
+        );
+      }
+    } catch (supabaseError) {
+      // If we can't check Supabase users, log but don't fail
+      console.warn("Could not check existing Supabase users:", supabaseError);
+    }
+
+    // STEP 3: NOW attempt to sign up with Supabase (sending OTP)
     const { data: supabaseAuthData, error: supabaseError } = await supabase.auth.signUp({
       email: userEmail,
       password,
+      options: {
+        // Ensure email confirmation is required
+        emailRedirectTo: undefined, // We handle verification via OTP, not magic links
+      },
     });
 
     if (supabaseError || !supabaseAuthData.user) {
+      console.error("Supabase signup error:", supabaseError);
       throw new AuthenticationError(
         AUTH_ERRORS.SIGNUP_FAILED.message,
         AUTH_ERRORS.SIGNUP_FAILED.code,
         { originalError: supabaseError?.message }
+      );
+    }
+
+    // Log signup success for debugging
+    console.log(`✅ Supabase user created successfully: ${supabaseAuthData.user.id}`);
+    console.log(`📧 Email confirmation should be sent to: ${userEmail}`);
+
+    // Check if user needs email confirmation
+    if (supabaseAuthData.user && !supabaseAuthData.user.email_confirmed_at) {
+      console.log(
+        "📧 User requires email confirmation - OTP should be sent automatically by Supabase"
+      );
+    } else {
+      console.warn(
+        "⚠️  User email appears to be pre-confirmed - this might indicate a configuration issue"
       );
     }
 
@@ -103,16 +191,33 @@ export const signupService = async ({
           username,
           firstName,
           lastName,
-          status: "ACTIVE",
-          // Initialize default values for game metrics
-          totalScore: 0,
-          gamesPlayed: 0,
-          gamesWon: 0,
-          winRate: 0.0,
-          currentStreak: 0,
-          bestStreak: 0,
+          passwordHash: "", // Will be set by Supabase
+          // Initialize collaboration-related defaults
+          maxDailySwipes: 50, // Default daily swipes for matchmaking
+          lastActive: new Date(),
         },
       });
+
+      // Log successful signup
+      AuthAudit.signupSuccess(req, createdUser.id, userEmail);
+
+      // Publish user registration event to Kafka
+      try {
+        await kafkaProducer.publishUserRegistered(createdUser.id, {
+          email: userEmail,
+          username,
+          firstName,
+          lastName,
+          registrationSource: 'direct_signup'
+        });
+      } catch (kafkaError) {
+        console.error('Failed to publish user registration event:', kafkaError);
+        // Don't fail registration if Kafka is down
+      }
+
+      // Set OTP cooldown (60 seconds)
+      const otpCooldownKey = `otp_cooldown:${userEmail.toLowerCase()}`;
+      await accountSecurity.redis.setex(otpCooldownKey, 60, Date.now().toString());
     } catch (dbError) {
       // If database user creation fails, we should clean up the Supabase user
       // to maintain consistency
@@ -163,7 +268,7 @@ export const signupService = async ({
  * =============================================================================
  */
 
-export const verifyOtpService = async ({ email, otp }: verifyOtpInputTypes) => {
+export const verifyOtpService = async (req: Request, { email, otp }: verifyOtpInputTypes) => {
   try {
     // Verify OTP with Supabase
     const { data, error } = await supabase.auth.verifyOtp({
@@ -173,12 +278,22 @@ export const verifyOtpService = async ({ email, otp }: verifyOtpInputTypes) => {
     });
 
     if (error) {
+      // Log failed OTP attempt
+      AuthAudit.otpEvent(AuditEventType.OTP_VERIFY_FAILURE, req, email, false);
+
+      // Record failed attempt for security tracking
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (user) {
+        await accountSecurity.recordFailedAttempt(req, user.id, email, "otp");
+      }
+
       throw new AuthenticationError(AUTH_ERRORS.OTP_INVALID.message, AUTH_ERRORS.OTP_INVALID.code, {
         originalError: error,
       });
     }
 
     if (!data.session) {
+      AuthAudit.otpEvent(AuditEventType.OTP_VERIFY_FAILURE, req, email, false);
       throw new AuthenticationError(AUTH_ERRORS.OTP_INVALID.message, AUTH_ERRORS.OTP_INVALID.code);
     }
 
@@ -194,6 +309,18 @@ export const verifyOtpService = async ({ email, otp }: verifyOtpInputTypes) => {
       );
     }
 
+    // Update user last active timestamp
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastActive: new Date() },
+    });
+
+    // Clear any previous failed attempts
+    await accountSecurity.clearAccountLockout(user.id);
+
+    // Log successful OTP verification
+    AuthAudit.otpEvent(AuditEventType.OTP_VERIFY_SUCCESS, req, email, true);
+
     // Mark user as online after successful OTP verification (don't block for presence failure)
     try {
       await markUserOnline(user.id, {
@@ -204,6 +331,16 @@ export const verifyOtpService = async ({ email, otp }: verifyOtpInputTypes) => {
     } catch (presenceError) {
       console.error("Failed to mark user online after OTP verification:", presenceError);
       // Don't throw - presence failure shouldn't block authentication
+    }
+
+    // Publish user activity event to Kafka
+    try {
+      await kafkaProducer.publishUserActivity(user.id, 'email_verification_completed', {
+        email: user.email,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (kafkaError) {
+      console.error('Failed to publish user activity event:', kafkaError);
     }
 
     return {
@@ -239,21 +376,59 @@ export const verifyOtpService = async ({ email, otp }: verifyOtpInputTypes) => {
  * =============================================================================
  */
 
-export const loginService = async ({ emailOrUsername, password }: loginInputTypes) => {
+export const loginService = async (
+  req: Request,
+  { emailOrUsername, password }: loginInputTypes
+) => {
   let user;
   try {
+    // Check for suspicious activity
+    const suspiciousActivity = await accountSecurity.detectSuspiciousActivity(req);
+    if (suspiciousActivity.isSuspicious) {
+      AuthAudit.loginFailure(req, emailOrUsername, "Suspicious activity detected");
+      throw new AuthenticationError(
+        "Login blocked due to suspicious activity.",
+        "LOGIN_BLOCKED_SUSPICIOUS"
+      );
+    }
+
+    // Convert to lowercase for case-insensitive comparison
+    const lowerIdentifier = emailOrUsername.toLowerCase();
+
     user = await prisma.user.findFirst({
       where: {
-        OR: [{ email: emailOrUsername }, { username: emailOrUsername }],
+        OR: [
+          {
+            email: {
+              equals: lowerIdentifier,
+              mode: "insensitive",
+            },
+          },
+          {
+            username: {
+              equals: lowerIdentifier,
+              mode: "insensitive",
+            },
+          },
+        ],
       },
     });
 
     if (!user) {
+      // Log failed attempt
+      AuthAudit.loginFailure(req, emailOrUsername, "User not found");
+
       throw new ValidationError(
         USER_ERRORS.USER_NOT_FOUND.message,
         USER_ERRORS.USER_NOT_FOUND.code
       );
     }
+
+    // Check if user exists and is valid for login
+    // Note: In Labyrinth, we rely on Supabase's user verification status
+
+    // Track IP to account access
+    await accountSecurity.trackIpAccountAccess(req, user.id);
   } catch (dbError) {
     if (dbError instanceof Error && dbError.name.includes("Error")) {
       throw dbError; // Re-throw our custom errors
@@ -274,6 +449,28 @@ export const loginService = async ({ emailOrUsername, password }: loginInputType
     sessionData = supabaseSessionData;
 
     if (error) {
+      // Record failed login attempt
+      const failedAttempt = await accountSecurity.recordFailedAttempt(
+        req,
+        user.id,
+        user.email,
+        "login"
+      );
+
+      AuthAudit.loginFailure(
+        req,
+        emailOrUsername,
+        "Invalid credentials",
+        failedAttempt.attemptCount
+      );
+
+      if (failedAttempt.shouldLock) {
+        throw new AuthenticationError(
+          `Account locked due to multiple failed attempts. Try again in ${failedAttempt.lockoutDuration} minutes.`,
+          "ACCOUNT_LOCKED_FAILED_ATTEMPTS"
+        );
+      }
+
       throw new AuthenticationError(
         AUTH_ERRORS.INVALID_CREDENTIALS.message,
         AUTH_ERRORS.INVALID_CREDENTIALS.code,
@@ -282,6 +479,10 @@ export const loginService = async ({ emailOrUsername, password }: loginInputType
     }
 
     if (!sessionData.session) {
+      // Record failed login attempt for missing session
+      await accountSecurity.recordFailedAttempt(req, user.id, user.email, "login");
+      AuthAudit.loginFailure(req, emailOrUsername, "No session created");
+
       throw new AuthenticationError(
         AUTH_ERRORS.INVALID_CREDENTIALS.message,
         AUTH_ERRORS.INVALID_CREDENTIALS.code
@@ -308,6 +509,18 @@ export const loginService = async ({ emailOrUsername, password }: loginInputType
   } catch (presenceError) {
     console.error("Failed to mark user online after login:", presenceError);
     // Don't throw - presence failure shouldn't block authentication
+  }
+
+  // Publish user activity event to Kafka
+  try {
+    await kafkaProducer.publishUserActivity(user.id, 'user_login', {
+      email: user.email,
+      username: user.username,
+      loginMethod: 'password',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (kafkaError) {
+    console.error('Failed to publish user login event:', kafkaError);
   }
 
   return {
@@ -341,7 +554,7 @@ export const loginService = async ({ emailOrUsername, password }: loginInputType
  * =============================================================================
  */
 
-export const forgotPasswordService = async ({ email }: forgotPasswordInputTypes) => {
+export const forgotPasswordService = async (req: Request, { email }: forgotPasswordInputTypes) => {
   try {
     // Check if user exists (don't reveal this in response for security)
     const user = await prisma.user.findUnique({
@@ -357,43 +570,33 @@ export const forgotPasswordService = async ({ email }: forgotPasswordInputTypes)
       };
     }
 
-    // Generate secure reset token (32 bytes = 64 hex characters)
-    const crypto = require("crypto");
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    // We rely on Supabase Auth for token management
+    // No need to store tokens in our database
 
-    // Invalidate any existing tokens for this user
-    await prisma.passwordResetToken.updateMany({
-      where: {
-        userId: user.id,
-        used: false,
-        expiresAt: { gt: new Date() },
-      },
-      data: { used: true, usedAt: new Date() },
-    });
+    // Log password reset request
+    AuthAudit.passwordResetEvent(AuditEventType.PASSWORD_RESET_REQUEST, req, email);
 
-    // Create new reset token
-    await prisma.passwordResetToken.create({
-      data: {
-        userId: user.id,
-        token: resetToken,
-        expiresAt,
-      },
-    });
+    // Send password reset OTP (6-digit token) using Supabase Auth
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: undefined, // No redirect = OTP mode (6-digit tokens)
+      });
 
-    // Send password reset email via Supabase
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`,
-    });
-
-    if (resetError) {
-      console.error("Failed to send password reset email:", resetError);
+      if (resetError) {
+        console.error("Supabase password reset OTP failed:", resetError);
+        // Don't throw error to prevent user enumeration
+      } else {
+        console.log(`✅ Password reset OTP (6-digit) sent successfully to ${email}`);
+      }
+    } catch (error) {
+      console.error("Failed to send password reset OTP via Supabase:", error);
       // Don't throw error to prevent user enumeration
     }
 
     return {
       message: "If an account with this email exists, a password reset link will be sent.",
       success: true,
+      data: { emailSent: true },
     };
   } catch (error) {
     console.error("Forgot password service error:", error);
@@ -401,6 +604,7 @@ export const forgotPasswordService = async ({ email }: forgotPasswordInputTypes)
     return {
       message: "If an account with this email exists, a password reset link will be sent.",
       success: true,
+      data: { emailSent: true },
     };
   }
 };
@@ -430,48 +634,32 @@ export const forgotPasswordService = async ({ email }: forgotPasswordInputTypes)
  * =============================================================================
  */
 
-export const resetPasswordService = async ({ token, password }: resetPasswordInputTypes) => {
+export const resetPasswordService = async (
+  req: Request,
+  { email, otp, password }: resetPasswordInputTypes
+) => {
   try {
-    // Find valid reset token
-    const resetToken = await prisma.passwordResetToken.findFirst({
-      where: {
-        token,
-        used: false,
-        expiresAt: { gt: new Date() },
-      },
-      include: {
-        user: true,
-      },
+    // Verify OTP with Supabase first
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: "recovery", // For password reset OTP
     });
 
-    if (!resetToken) {
+    if (error || !data.user) {
+      // Log failed reset attempt
+      AuthAudit.passwordResetEvent(AuditEventType.PASSWORD_RESET_REQUEST, req, email);
+
       throw new AuthenticationError(
-        AUTH_ERRORS.RESET_TOKEN_INVALID.message,
-        AUTH_ERRORS.RESET_TOKEN_INVALID.code
+        "Invalid or expired OTP code for password reset.",
+        "PASSWORD_RESET_OTP_INVALID"
       );
     }
 
-    // Check if token is expired
-    if (resetToken.expiresAt < new Date()) {
-      throw new AuthenticationError(
-        AUTH_ERRORS.RESET_TOKEN_EXPIRED.message,
-        AUTH_ERRORS.RESET_TOKEN_EXPIRED.code
-      );
-    }
-
-    // Check if token is already used
-    if (resetToken.used) {
-      throw new AuthenticationError(
-        AUTH_ERRORS.RESET_TOKEN_USED.message,
-        AUTH_ERRORS.RESET_TOKEN_USED.code
-      );
-    }
-
-    // Update password using Supabase Admin API
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      resetToken.user.id,
-      { password }
-    );
+    // Update password using Supabase Auth with the verified session
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: password,
+    });
 
     if (updateError) {
       throw new ExternalServiceError(
@@ -481,22 +669,23 @@ export const resetPasswordService = async ({ token, password }: resetPasswordInp
       );
     }
 
-    // Mark token as used
-    await prisma.passwordResetToken.update({
-      where: { id: resetToken.id },
-      data: {
-        used: true,
-        usedAt: new Date(),
-      },
+    // Find user in our database
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true },
     });
 
+    if (!user) {
+      throw new NotFoundError(USER_ERRORS.USER_NOT_FOUND.message, USER_ERRORS.USER_NOT_FOUND.code);
+    }
+
     // Invalidate all existing sessions for security
-    await supabaseAdmin.auth.admin.signOut(resetToken.user.id, "others");
+    await supabaseAdmin.auth.admin.signOut(data.user.id, "others");
 
     return {
       message: "Password has been successfully reset. Please log in with your new password.",
       success: true,
-      userId: resetToken.user.id,
+      userId: user.id,
     };
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
@@ -507,5 +696,240 @@ export const resetPasswordService = async ({ token, password }: resetPasswordInp
       AUTH_ERRORS.PASSWORD_RESET_FAILED.code,
       { originalError: error }
     );
+  }
+};
+
+/**
+ * =============================================================================
+ * FORGOT USERNAME SERVICE
+ * =============================================================================
+ *
+ * Initiates username recovery process by sending username via email/
+ *
+ * Usage: Service is used by forgotUsernameController to handle forgot username requests.
+ *
+ * Flow:
+ * 1. Validate user exists
+ * 1.5 Should verify the user by IP or Phone Number (Later we will impliment this)
+ * 2. Send username email via Supabase
+ *
+ * Security Features:
+ * - Cryptographically secure token generation
+ * - Token expiration (1 hour)
+ * - Rate limiting protection
+ * - No user enumeration (same response for existing/non-existing emails)
+ *
+ * =============================================================================
+};
+
+/**
+ * =============================================================================
+ * RESEND OTP SERVICE
+ * =============================================================================
+ *
+ * Resends OTP email for users who didn't receive the initial signup email.
+ * This addresses cases where Supabase's automatic email sending fails.
+ *
+ * =============================================================================
+ */
+export const resendOtpService = async (req: Request, email: string) => {
+  try {
+    // Check OTP cooldown - prevent spam
+    const otpCooldownKey = `otp_cooldown:${email.toLowerCase()}`;
+    const lastOtpRequest = await accountSecurity.redis.get(otpCooldownKey);
+
+    if (lastOtpRequest) {
+      const timeLeft = await accountSecurity.redis.ttl(otpCooldownKey);
+      throw new AuthenticationError(
+        `Please wait ${timeLeft} seconds before requesting another verification code.`,
+        "OTP_COOLDOWN_ACTIVE"
+      );
+    }
+
+    // Check if user exists in database
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      // Return same response to prevent user enumeration
+      return {
+        message:
+          "If an account with this email exists and requires verification, an OTP has been sent.",
+        success: true,
+      };
+    }
+
+    // Resend OTP using Supabase
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email,
+      options: {
+        emailRedirectTo: undefined, // We handle via OTP, not magic links
+      },
+    });
+
+    if (error) {
+      console.error("Failed to resend OTP:", error);
+      // Don't reveal the error to prevent information disclosure
+    } else {
+      console.log(`✅ OTP resent successfully to ${email}`);
+    }
+
+    // Set cooldown regardless of success/failure
+    await accountSecurity.redis.setex(otpCooldownKey, 60, Date.now().toString());
+
+    return {
+      message:
+        "If an account with this email exists and requires verification, an OTP has been sent.",
+      success: true,
+    };
+  } catch (error) {
+    console.error("Resend OTP service error:", error);
+
+    if (error instanceof Error && error.name.includes("Error")) {
+      throw error;
+    }
+
+    // Return success message even on error to prevent user enumeration
+    return {
+      message:
+        "If an account with this email exists and requires verification, an OTP has been sent.",
+      success: true,
+    };
+  }
+};
+
+// export const forgotUsernameService = async ({ email }: forgotUsernameInputTypes) => {
+//   try {
+//     // Check if user exists
+//     const user = await prisma.user.findUnique({
+//       where: { email: email.toLowerCase() },
+//       select: { id: true, username: true, email: true },
+//     });
+
+//     // Always return same response → prevent user enumeration
+//     if (!user) {
+//       return {
+//         message: "If an account with this email exists, your username has been sent.",
+//         success: true,
+//         data: { emailSent: true }
+//       };
+//     }
+
+//     // Send username recovery email using Supabase Auth (via invite link with custom data)
+//     try {
+//       await resend.emails.send({
+//         from: ENV.resendFromEmail,
+//         to: email,
+//         subject: "Your Username Recovery",
+//         text: `Hello, your username is: ${user.username}`,
+//         html: `<p>Hello,</p>
+//            <p>Your username is: <b>${user.username}</b></p>
+//            <p>If you didn't request this, you can ignore this email.</p>`,
+//       });
+
+//       console.log(`Username recovery email sent successfully via Supabase to ${user.email} (username: ${user.username})`);
+
+//     } catch (error) {
+//       console.error('Failed to send username recovery email via Resend:', error);
+//       // Don't throw error to prevent user enumeration
+//     }
+
+//     // Always return the same success message regardless of email success/failure
+//     // This prevents user enumeration attacks
+//     return {
+//       message: "If an account with this email exists, your username has been sent.",
+//       success: true,
+//       data: { emailSent: true }
+//     };
+//   } catch (error) {
+//     console.error("Forgot username service error:", error);
+
+//     // Same response → prevent user enumeration
+//     // Never reveal whether the user exists or not
+//     return {
+//       message: "If an account with this email exists, your username has been sent.",
+//       success: true,
+//       data: { emailSent: true }
+//     };
+//   }
+// };
+
+export const forgotUsernameService = async ({ email }: forgotUsernameInputTypes) => {
+  const safeResponse = {
+    message: "If an account with this email exists, your username has been sent.",
+    success: true,
+    data: { emailSent: true },
+  };
+
+  try {
+    // Check if user exists (case-insensitive)
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { username: true, email: true },
+    });
+
+    if (!user) return safeResponse;
+
+    try {
+      console.log(`🔧 Attempting to send username recovery email to: ${user.email}`);
+      console.log(`🔧 Using Resend API Key: ${ENV.resendApiKey ? "SET" : "MISSING"}`);
+      console.log(`🔧 From Email: ${ENV.resendFromEmail}`);
+
+      const result = await resend.emails.send({
+        from: `${ENV.resendFromName} <${ENV.resendFromEmail}>`,
+        to: [user.email],
+        subject: "Your Username Recovery - With A Twist",
+        text: `Hello, your username is: ${user.username}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <p style="font-size: 16px; margin-bottom: 12px;">Hello,</p>
+
+          <p style="margin-bottom: 16px;">
+              We found your account details. Your username is:
+          </p>
+
+          <p style="
+            display: inline-block;
+            padding: 10px 16px;
+            background-color: #f0f8ff;
+            color: #007bff;
+            border: 1px solid #007bff;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 12px 0;
+          ">
+            ${user.username}
+          </p>
+        
+          <p style="margin-top: 20px; font-size: 14px; color: #555;">
+            If you didn’t request this, you can safely ignore this email.
+          </p>
+          </div>
+
+        `,
+      });
+
+      if (result.error) {
+        throw new Error(`Resend API Error: ${result.error.message}`);
+      }
+
+      console.log(
+        `✅ Username recovery email sent successfully to ${user.email} (username: ${user.username})`
+      );
+      console.log(`✅ Resend Message ID: ${result.data?.id}`);
+
+      return safeResponse;
+    } catch (sendError) {
+      console.error("Resend email error (username recovery):", sendError);
+    }
+
+    return safeResponse;
+  } catch (error) {
+    console.error("Forgot username service DB error:", error);
+    return safeResponse;
   }
 };

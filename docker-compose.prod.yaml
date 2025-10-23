@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - KAFKA_BROKERS=kafka:9092
+      - REDIS_URL=redis://redis:6379
+      # add other envs or use env_file: .env
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - labyrinth-network
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=labyrinth_db
+      - POSTGRES_USER=labyrinth_user
+      - POSTGRES_PASSWORD=labyrinth_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - labyrinth-network
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - labyrinth-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - labyrinth-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on: [zookeeper]
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+    networks:
+      - labyrinth-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:
+
+networks:
+  labyrinth-network:
+    driver: bridge

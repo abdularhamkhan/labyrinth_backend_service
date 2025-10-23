@@ -5,13 +5,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 
 const {
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientInitializationError,
+  PrismaClientValidationError,
+  getPrismaClient,
+  sqltag,
+  empty,
+  join,
+  raw,
+  skip,
   Decimal,
+  Debug,
   objectEnumValues,
   makeStrictEnum,
+  Extensions,
+  warnOnce,
+  defineDmmfProperty,
   Public,
   getRuntime,
-  skip
-} = require('./runtime/index-browser.js')
+  createParam,
+} = require('./runtime/wasm-engine-edge.js')
 
 
 const Prisma = {}
@@ -20,79 +35,35 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.12.0
- * Query Engine version: 8047c96bbd92db98a2abc7c9323ce77c02c89dbc
+ * Prisma Client JS version: 6.17.1
+ * Query Engine version: 272a37d34178c2894197e17273bf937f25acdeac
  */
 Prisma.prismaVersion = {
-  client: "6.12.0",
-  engine: "8047c96bbd92db98a2abc7c9323ce77c02c89dbc"
+  client: "6.17.1",
+  engine: "272a37d34178c2894197e17273bf937f25acdeac"
 }
 
-Prisma.PrismaClientKnownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientKnownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)};
-Prisma.PrismaClientUnknownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientUnknownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientRustPanicError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientRustPanicError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientInitializationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientInitializationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientValidationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientValidationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
+Prisma.PrismaClientUnknownRequestError = PrismaClientUnknownRequestError
+Prisma.PrismaClientRustPanicError = PrismaClientRustPanicError
+Prisma.PrismaClientInitializationError = PrismaClientInitializationError
+Prisma.PrismaClientValidationError = PrismaClientValidationError
 Prisma.Decimal = Decimal
 
 /**
  * Re-export of sql-template-tag
  */
-Prisma.sql = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`sqltag is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.empty = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`empty is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.join = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`join is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.raw = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`raw is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.sql = sqltag
+Prisma.empty = empty
+Prisma.join = join
+Prisma.raw = raw
 Prisma.validator = Public.validator
 
 /**
 * Extensions
 */
-Prisma.getExtensionContext = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.getExtensionContext is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.defineExtension = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.defineExtension is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.getExtensionContext = Extensions.getExtensionContext
+Prisma.defineExtension = Extensions.defineExtension
 
 /**
  * Shorthand utilities for JSON filtering
@@ -109,10 +80,11 @@ Prisma.NullTypes = {
 
 
 
+
+
 /**
  * Enums
  */
-
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
@@ -124,157 +96,237 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   username: 'username',
+  passwordHash: 'passwordHash',
   firstName: 'firstName',
   lastName: 'lastName',
-  phone: 'phone',
+  dateOfBirth: 'dateOfBirth',
+  lastActive: 'lastActive',
+  gitHubProfile: 'gitHubProfile',
+  education: 'education',
+  maxDailySwipes: 'maxDailySwipes',
   avatar: 'avatar',
   status: 'status',
   totalScore: 'totalScore',
-  gamesPlayed: 'gamesPlayed',
-  gamesWon: 'gamesWon',
-  winRate: 'winRate',
-  currentStreak: 'currentStreak',
-  bestStreak: 'bestStreak',
-  lastActive: 'lastActive',
+  techStackId: 'techStackId',
+  demographicId: 'demographicId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
-exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+exports.Prisma.PreferencesScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  token: 'token',
-  expiresAt: 'expiresAt',
-  used: 'used',
+  preferredTechStackId: 'preferredTechStackId',
+  preferredDemographicId: 'preferredDemographicId',
   createdAt: 'createdAt',
-  usedAt: 'usedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
-exports.Prisma.UserSessionScalarFieldEnum = {
+exports.Prisma.MatchScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  sessionToken: 'sessionToken',
-  deviceInfo: 'deviceInfo',
-  ipAddress: 'ipAddress',
-  userAgent: 'userAgent',
+  matchStatus: 'matchStatus',
+  preferencesId: 'preferencesId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.MatchUserScalarFieldEnum = {
+  id: 'id',
+  matchId: 'matchId',
+  userId: 'userId'
+};
+
+exports.Prisma.MatchProjectScalarFieldEnum = {
+  id: 'id',
+  matchId: 'matchId',
+  projectId: 'projectId'
+};
+
+exports.Prisma.SwipeScalarFieldEnum = {
+  id: 'id',
+  isRightSwipe: 'isRightSwipe',
+  swiperId: 'swiperId',
+  swipeeUserId: 'swipeeUserId',
+  swipeeProjectId: 'swipeeProjectId',
+  matchId: 'matchId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.DemographicScalarFieldEnum = {
+  id: 'id',
+  country: 'country',
+  languages: 'languages',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.TechStackScalarFieldEnum = {
+  id: 'id',
+  frameworks: 'frameworks',
+  languages: 'languages',
+  tools: 'tools',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ProjectScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  workspaceId: 'workspaceId',
+  chatId: 'chatId',
+  mediaId: 'mediaId',
+  analyticsId: 'analyticsId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ProjectTechStackScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  techStackId: 'techStackId'
+};
+
+exports.Prisma.WorkspaceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.RoleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  roleName: 'roleName',
+  projectId: 'projectId',
+  permissions: 'permissions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.UserRoleScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  roleId: 'roleId',
+  assignedAt: 'assignedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.TaskScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  taskName: 'taskName',
+  description: 'description',
+  userId: 'userId',
+  assignedToId: 'assignedToId',
   status: 'status',
+  dueDate: 'dueDate',
+  roleId: 'roleId',
+  projectId: 'projectId',
   createdAt: 'createdAt',
-  expiresAt: 'expiresAt',
-  lastActivity: 'lastActivity'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ChatScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  name: 'name',
+  lastMessageAt: 'lastMessageAt',
+  projectId: 'projectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.ChatParticipantScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  chatId: 'chatId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.UserChatScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  chatId: 'chatId',
+  unreadCount: 'unreadCount',
+  lastReadAt: 'lastReadAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.MessageScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  messageType: 'messageType',
+  mediaUrl: 'mediaUrl',
+  senderId: 'senderId',
+  chatId: 'chatId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.MediaScalarFieldEnum = {
+  id: 'id',
+  filename: 'filename',
+  originalName: 'originalName',
+  mimeType: 'mimeType',
+  size: 'size',
+  width: 'width',
+  height: 'height',
+  duration: 'duration',
+  url: 'url',
+  thumbnailUrl: 'thumbnailUrl',
+  cdnUrl: 'cdnUrl',
+  category: 'category',
+  storageProvider: 'storageProvider',
+  storageKey: 'storageKey',
+  bucketName: 'bucketName',
+  uploadedBy: 'uploadedBy',
+  tags: 'tags',
+  metadata: 'metadata',
+  projectId: 'projectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.AnalyticsScalarFieldEnum = {
+  id: 'id',
+  stats: 'stats',
+  projectId: 'projectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.FriendshipScalarFieldEnum = {
   id: 'id',
   requesterId: 'requesterId',
-  receiverId: 'receiverId',
+  recipientId: 'recipientId',
   status: 'status',
+  message: 'message',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.GameSessionScalarFieldEnum = {
-  id: 'id',
-  roomCode: 'roomCode',
-  gameType: 'gameType',
-  status: 'status',
-  maxPlayers: 'maxPlayers',
-  currentRound: 'currentRound',
-  totalRounds: 'totalRounds',
-  maxMistakes: 'maxMistakes',
-  difficulty: 'difficulty',
-  timeLimit: 'timeLimit',
-  createdAt: 'createdAt',
-  startedAt: 'startedAt',
-  endedAt: 'endedAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.GameParticipantScalarFieldEnum = {
-  id: 'id',
-  gameSessionId: 'gameSessionId',
-  userId: 'userId',
-  position: 'position',
-  isReady: 'isReady',
-  isConnected: 'isConnected',
-  finalScore: 'finalScore',
-  finalRank: 'finalRank',
-  mistakeCount: 'mistakeCount',
-  joinedAt: 'joinedAt',
-  leftAt: 'leftAt'
-};
-
-exports.Prisma.GameRoundScalarFieldEnum = {
-  id: 'id',
-  gameSessionId: 'gameSessionId',
-  roundNumber: 'roundNumber',
-  verse: 'verse',
-  blanks: 'blanks',
-  emojiMapping: 'emojiMapping',
-  correctBook: 'correctBook',
-  correctRef: 'correctRef',
-  context: 'context',
-  startedAt: 'startedAt',
-  endedAt: 'endedAt'
-};
-
-exports.Prisma.GameScoreScalarFieldEnum = {
-  id: 'id',
-  participantId: 'participantId',
-  roundId: 'roundId',
-  blanksScore: 'blanksScore',
-  contextScore: 'contextScore',
-  bookScore: 'bookScore',
-  referenceScore: 'referenceScore',
-  timeBonus: 'timeBonus',
-  streakBonus: 'streakBonus',
-  totalScore: 'totalScore',
-  timeSpent: 'timeSpent',
-  mistakesMade: 'mistakesMade',
-  hintsUsed: 'hintsUsed',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.DailyChallengeScalarFieldEnum = {
-  id: 'id',
-  date: 'date',
-  verse: 'verse',
-  blanks: 'blanks',
-  emojiMapping: 'emojiMapping',
-  correctBook: 'correctBook',
-  correctRef: 'correctRef',
-  context: 'context',
-  difficulty: 'difficulty',
-  maxAttempts: 'maxAttempts',
-  timeLimit: 'timeLimit',
-  isActive: 'isActive',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.DailyChallengeAnswerScalarFieldEnum = {
-  id: 'id',
-  challengeId: 'challengeId',
-  userId: 'userId',
-  userAnswers: 'userAnswers',
-  isCorrect: 'isCorrect',
-  score: 'score',
-  timeSpent: 'timeSpent',
-  hintsUsed: 'hintsUsed',
-  completedAt: 'completedAt'
-};
-
-exports.Prisma.LeaderboardScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  globalRank: 'globalRank',
-  weeklyRank: 'weeklyRank',
-  monthlyRank: 'monthlyRank',
-  totalScore: 'totalScore',
-  gamesPlayed: 'gamesPlayed',
-  gamesWon: 'gamesWon',
-  winRate: 'winRate',
-  currentStreak: 'currentStreak',
-  bestStreak: 'bestStreak',
-  lastUpdated: 'lastUpdated'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -306,17 +358,27 @@ exports.Prisma.JsonNullValueFilter = {
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
 };
-exports.UserStatus = exports.$Enums.UserStatus = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  SUSPENDED: 'SUSPENDED',
-  DELETED: 'DELETED'
+exports.TaskStatus = exports.$Enums.TaskStatus = {
+  PENDING: 'PENDING',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  BLOCKED: 'BLOCKED'
 };
 
-exports.SessionStatus = exports.$Enums.SessionStatus = {
-  ACTIVE: 'ACTIVE',
-  EXPIRED: 'EXPIRED',
-  TERMINATED: 'TERMINATED'
+exports.MediaCategory = exports.$Enums.MediaCategory = {
+  USER_AVATAR: 'USER_AVATAR',
+  PROJECT_IMAGE: 'PROJECT_IMAGE',
+  CHAT_MEDIA: 'CHAT_MEDIA',
+  PROJECT_FILE: 'PROJECT_FILE',
+  WORKSPACE_BANNER: 'WORKSPACE_BANNER',
+  SYSTEM_ASSET: 'SYSTEM_ASSET'
+};
+
+exports.StorageProvider = exports.$Enums.StorageProvider = {
+  SUPABASE: 'SUPABASE',
+  CLOUDINARY: 'CLOUDINARY',
+  AWS_S3: 'AWS_S3',
+  LOCAL: 'LOCAL'
 };
 
 exports.FriendshipStatus = exports.$Enums.FriendshipStatus = {
@@ -326,62 +388,108 @@ exports.FriendshipStatus = exports.$Enums.FriendshipStatus = {
   REJECTED: 'REJECTED'
 };
 
-exports.GameType = exports.$Enums.GameType = {
-  DAILY_CHALLENGE: 'DAILY_CHALLENGE',
-  PVP_MATCH: 'PVP_MATCH',
-  PVP_COMPUTER: 'PVP_COMPUTER',
-  PRACTICE: 'PRACTICE'
-};
-
-exports.GameStatus = exports.$Enums.GameStatus = {
-  WAITING: 'WAITING',
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED'
-};
-
 exports.Prisma.ModelName = {
   User: 'User',
-  PasswordResetToken: 'PasswordResetToken',
-  UserSession: 'UserSession',
-  Friendship: 'Friendship',
-  GameSession: 'GameSession',
-  GameParticipant: 'GameParticipant',
-  GameRound: 'GameRound',
-  GameScore: 'GameScore',
-  DailyChallenge: 'DailyChallenge',
-  DailyChallengeAnswer: 'DailyChallengeAnswer',
-  Leaderboard: 'Leaderboard'
+  Preferences: 'Preferences',
+  Match: 'Match',
+  MatchUser: 'MatchUser',
+  MatchProject: 'MatchProject',
+  Swipe: 'Swipe',
+  Demographic: 'Demographic',
+  TechStack: 'TechStack',
+  Project: 'Project',
+  ProjectTechStack: 'ProjectTechStack',
+  Workspace: 'Workspace',
+  Role: 'Role',
+  UserRole: 'UserRole',
+  Task: 'Task',
+  Chat: 'Chat',
+  ChatParticipant: 'ChatParticipant',
+  UserChat: 'UserChat',
+  Message: 'Message',
+  Media: 'Media',
+  Analytics: 'Analytics',
+  Friendship: 'Friendship'
 };
-
 /**
- * This is a stub Prisma Client that will error at runtime if called.
+ * Create the Client
  */
-class PrismaClient {
-  constructor() {
-    return new Proxy(this, {
-      get(target, prop) {
-        let message
-        const runtime = getRuntime()
-        if (runtime.isEdge) {
-          message = `PrismaClient is not configured to run in ${runtime.prettyName}. In order to run Prisma Client on edge runtime, either:
-- Use Prisma Accelerate: https://pris.ly/d/accelerate
-- Use Driver Adapters: https://pris.ly/d/driver-adapters
-`;
-        } else {
-          message = 'PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `' + runtime.prettyName + '`).'
-        }
-
-        message += `
-If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report`
-
-        throw new Error(message)
+const config = {
+  "generator": {
+    "name": "client",
+    "provider": {
+      "fromEnvVar": null,
+      "value": "prisma-client-js"
+    },
+    "output": {
+      "value": "/home/arham/Desktop/Uni/FYP/labyrinth_backend_service/prisma/generated/prisma",
+      "fromEnvVar": null
+    },
+    "config": {
+      "engineType": "library"
+    },
+    "binaryTargets": [
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x",
+        "native": true
       }
-    })
+    ],
+    "previewFeatures": [
+      "postgresqlExtensions"
+    ],
+    "sourceFilePath": "/home/arham/Desktop/Uni/FYP/labyrinth_backend_service/prisma/schema.prisma",
+    "isCustomOutput": true
+  },
+  "relativeEnvPaths": {
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../../.env"
+  },
+  "relativePath": "../..",
+  "clientVersion": "6.17.1",
+  "engineVersion": "272a37d34178c2894197e17273bf937f25acdeac",
+  "datasourceNames": [
+    "db"
+  ],
+  "activeProvider": "postgresql",
+  "postinstall": false,
+  "inlineDatasources": {
+    "db": {
+      "url": {
+        "fromEnvVar": "DATABASE_URL",
+        "value": null
+      }
+    }
+  },
+  "inlineSchema": "generator client {\n  provider        = \"prisma-client-js\"\n  output          = \"./generated/prisma\"\n  previewFeatures = [\"postgresqlExtensions\"]\n}\n\ndatasource db {\n  provider   = \"postgresql\"\n  url        = env(\"DATABASE_URL\")\n  extensions = [uuid_ossp(map: \"uuid-ossp\"), pg_trgm]\n}\n\n// =============================================================================\n// ENUMS - Type Safety and Consistency for Labyrinth Platform\n// =============================================================================\n\nenum TaskStatus {\n  PENDING\n  IN_PROGRESS\n  COMPLETED\n  BLOCKED\n}\n\nenum MediaCategory {\n  USER_AVATAR\n  PROJECT_IMAGE\n  CHAT_MEDIA\n  PROJECT_FILE\n  WORKSPACE_BANNER\n  SYSTEM_ASSET\n}\n\nenum StorageProvider {\n  SUPABASE\n  CLOUDINARY\n  AWS_S3\n  LOCAL\n}\n\nenum FriendshipStatus {\n  PENDING\n  ACCEPTED\n  BLOCKED\n  REJECTED\n}\n\n// =============================================================================\n// LABYRINTH COLLABORATION PLATFORM MODELS\n// =============================================================================\n\nmodel User {\n  id             String    @id @default(uuid())\n  email          String    @unique\n  username       String    @unique\n  passwordHash   String\n  firstName      String?\n  lastName       String?\n  dateOfBirth    DateTime?\n  lastActive     DateTime?\n  gitHubProfile  String?\n  education      String?\n  maxDailySwipes Int?\n  avatar         String?\n  status         String?   @default(\"ACTIVE\")\n  totalScore     Int?      @default(0)\n\n  preferences         Preferences?\n  techStackId         String?\n  techStack           TechStack?        @relation(fields: [techStackId], references: [id])\n  demographicId       String?\n  demographic         Demographic?      @relation(fields: [demographicId], references: [id])\n  match               Match?\n  workspaces          Workspace[]\n  userRoles           UserRole[]\n  assignedTasks       Task[]            @relation(\"AssignedTasks\")\n  swipesMade          Swipe[]           @relation(\"swiperSwipes\")\n  swipesReceived      Swipe[]           @relation(\"swipeeUserSwipes\")\n  messages            Message[]         @relation(\"MessageSender\")\n  projects            Project[]         @relation(\"ProjectCollaborators\")\n  userChats           UserChat[]\n  chatParticipants    ChatParticipant[] @relation(\"ChatParticipants\")\n  matchUsers          MatchUser[]\n  uploadedMedia       Media[]           @relation(\"MediaUploader\")\n  sentFriendships     Friendship[]      @relation(\"FriendshipRequester\")\n  receivedFriendships Friendship[]      @relation(\"FriendshipRecipient\")\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([email])\n  @@index([username])\n  @@index([lastActive])\n  @@index([techStackId])\n  @@index([demographicId])\n  @@index([createdAt])\n  @@index([deletedAt]) // For soft delete queries\n  @@index([firstName, lastName]) // For name searches\n}\n\nmodel Preferences {\n  id                     String       @id @default(uuid())\n  userId                 String       @unique\n  user                   User         @relation(fields: [userId], references: [id])\n  preferredTechStackId   String?\n  preferredTechStack     TechStack?   @relation(\"PreferredTechStack\", fields: [preferredTechStackId], references: [id])\n  preferredDemographicId String?\n  preferredDemographic   Demographic? @relation(\"PreferredDemographic\", fields: [preferredDemographicId], references: [id])\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n  matches   Match[]\n\n  @@index([preferredTechStackId])\n  @@index([preferredDemographicId])\n  @@index([createdAt])\n}\n\nmodel Match {\n  id              String         @id @default(uuid())\n  userId          String         @unique\n  user            User           @relation(fields: [userId], references: [id])\n  matchStatus     String?\n  preferencesId   String?\n  preferences     Preferences?   @relation(fields: [preferencesId], references: [id])\n  matchedUsers    MatchUser[]\n  matchedProjects MatchProject[]\n  swipes          Swipe[]\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([matchStatus])\n  @@index([preferencesId])\n  @@index([createdAt])\n  @@index([deletedAt])\n}\n\nmodel MatchUser {\n  id      String @id @default(uuid())\n  matchId String\n  match   Match  @relation(fields: [matchId], references: [id])\n  userId  String\n  user    User   @relation(fields: [userId], references: [id])\n\n  @@unique([matchId, userId])\n  @@index([matchId])\n  @@index([userId])\n}\n\nmodel MatchProject {\n  id        String  @id @default(uuid())\n  matchId   String\n  match     Match   @relation(fields: [matchId], references: [id])\n  projectId String\n  project   Project @relation(fields: [projectId], references: [id])\n\n  @@unique([matchId, projectId])\n  @@index([matchId])\n  @@index([projectId])\n}\n\nmodel Swipe {\n  id              String   @id @default(uuid())\n  isRightSwipe    Boolean\n  swiperId        String\n  swiper          User     @relation(\"swiperSwipes\", fields: [swiperId], references: [id])\n  swipeeUserId    String?\n  swipeeUser      User?    @relation(\"swipeeUserSwipes\", fields: [swipeeUserId], references: [id])\n  swipeeProjectId String?\n  swipeeProject   Project? @relation(fields: [swipeeProjectId], references: [id])\n  matchId         String?\n  match           Match?   @relation(fields: [matchId], references: [id])\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@unique([swiperId, swipeeUserId]) // Prevent duplicate user swipes\n  @@unique([swiperId, swipeeProjectId]) // Prevent duplicate project swipes\n  @@index([swiperId])\n  @@index([swipeeUserId])\n  @@index([swipeeProjectId])\n  @@index([matchId])\n  @@index([swiperId, createdAt]) // For user swipe history queries\n  @@index([isRightSwipe, createdAt]) // For match analytics\n  @@index([deletedAt]) // For soft delete queries\n}\n\nmodel Demographic {\n  id          String        @id @default(uuid())\n  country     String\n  languages   String[]\n  users       User[]\n  preferences Preferences[] @relation(\"PreferredDemographic\")\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([country])\n  @@index([languages]) // GIN index for array queries\n  @@index([createdAt])\n}\n\nmodel TechStack {\n  id          String             @id @default(uuid())\n  frameworks  String[]\n  languages   String[]\n  tools       String[]\n  users       User[]\n  preferences Preferences[]      @relation(\"PreferredTechStack\")\n  projects    ProjectTechStack[]\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([id])\n  @@index([frameworks]) // GIN index for array queries\n  @@index([languages]) // GIN index for array queries\n  @@index([tools]) // GIN index for array queries\n  @@index([createdAt])\n}\n\nmodel Project {\n  id              String             @id @default(uuid())\n  title           String\n  description     String\n  workspaceId     String\n  workspace       Workspace          @relation(fields: [workspaceId], references: [id])\n  chatId          String?            @unique\n  chat            Chat?              @relation(\"ProjectChat\", fields: [chatId], references: [id])\n  mediaId         String?            @unique\n  media           Media?             @relation(\"ProjectMedia\", fields: [mediaId], references: [id])\n  analyticsId     String?            @unique\n  analytics       Analytics?         @relation(\"ProjectAnalytics\", fields: [analyticsId], references: [id])\n  techLinks       ProjectTechStack[]\n  roles           Role[]\n  tasks           Task[]\n  collaborators   User[]             @relation(\"ProjectCollaborators\")\n  matchedProjects MatchProject[]\n  swipes          Swipe[]\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([workspaceId])\n  @@index([title]) // For project searches\n  @@index([createdAt])\n  @@index([updatedAt]) // For recent activity queries\n  @@index([deletedAt]) // For soft delete queries\n  @@index([chatId])\n  @@index([mediaId])\n  @@index([analyticsId])\n}\n\nmodel ProjectTechStack {\n  id          String    @id @default(uuid())\n  projectId   String\n  project     Project   @relation(fields: [projectId], references: [id])\n  techStackId String\n  techStack   TechStack @relation(fields: [techStackId], references: [id])\n\n  @@unique([projectId, techStackId])\n  @@index([projectId])\n  @@index([techStackId])\n}\n\nmodel Workspace {\n  id          String    @id @default(uuid())\n  name        String\n  description String?\n  userId      String    @unique\n  user        User      @relation(fields: [userId], references: [id])\n  projects    Project[]\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([name])\n}\n\nmodel Role {\n  id          String     @id @default(uuid())\n  name        String\n  roleName    String\n  projectId   String\n  project     Project    @relation(fields: [projectId], references: [id])\n  permissions String[]\n  userRoles   UserRole[]\n  tasks       Task[]\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([projectId])\n}\n\nmodel UserRole {\n  id         String    @id @default(uuid())\n  userId     String\n  user       User      @relation(fields: [userId], references: [id])\n  roleId     String\n  role       Role      @relation(fields: [roleId], references: [id])\n  assignedAt DateTime  @default(now())\n  deletedAt  DateTime?\n\n  @@unique([userId, roleId])\n  @@index([userId])\n  @@index([roleId])\n}\n\nmodel Task {\n  id           String     @id @default(uuid())\n  title        String\n  taskName     String\n  description  String?\n  userId       String?\n  assignedTo   User?      @relation(\"AssignedTasks\", fields: [userId], references: [id])\n  assignedToId String? // added scalar FK if you need assignedToId available directly\n  status       TaskStatus @default(PENDING)\n  dueDate      DateTime?\n  roleId       String\n  role         Role       @relation(fields: [roleId], references: [id])\n  projectId    String\n  project      Project    @relation(fields: [projectId], references: [id])\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([projectId])\n  @@index([userId])\n  @@index([status])\n  @@index([roleId])\n  @@index([dueDate])\n  @@index([projectId, status]) // Composite for project task filtering\n  @@index([userId, status]) // Composite for user task filtering\n  @@index([createdAt])\n  @@index([updatedAt])\n}\n\nmodel Chat {\n  id            String            @id @default(uuid())\n  type          String?           @default(\"DIRECT\") // DIRECT or PROJECT\n  name          String? // Name for group/project chats\n  lastMessageAt DateTime? // Add lastMessageAt field\n  messages      Message[]\n  userChats     UserChat[]\n  participants  ChatParticipant[] // Add participants relation\n  project       Project?          @relation(\"ProjectChat\")\n  projectId     String?           @unique\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([projectId])\n  @@index([createdAt])\n  @@index([updatedAt])\n  @@index([deletedAt])\n}\n\nmodel ChatParticipant {\n  id     String @id @default(uuid())\n  userId String\n  user   User   @relation(\"ChatParticipants\", fields: [userId], references: [id])\n  chatId String\n  chat   Chat   @relation(fields: [chatId], references: [id])\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@unique([userId, chatId])\n  @@index([userId])\n  @@index([chatId])\n}\n\nmodel UserChat {\n  id          String    @id @default(uuid())\n  userId      String\n  user        User      @relation(fields: [userId], references: [id])\n  chatId      String\n  chat        Chat      @relation(fields: [chatId], references: [id])\n  unreadCount Int       @default(0) // Add unreadCount field\n  lastReadAt  DateTime?\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@unique([userId, chatId])\n  @@index([userId])\n  @@index([chatId])\n}\n\nmodel Message {\n  id          String  @id @default(uuid())\n  content     String\n  messageType String? @default(\"TEXT\") // TEXT, IMAGE, FILE, etc.\n  mediaUrl    String? // Add mediaUrl field\n  senderId    String\n  sender      User    @relation(\"MessageSender\", fields: [senderId], references: [id])\n  chatId      String\n  chat        Chat    @relation(fields: [chatId], references: [id])\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([chatId])\n  @@index([senderId])\n  @@index([createdAt])\n  @@index([chatId, createdAt]) // Composite for chat message ordering\n  @@index([deletedAt]) // For soft delete queries\n  @@index([messageType])\n}\n\nmodel Media {\n  id              String          @id @default(uuid())\n  filename        String\n  originalName    String\n  mimeType        String\n  size            Int\n  width           Int?\n  height          Int?\n  duration        Float? // For videos/audio in seconds\n  url             String\n  thumbnailUrl    String?\n  cdnUrl          String?\n  category        MediaCategory\n  storageProvider StorageProvider\n  storageKey      String // Path/key in storage\n  bucketName      String // Storage bucket name\n  uploadedBy      String\n  uploader        User            @relation(\"MediaUploader\", fields: [uploadedBy], references: [id])\n  tags            String[]        @default([])\n  metadata        Json? // Additional metadata\n\n  // Relations\n  project   Project? @relation(\"ProjectMedia\")\n  projectId String?  @unique\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([uploadedBy])\n  @@index([category])\n  @@index([storageProvider])\n  @@index([createdAt])\n  @@index([tags]) // GIN index for array queries\n  @@index([mimeType])\n  @@index([size])\n  @@index([uploadedBy, category]) // Composite for user media filtering\n  @@index([category, createdAt]) // Composite for category-based queries\n  @@index([deletedAt]) // For soft delete queries\n  @@index([filename]) // For filename searches\n}\n\nmodel Analytics {\n  id        String   @id @default(uuid())\n  stats     Json\n  project   Project? @relation(\"ProjectAnalytics\")\n  projectId String?  @unique\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  @@index([projectId])\n  @@index([createdAt])\n  @@index([updatedAt])\n}\n\nmodel Friendship {\n  id          String           @id @default(uuid())\n  requesterId String\n  requester   User             @relation(\"FriendshipRequester\", fields: [requesterId], references: [id], onDelete: Cascade)\n  recipientId String\n  recipient   User             @relation(\"FriendshipRecipient\", fields: [recipientId], references: [id], onDelete: Cascade)\n  status      FriendshipStatus @default(PENDING)\n  message     String? // Optional message with friend request\n\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  deletedAt DateTime?\n\n  // Ensure unique friendships and prevent self-friendship\n  @@unique([requesterId, recipientId])\n  @@index([requesterId])\n  @@index([recipientId])\n  @@index([status])\n  @@index([createdAt])\n  @@index([requesterId, status]) // For requester's friendship filtering\n  @@index([recipientId, status]) // For recipient's friendship filtering\n  @@index([deletedAt]) // For soft delete queries\n}\n\ngenerator erd {\n  provider = \"prisma-erd-generator\"\n}\n",
+  "inlineSchemaHash": "339d67a5e87465060852d601d2bf98685b260dd520cc9838f6aade738664bdd7",
+  "copyEngine": true
+}
+config.dirname = '/'
+
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"firstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"dateOfBirth\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lastActive\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"gitHubProfile\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"education\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"maxDailySwipes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"avatar\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"totalScore\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"preferences\",\"kind\":\"object\",\"type\":\"Preferences\",\"relationName\":\"PreferencesToUser\"},{\"name\":\"techStackId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"techStack\",\"kind\":\"object\",\"type\":\"TechStack\",\"relationName\":\"TechStackToUser\"},{\"name\":\"demographicId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"demographic\",\"kind\":\"object\",\"type\":\"Demographic\",\"relationName\":\"DemographicToUser\"},{\"name\":\"match\",\"kind\":\"object\",\"type\":\"Match\",\"relationName\":\"MatchToUser\"},{\"name\":\"workspaces\",\"kind\":\"object\",\"type\":\"Workspace\",\"relationName\":\"UserToWorkspace\"},{\"name\":\"userRoles\",\"kind\":\"object\",\"type\":\"UserRole\",\"relationName\":\"UserToUserRole\"},{\"name\":\"assignedTasks\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"AssignedTasks\"},{\"name\":\"swipesMade\",\"kind\":\"object\",\"type\":\"Swipe\",\"relationName\":\"swiperSwipes\"},{\"name\":\"swipesReceived\",\"kind\":\"object\",\"type\":\"Swipe\",\"relationName\":\"swipeeUserSwipes\"},{\"name\":\"messages\",\"kind\":\"object\",\"type\":\"Message\",\"relationName\":\"MessageSender\"},{\"name\":\"projects\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectCollaborators\"},{\"name\":\"userChats\",\"kind\":\"object\",\"type\":\"UserChat\",\"relationName\":\"UserToUserChat\"},{\"name\":\"chatParticipants\",\"kind\":\"object\",\"type\":\"ChatParticipant\",\"relationName\":\"ChatParticipants\"},{\"name\":\"matchUsers\",\"kind\":\"object\",\"type\":\"MatchUser\",\"relationName\":\"MatchUserToUser\"},{\"name\":\"uploadedMedia\",\"kind\":\"object\",\"type\":\"Media\",\"relationName\":\"MediaUploader\"},{\"name\":\"sentFriendships\",\"kind\":\"object\",\"type\":\"Friendship\",\"relationName\":\"FriendshipRequester\"},{\"name\":\"receivedFriendships\",\"kind\":\"object\",\"type\":\"Friendship\",\"relationName\":\"FriendshipRecipient\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Preferences\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PreferencesToUser\"},{\"name\":\"preferredTechStackId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"preferredTechStack\",\"kind\":\"object\",\"type\":\"TechStack\",\"relationName\":\"PreferredTechStack\"},{\"name\":\"preferredDemographicId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"preferredDemographic\",\"kind\":\"object\",\"type\":\"Demographic\",\"relationName\":\"PreferredDemographic\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"matches\",\"kind\":\"object\",\"type\":\"Match\",\"relationName\":\"MatchToPreferences\"}],\"dbName\":null},\"Match\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"MatchToUser\"},{\"name\":\"matchStatus\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"preferencesId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"preferences\",\"kind\":\"object\",\"type\":\"Preferences\",\"relationName\":\"MatchToPreferences\"},{\"name\":\"matchedUsers\",\"kind\":\"object\",\"type\":\"MatchUser\",\"relationName\":\"MatchToMatchUser\"},{\"name\":\"matchedProjects\",\"kind\":\"object\",\"type\":\"MatchProject\",\"relationName\":\"MatchToMatchProject\"},{\"name\":\"swipes\",\"kind\":\"object\",\"type\":\"Swipe\",\"relationName\":\"MatchToSwipe\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"MatchUser\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"matchId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"match\",\"kind\":\"object\",\"type\":\"Match\",\"relationName\":\"MatchToMatchUser\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"MatchUserToUser\"}],\"dbName\":null},\"MatchProject\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"matchId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"match\",\"kind\":\"object\",\"type\":\"Match\",\"relationName\":\"MatchToMatchProject\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"MatchProjectToProject\"}],\"dbName\":null},\"Swipe\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isRightSwipe\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"swiperId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"swiper\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"swiperSwipes\"},{\"name\":\"swipeeUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"swipeeUser\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"swipeeUserSwipes\"},{\"name\":\"swipeeProjectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"swipeeProject\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectToSwipe\"},{\"name\":\"matchId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"match\",\"kind\":\"object\",\"type\":\"Match\",\"relationName\":\"MatchToSwipe\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Demographic\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"country\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"languages\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"DemographicToUser\"},{\"name\":\"preferences\",\"kind\":\"object\",\"type\":\"Preferences\",\"relationName\":\"PreferredDemographic\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"TechStack\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"frameworks\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"languages\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tools\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TechStackToUser\"},{\"name\":\"preferences\",\"kind\":\"object\",\"type\":\"Preferences\",\"relationName\":\"PreferredTechStack\"},{\"name\":\"projects\",\"kind\":\"object\",\"type\":\"ProjectTechStack\",\"relationName\":\"ProjectTechStackToTechStack\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Project\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"workspaceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"workspace\",\"kind\":\"object\",\"type\":\"Workspace\",\"relationName\":\"ProjectToWorkspace\"},{\"name\":\"chatId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"chat\",\"kind\":\"object\",\"type\":\"Chat\",\"relationName\":\"ProjectChat\"},{\"name\":\"mediaId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"media\",\"kind\":\"object\",\"type\":\"Media\",\"relationName\":\"ProjectMedia\"},{\"name\":\"analyticsId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"analytics\",\"kind\":\"object\",\"type\":\"Analytics\",\"relationName\":\"ProjectAnalytics\"},{\"name\":\"techLinks\",\"kind\":\"object\",\"type\":\"ProjectTechStack\",\"relationName\":\"ProjectToProjectTechStack\"},{\"name\":\"roles\",\"kind\":\"object\",\"type\":\"Role\",\"relationName\":\"ProjectToRole\"},{\"name\":\"tasks\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"ProjectToTask\"},{\"name\":\"collaborators\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ProjectCollaborators\"},{\"name\":\"matchedProjects\",\"kind\":\"object\",\"type\":\"MatchProject\",\"relationName\":\"MatchProjectToProject\"},{\"name\":\"swipes\",\"kind\":\"object\",\"type\":\"Swipe\",\"relationName\":\"ProjectToSwipe\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"ProjectTechStack\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectToProjectTechStack\"},{\"name\":\"techStackId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"techStack\",\"kind\":\"object\",\"type\":\"TechStack\",\"relationName\":\"ProjectTechStackToTechStack\"}],\"dbName\":null},\"Workspace\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserToWorkspace\"},{\"name\":\"projects\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectToWorkspace\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Role\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"roleName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectToRole\"},{\"name\":\"permissions\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userRoles\",\"kind\":\"object\",\"type\":\"UserRole\",\"relationName\":\"RoleToUserRole\"},{\"name\":\"tasks\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"RoleToTask\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"UserRole\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserToUserRole\"},{\"name\":\"roleId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"object\",\"type\":\"Role\",\"relationName\":\"RoleToUserRole\"},{\"name\":\"assignedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Task\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"taskName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"assignedTo\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AssignedTasks\"},{\"name\":\"assignedToId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"TaskStatus\"},{\"name\":\"dueDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"roleId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"object\",\"type\":\"Role\",\"relationName\":\"RoleToTask\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectToTask\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Chat\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastMessageAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"messages\",\"kind\":\"object\",\"type\":\"Message\",\"relationName\":\"ChatToMessage\"},{\"name\":\"userChats\",\"kind\":\"object\",\"type\":\"UserChat\",\"relationName\":\"ChatToUserChat\"},{\"name\":\"participants\",\"kind\":\"object\",\"type\":\"ChatParticipant\",\"relationName\":\"ChatToChatParticipant\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectChat\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"ChatParticipant\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ChatParticipants\"},{\"name\":\"chatId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"chat\",\"kind\":\"object\",\"type\":\"Chat\",\"relationName\":\"ChatToChatParticipant\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"UserChat\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserToUserChat\"},{\"name\":\"chatId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"chat\",\"kind\":\"object\",\"type\":\"Chat\",\"relationName\":\"ChatToUserChat\"},{\"name\":\"unreadCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"lastReadAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Message\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"messageType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mediaUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"senderId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sender\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"MessageSender\"},{\"name\":\"chatId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"chat\",\"kind\":\"object\",\"type\":\"Chat\",\"relationName\":\"ChatToMessage\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Media\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"filename\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"originalName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mimeType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"size\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"width\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"height\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"duration\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"url\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"thumbnailUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cdnUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"enum\",\"type\":\"MediaCategory\"},{\"name\":\"storageProvider\",\"kind\":\"enum\",\"type\":\"StorageProvider\"},{\"name\":\"storageKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bucketName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"uploadedBy\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"uploader\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"MediaUploader\"},{\"name\":\"tags\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"metadata\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectMedia\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Analytics\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stats\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectAnalytics\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Friendship\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"requesterId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"requester\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FriendshipRequester\"},{\"name\":\"recipientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"recipient\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FriendshipRecipient\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"FriendshipStatus\"},{\"name\":\"message\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
+config.engineWasm = {
+  getRuntime: async () => require('./query_engine_bg.js'),
+  getQueryEngineWasmModule: async () => {
+    const loader = (await import('#wasm-engine-loader')).default
+    const engine = (await loader).default
+    return engine
   }
 }
+config.compilerWasm = undefined
 
+config.injectableEdgeEnv = () => ({
+  parsed: {
+    DATABASE_URL: typeof globalThis !== 'undefined' && globalThis['DATABASE_URL'] || typeof process !== 'undefined' && process.env && process.env.DATABASE_URL || undefined
+  }
+})
+
+if (typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined) {
+  Debug.enable(typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined)
+}
+
+const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
-
 Object.assign(exports, Prisma)
+

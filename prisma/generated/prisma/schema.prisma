@@ -1,24 +1,40 @@
 generator client {
-  provider      = "prisma-client-js"
-  output        = "./generated/prisma"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  output          = "./generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [uuid_ossp(map: "uuid-ossp"), pg_trgm]
 }
 
 // =============================================================================
-// ENUMS - Type Safety and Consistency
+// ENUMS - Type Safety and Consistency for Labyrinth Platform
 // =============================================================================
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-  DELETED
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum MediaCategory {
+  USER_AVATAR
+  PROJECT_IMAGE
+  CHAT_MEDIA
+  PROJECT_FILE
+  WORKSPACE_BANNER
+  SYSTEM_ASSET
+}
+
+enum StorageProvider {
+  SUPABASE
+  CLOUDINARY
+  AWS_S3
+  LOCAL
 }
 
 enum FriendshipStatus {
@@ -28,357 +44,466 @@ enum FriendshipStatus {
   REJECTED
 }
 
-enum GameType {
-  DAILY_CHALLENGE
-  PVP_MATCH
-  PVP_COMPUTER
-  PRACTICE
-}
-
-enum GameStatus {
-  WAITING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-  EXPIRED
-}
-
-enum SessionStatus {
-  ACTIVE
-  EXPIRED
-  TERMINATED
-}
-
 // =============================================================================
-// CORE USER MODEL - Optimized with Denormalized Metrics
+// LABYRINTH COLLABORATION PLATFORM MODELS
 // =============================================================================
 
 model User {
-  id        String     @id @default(uuid()) @db.Uuid()
-  email     String     @unique
-  username  String     @unique @db.VarChar(50)
-  firstName String     @db.VarChar(50)
-  lastName  String     @db.VarChar(50)
-  phone     String?    @unique @db.VarChar(20)
-  avatar    String?
-  status    UserStatus @default(ACTIVE)
+  id             String    @id @default(uuid())
+  email          String    @unique
+  username       String    @unique
+  passwordHash   String
+  firstName      String?
+  lastName       String?
+  dateOfBirth    DateTime?
+  lastActive     DateTime?
+  gitHubProfile  String?
+  education      String?
+  maxDailySwipes Int?
+  avatar         String?
+  status         String?   @default("ACTIVE")
+  totalScore     Int?      @default(0)
 
-  // Denormalized performance metrics
-  totalScore    Int   @default(0)
-  gamesPlayed   Int   @default(0)
-  gamesWon      Int   @default(0)
-  winRate       Float @default(0.0)
-  currentStreak Int   @default(0)
-  bestStreak    Int   @default(0)
+  preferences         Preferences?
+  techStackId         String?
+  techStack           TechStack?        @relation(fields: [techStackId], references: [id])
+  demographicId       String?
+  demographic         Demographic?      @relation(fields: [demographicId], references: [id])
+  match               Match?
+  workspaces          Workspace[]
+  userRoles           UserRole[]
+  assignedTasks       Task[]            @relation("AssignedTasks")
+  swipesMade          Swipe[]           @relation("swiperSwipes")
+  swipesReceived      Swipe[]           @relation("swipeeUserSwipes")
+  messages            Message[]         @relation("MessageSender")
+  projects            Project[]         @relation("ProjectCollaborators")
+  userChats           UserChat[]
+  chatParticipants    ChatParticipant[] @relation("ChatParticipants")
+  matchUsers          MatchUser[]
+  uploadedMedia       Media[]           @relation("MediaUploader")
+  sentFriendships     Friendship[]      @relation("FriendshipRequester")
+  receivedFriendships Friendship[]      @relation("FriendshipRecipient")
 
-  // Timestamps
-  lastActive DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  // Relationships
-  sessions               UserSession[]
-  passwordResetTokens    PasswordResetToken[]
-  sentFriendRequests     Friendship[]           @relation("FriendRequester")
-  receivedFriendRequests Friendship[]           @relation("FriendReceiver")
-  gameParticipations     GameParticipant[]
-  dailyChallengeAnswers  DailyChallengeAnswer[]
-  leaderboardEntry       Leaderboard?
-
-  // Indexes for performance
   @@index([email])
   @@index([username])
-  @@index([totalScore(sort: Desc)])
-  @@index([status])
   @@index([lastActive])
+  @@index([techStackId])
+  @@index([demographicId])
+  @@index([createdAt])
+  @@index([deletedAt]) // For soft delete queries
+  @@index([firstName, lastName]) // For name searches
 }
 
-// =============================================================================
-// PASSWORD RESET SYSTEM - Secure Token Management
-// =============================================================================
+model Preferences {
+  id                     String       @id @default(uuid())
+  userId                 String       @unique
+  user                   User         @relation(fields: [userId], references: [id])
+  preferredTechStackId   String?
+  preferredTechStack     TechStack?   @relation("PreferredTechStack", fields: [preferredTechStackId], references: [id])
+  preferredDemographicId String?
+  preferredDemographic   Demographic? @relation("PreferredDemographic", fields: [preferredDemographicId], references: [id])
 
-model PasswordResetToken {
-  id        String   @id @default(uuid()) @db.Uuid()
-  userId    String   @db.Uuid()
-  token     String   @unique
-  expiresAt DateTime
-  used      Boolean  @default(false)
-
-  // Timestamps
   createdAt DateTime  @default(now())
-  usedAt    DateTime?
-
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Indexes for performance and cleanup
-  @@index([userId])
-  @@index([token])
-  @@index([expiresAt])
-  @@index([used])
-}
-
-// =============================================================================
-// SESSION MANAGEMENT - Security and State Tracking
-// =============================================================================
-
-model UserSession {
-  id           String        @id @default(uuid()) @db.Uuid()
-  userId       String        @db.Uuid()
-  sessionToken String        @unique
-  deviceInfo   Json?
-  ipAddress    String?
-  userAgent    String?
-  status       SessionStatus @default(ACTIVE)
-
-  // Timestamps
-  createdAt    DateTime @default(now())
-  expiresAt    DateTime
-  lastActivity DateTime @default(now())
-
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([userId])
-  @@index([sessionToken])
-  @@index([status])
-  @@index([expiresAt])
-}
-
-// =============================================================================
-// FRIENDSHIP SYSTEM - Optimized Social Features
-// =============================================================================
-
-model Friendship {
-  id          String           @id @default(uuid()) @db.Uuid()
-  requesterId String           @db.Uuid()
-  receiverId  String           @db.Uuid()
-  status      FriendshipStatus @default(PENDING)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  receiver  User @relation("FriendReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  // Constraints and Indexes
-  @@unique([requesterId, receiverId])
-  @@index([requesterId, status])
-  @@index([receiverId, status])
-}
-
-// =============================================================================
-// GAME SESSION ARCHITECTURE - Multiplayer Support
-// =============================================================================
-
-model GameSession {
-  id           String     @id @default(uuid()) @db.Uuid()
-  roomCode     String?    @unique
-  gameType     GameType
-  status       GameStatus @default(WAITING)
-  maxPlayers   Int        @default(2)
-  currentRound Int        @default(0)
-  totalRounds  Int        @default(5)
-  maxMistakes  Int        @default(12)
-
-  // Game Configuration
-  difficulty String @default("medium")
-  timeLimit  Int? // seconds per round
-
-  // Timestamps
-  createdAt DateTime  @default(now())
-  startedAt DateTime?
-  endedAt   DateTime?
   updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  matches   Match[]
 
-  // Relationships
-  participants GameParticipant[]
-  rounds       GameRound[]
-
-  // Indexes
-  @@index([gameType, status])
-  @@index([roomCode])
+  @@index([preferredTechStackId])
+  @@index([preferredDemographicId])
   @@index([createdAt])
 }
 
-model GameParticipant {
-  id            String @id @default(uuid()) @db.Uuid()
-  gameSessionId String @db.Uuid()
-  userId        String @db.Uuid()
+model Match {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id])
+  matchStatus     String?
+  preferencesId   String?
+  preferences     Preferences?   @relation(fields: [preferencesId], references: [id])
+  matchedUsers    MatchUser[]
+  matchedProjects MatchProject[]
+  swipes          Swipe[]
 
-  // Game State
-  position     Int     @default(0) // player order
-  isReady      Boolean @default(false)
-  isConnected  Boolean @default(true)
-  finalScore   Int     @default(0)
-  finalRank    Int?
-  mistakeCount Int     @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  // Timestamps
-  joinedAt DateTime  @default(now())
-  leftAt   DateTime?
+  @@index([matchStatus])
+  @@index([preferencesId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
 
-  // Relationships
-  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scores      GameScore[]
+model MatchUser {
+  id      String @id @default(uuid())
+  matchId String
+  match   Match  @relation(fields: [matchId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
 
-  // Constraints and Indexes
-  @@unique([gameSessionId, userId])
-  @@index([gameSessionId])
+  @@unique([matchId, userId])
+  @@index([matchId])
   @@index([userId])
 }
 
-model GameRound {
-  id            String @id @default(uuid()) @db.Uuid()
-  gameSessionId String @db.Uuid()
-  roundNumber   Int
+model MatchProject {
+  id        String  @id @default(uuid())
+  matchId   String
+  match     Match   @relation(fields: [matchId], references: [id])
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
 
-  // Round Content
-  verse        String
-  blanks       Json // {"blank1": "love", "blank2": "home"}
-  emojiMapping Json // {"❤️": "love", "🏘️": "home"}
-  correctBook  String
-  correctRef   String
-  context      String?
-
-  // Round State
-  startedAt DateTime?
-  endedAt   DateTime?
-
-  // Relationships
-  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
-  scores      GameScore[]
-
-  // Constraints and Indexes
-  @@unique([gameSessionId, roundNumber])
-  @@index([gameSessionId])
+  @@unique([matchId, projectId])
+  @@index([matchId])
+  @@index([projectId])
 }
 
-model GameScore {
-  id            String @id @default(uuid()) @db.Uuid()
-  participantId String @db.Uuid()
-  roundId       String @db.Uuid()
+model Swipe {
+  id              String   @id @default(uuid())
+  isRightSwipe    Boolean
+  swiperId        String
+  swiper          User     @relation("swiperSwipes", fields: [swiperId], references: [id])
+  swipeeUserId    String?
+  swipeeUser      User?    @relation("swipeeUserSwipes", fields: [swipeeUserId], references: [id])
+  swipeeProjectId String?
+  swipeeProject   Project? @relation(fields: [swipeeProjectId], references: [id])
+  matchId         String?
+  match           Match?   @relation(fields: [matchId], references: [id])
 
-  // Scoring Details
-  blanksScore    Int @default(0)
-  contextScore   Int @default(0)
-  bookScore      Int @default(0)
-  referenceScore Int @default(0)
-  timeBonus      Int @default(0)
-  streakBonus    Int @default(0)
-  totalScore     Int @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  // Performance Metrics
-  timeSpent    Int // milliseconds
-  mistakesMade Int @default(0)
-  hintsUsed    Int @default(0)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  // Relationships
-  participant GameParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
-  round       GameRound       @relation(fields: [roundId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([participantId])
-  @@index([roundId])
+  @@unique([swiperId, swipeeUserId]) // Prevent duplicate user swipes
+  @@unique([swiperId, swipeeProjectId]) // Prevent duplicate project swipes
+  @@index([swiperId])
+  @@index([swipeeUserId])
+  @@index([swipeeProjectId])
+  @@index([matchId])
+  @@index([swiperId, createdAt]) // For user swipe history queries
+  @@index([isRightSwipe, createdAt]) // For match analytics
+  @@index([deletedAt]) // For soft delete queries
 }
 
-// =============================================================================
-// DAILY CHALLENGE SYSTEM
-// =============================================================================
+model Demographic {
+  id          String        @id @default(uuid())
+  country     String
+  languages   String[]
+  users       User[]
+  preferences Preferences[] @relation("PreferredDemographic")
 
-model DailyChallenge {
-  id   String   @id @default(uuid()) @db.Uuid()
-  date DateTime @unique @db.Date
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  // Challenge Content
-  verse        String
-  blanks       Json // {"blank1": "love", "blank2": "home"}
-  emojiMapping Json // {"❤️": "love", "🏘️": "home"}
-  correctBook  String
-  correctRef   String
-  context      String?
-
-  // Challenge Configuration
-  difficulty  String @default("medium")
-  maxAttempts Int    @default(3)
-  timeLimit   Int? // seconds
-
-  // Status
-  isActive Boolean @default(true)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-
-  // Relationships
-  answers DailyChallengeAnswer[]
-
-  // Indexes
-  @@index([date])
-  @@index([isActive])
+  @@index([country])
+  @@index([languages]) // GIN index for array queries
+  @@index([createdAt])
 }
 
-model DailyChallengeAnswer {
-  id          String @id @default(uuid()) @db.Uuid()
-  challengeId String @db.Uuid()
-  userId      String @db.Uuid()
+model TechStack {
+  id          String             @id @default(uuid())
+  frameworks  String[]
+  languages   String[]
+  tools       String[]
+  users       User[]
+  preferences Preferences[]      @relation("PreferredTechStack")
+  projects    ProjectTechStack[]
 
-  // Answer Details
-  userAnswers Json // {"blank1": "user_answer1", "blank2": "user_answer2"}
-  isCorrect   Boolean @default(false)
-  score       Int     @default(0)
-  timeSpent   Int // milliseconds
-  hintsUsed   Int     @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  // Timestamps
-  completedAt DateTime @default(now())
+  @@index([id])
+  @@index([frameworks]) // GIN index for array queries
+  @@index([languages]) // GIN index for array queries
+  @@index([tools]) // GIN index for array queries
+  @@index([createdAt])
+}
 
-  // Relationships
-  challenge DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Project {
+  id              String             @id @default(uuid())
+  title           String
+  description     String
+  workspaceId     String
+  workspace       Workspace          @relation(fields: [workspaceId], references: [id])
+  chatId          String?            @unique
+  chat            Chat?              @relation("ProjectChat", fields: [chatId], references: [id])
+  mediaId         String?            @unique
+  media           Media?             @relation("ProjectMedia", fields: [mediaId], references: [id])
+  analyticsId     String?            @unique
+  analytics       Analytics?         @relation("ProjectAnalytics", fields: [analyticsId], references: [id])
+  techLinks       ProjectTechStack[]
+  roles           Role[]
+  tasks           Task[]
+  collaborators   User[]             @relation("ProjectCollaborators")
+  matchedProjects MatchProject[]
+  swipes          Swipe[]
 
-  // Constraints and Indexes
-  @@unique([challengeId, userId])
-  @@index([challengeId])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([workspaceId])
+  @@index([title]) // For project searches
+  @@index([createdAt])
+  @@index([updatedAt]) // For recent activity queries
+  @@index([deletedAt]) // For soft delete queries
+  @@index([chatId])
+  @@index([mediaId])
+  @@index([analyticsId])
+}
+
+model ProjectTechStack {
+  id          String    @id @default(uuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id])
+  techStackId String
+  techStack   TechStack @relation(fields: [techStackId], references: [id])
+
+  @@unique([projectId, techStackId])
+  @@index([projectId])
+  @@index([techStackId])
+}
+
+model Workspace {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
+  projects    Project[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+}
+
+model Role {
+  id          String     @id @default(uuid())
+  name        String
+  roleName    String
+  projectId   String
+  project     Project    @relation(fields: [projectId], references: [id])
+  permissions String[]
+  userRoles   UserRole[]
+  tasks       Task[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([projectId])
+}
+
+model UserRole {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  roleId     String
+  role       Role      @relation(fields: [roleId], references: [id])
+  assignedAt DateTime  @default(now())
+  deletedAt  DateTime?
+
+  @@unique([userId, roleId])
   @@index([userId])
-  @@index([completedAt])
+  @@index([roleId])
 }
 
-// =============================================================================
-// LEADERBOARD SYSTEM - Optimized Rankings
-// =============================================================================
+model Task {
+  id           String     @id @default(uuid())
+  title        String
+  taskName     String
+  description  String?
+  userId       String?
+  assignedTo   User?      @relation("AssignedTasks", fields: [userId], references: [id])
+  assignedToId String? // added scalar FK if you need assignedToId available directly
+  status       TaskStatus @default(PENDING)
+  dueDate      DateTime?
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+  projectId    String
+  project      Project    @relation(fields: [projectId], references: [id])
 
-model Leaderboard {
-  id     String @id @default(uuid()) @db.Uuid()
-  userId String @unique @db.Uuid()
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  // Ranking Metrics (Denormalized for performance)
-  globalRank    Int
-  weeklyRank    Int?
-  monthlyRank   Int?
-  totalScore    Int
-  gamesPlayed   Int
-  gamesWon      Int
-  winRate       Float
-  currentStreak Int
-  bestStreak    Int
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@index([roleId])
+  @@index([dueDate])
+  @@index([projectId, status]) // Composite for project task filtering
+  @@index([userId, status]) // Composite for user task filtering
+  @@index([createdAt])
+  @@index([updatedAt])
+}
 
-  // Timestamps
-  lastUpdated DateTime @default(now())
+model Chat {
+  id            String            @id @default(uuid())
+  type          String?           @default("DIRECT") // DIRECT or PROJECT
+  name          String? // Name for group/project chats
+  lastMessageAt DateTime? // Add lastMessageAt field
+  messages      Message[]
+  userChats     UserChat[]
+  participants  ChatParticipant[] // Add participants relation
+  project       Project?          @relation("ProjectChat")
+  projectId     String?           @unique
 
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  // Indexes
-  @@index([globalRank])
-  @@index([weeklyRank])
-  @@index([monthlyRank])
-  @@index([totalScore(sort: Desc)])
-  @@index([lastUpdated])
+  @@index([projectId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([deletedAt])
+}
+
+model ChatParticipant {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("ChatParticipants", fields: [userId], references: [id])
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, chatId])
+  @@index([userId])
+  @@index([chatId])
+}
+
+model UserChat {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  chatId      String
+  chat        Chat      @relation(fields: [chatId], references: [id])
+  unreadCount Int       @default(0) // Add unreadCount field
+  lastReadAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, chatId])
+  @@index([userId])
+  @@index([chatId])
+}
+
+model Message {
+  id          String  @id @default(uuid())
+  content     String
+  messageType String? @default("TEXT") // TEXT, IMAGE, FILE, etc.
+  mediaUrl    String? // Add mediaUrl field
+  senderId    String
+  sender      User    @relation("MessageSender", fields: [senderId], references: [id])
+  chatId      String
+  chat        Chat    @relation(fields: [chatId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([chatId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([chatId, createdAt]) // Composite for chat message ordering
+  @@index([deletedAt]) // For soft delete queries
+  @@index([messageType])
+}
+
+model Media {
+  id              String          @id @default(uuid())
+  filename        String
+  originalName    String
+  mimeType        String
+  size            Int
+  width           Int?
+  height          Int?
+  duration        Float? // For videos/audio in seconds
+  url             String
+  thumbnailUrl    String?
+  cdnUrl          String?
+  category        MediaCategory
+  storageProvider StorageProvider
+  storageKey      String // Path/key in storage
+  bucketName      String // Storage bucket name
+  uploadedBy      String
+  uploader        User            @relation("MediaUploader", fields: [uploadedBy], references: [id])
+  tags            String[]        @default([])
+  metadata        Json? // Additional metadata
+
+  // Relations
+  project   Project? @relation("ProjectMedia")
+  projectId String?  @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([uploadedBy])
+  @@index([category])
+  @@index([storageProvider])
+  @@index([createdAt])
+  @@index([tags]) // GIN index for array queries
+  @@index([mimeType])
+  @@index([size])
+  @@index([uploadedBy, category]) // Composite for user media filtering
+  @@index([category, createdAt]) // Composite for category-based queries
+  @@index([deletedAt]) // For soft delete queries
+  @@index([filename]) // For filename searches
+}
+
+model Analytics {
+  id        String   @id @default(uuid())
+  stats     Json
+  project   Project? @relation("ProjectAnalytics")
+  projectId String?  @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([projectId])
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+model Friendship {
+  id          String           @id @default(uuid())
+  requesterId String
+  requester   User             @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User             @relation("FriendshipRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  status      FriendshipStatus @default(PENDING)
+  message     String? // Optional message with friend request
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Ensure unique friendships and prevent self-friendship
+  @@unique([requesterId, recipientId])
+  @@index([requesterId])
+  @@index([recipientId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([requesterId, status]) // For requester's friendship filtering
+  @@index([recipientId, status]) // For recipient's friendship filtering
+  @@index([deletedAt]) // For soft delete queries
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
 }

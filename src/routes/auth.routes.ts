@@ -4,9 +4,12 @@ import {
   loginController,
   verifyOtpController,
   forgotPasswordController,
+  forgotUsernameController,
   resetPasswordController,
+  resendOtpController,
 } from "../controllers/auth.controller";
 import { asyncHandler } from "../middlewares/error.middleware";
+import { rateLimitMiddleware } from "../utils/accountSecurity";
 
 /**
  * =============================================================================
@@ -40,8 +43,9 @@ const router = Router();
  * Response: { message, requiresVerification: true, userId }
  *
  * Creates new user account and sends OTP for verification
+ * Rate Limited: 3 attempts per hour per IP
  */
-router.post("/signup", asyncHandler(signupController));
+router.post("/signup", rateLimitMiddleware("signup"), asyncHandler(signupController));
 
 /**
  * EMAIL VERIFICATION
@@ -51,8 +55,9 @@ router.post("/signup", asyncHandler(signupController));
  * Response: { message, user, token }
  *
  * Verifies OTP and returns JWT token for authentication
+ * Rate Limited: 5 attempts per 10 minutes per IP
  */
-router.post("/verify-otp", asyncHandler(verifyOtpController));
+router.post("/verify-otp", rateLimitMiddleware("otp"), asyncHandler(verifyOtpController));
 
 /**
  * USER LOGIN
@@ -62,8 +67,9 @@ router.post("/verify-otp", asyncHandler(verifyOtpController));
  * Response: { message, user, token }
  *
  * Authenticates user and returns JWT token
+ * Rate Limited: 10 attempts per 5 minutes per IP
  */
-router.post("/login", asyncHandler(loginController));
+router.post("/login", rateLimitMiddleware("login"), asyncHandler(loginController));
 
 /**
  * FORGOT PASSWORD
@@ -74,8 +80,13 @@ router.post("/login", asyncHandler(loginController));
  *
  * Initiates password reset process by sending reset email
  * Note: Returns success message regardless of email existence for security
+ * Rate Limited: 3 attempts per hour per IP
  */
-router.post("/forgot-password", asyncHandler(forgotPasswordController));
+router.post(
+  "/forgot-password",
+  rateLimitMiddleware("passwordReset"),
+  asyncHandler(forgotPasswordController)
+);
 
 /**
  * RESET PASSWORD
@@ -87,5 +98,34 @@ router.post("/forgot-password", asyncHandler(forgotPasswordController));
  * Completes password reset using secure token validation
  */
 router.post("/reset-password", asyncHandler(resetPasswordController));
+
+/**
+ * FORGOT USERNAME
+ *
+ * Endpoint: POST /api/auth/forgot-username (CHANGED FROM GET TO POST FOR SECURITY)
+ * Body: { email }
+ * Response: { message, emailSent: true }
+ *
+ * Initiates username recovery process by sending username via email
+ * Note: Returns success message regardless of email existence for security
+ * Rate Limited: 3 attempts per hour per IP
+ */
+router.post(
+  "/forgot-username",
+  rateLimitMiddleware("passwordReset"),
+  asyncHandler(forgotUsernameController)
+);
+
+/**
+ * RESEND OTP
+ *
+ * Endpoint: POST /api/auth/resend-otp
+ * Body: { email }
+ * Response: { message, emailSent: true }
+ *
+ * Resends OTP for users who didn't receive the initial signup verification email
+ * Rate Limited: 3 attempts per hour per IP (same as other auth operations)
+ */
+router.post("/resend-otp", rateLimitMiddleware("passwordReset"), asyncHandler(resendOtpController));
 
 export default router;

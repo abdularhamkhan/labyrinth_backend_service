@@ -1,0 +1,44 @@
+# Production .dockerignore - includes dist folder
+node_modules/
+npm-debug.log*
+.npm
+
+# Exclude source since we're using pre-built dist
+src/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+
+# Documentation
+README*.md
+*.md
+
+# Test files
+tests/
+test/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Development files
+coverage/
+.eslintcache
+*.log
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

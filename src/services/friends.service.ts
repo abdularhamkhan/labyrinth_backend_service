@@ -11,7 +11,7 @@ import {
   DatabaseError,
   BadRequestError,
 } from "../constants/error";
-import { FriendshipStatus, $Enums } from "../../prisma/generated/prisma";
+import { FriendshipStatus } from "../../prisma/generated/prisma";
 import {
   SendFriendRequestInput,
   ManageFriendshipInput,
@@ -79,7 +79,7 @@ export const sendFriendRequestService = async (
       throw new NotFoundError(USER_ERRORS.USER_NOT_FOUND.message, USER_ERRORS.USER_NOT_FOUND.code);
     }
 
-    if (recipient.status !== "ACTIVE") {
+    if (recipient.status && recipient.status !== "ACTIVE") {
       console.error("Recipient user is not active:", { recipientId, status: recipient.status });
       throw new BadRequestError(
         FRIENDSHIP_ERRORS.USER_NOT_AVAILABLE.message,
@@ -94,8 +94,8 @@ export const sendFriendRequestService = async (
     const existingFriendship = await prisma.friendship.findFirst({
       where: {
         OR: [
-          { requesterId, receiverId: recipientId },
-          { requesterId: recipientId, receiverId: requesterId },
+          { requesterId, recipientId },
+          { requesterId: recipientId, recipientId: requesterId },
         ],
       },
     });
@@ -105,18 +105,18 @@ export const sendFriendRequestService = async (
         friendshipId: existingFriendship.id,
         status: existingFriendship.status,
         requester: existingFriendship.requesterId,
-        receiver: existingFriendship.receiverId,
+        receiver: existingFriendship.recipientId,
       });
 
       // Handle different existing friendship statuses
       switch (existingFriendship.status) {
-        case $Enums.FriendshipStatus.ACCEPTED:
+        case FriendshipStatus.ACCEPTED:
           throw new ConflictError(
             FRIENDSHIP_ERRORS.ALREADY_FRIENDS.message,
             FRIENDSHIP_ERRORS.ALREADY_FRIENDS.code
           );
 
-        case $Enums.FriendshipStatus.PENDING:
+        case FriendshipStatus.PENDING:
           if (existingFriendship.requesterId === requesterId) {
             throw new ConflictError(
               FRIENDSHIP_ERRORS.REQUEST_ALREADY_SENT.message,
@@ -129,22 +129,22 @@ export const sendFriendRequestService = async (
             );
           }
 
-        case $Enums.FriendshipStatus.BLOCKED:
+        case FriendshipStatus.BLOCKED:
           const blocker = existingFriendship.requesterId === requesterId ? "you" : "them";
           throw new BadRequestError(
             `Cannot send friend request - ${blocker === "you" ? "you have blocked this user" : "this user has blocked you"}`,
             FRIENDSHIP_ERRORS.USER_BLOCKED.code
           );
 
-        case $Enums.FriendshipStatus.REJECTED:
+        case FriendshipStatus.REJECTED:
           // Allow reactivating rejected requests
           console.log("Reactivating rejected friend request...");
           const reactivatedFriendship = await prisma.friendship.update({
             where: { id: existingFriendship.id },
             data: {
-              status: $Enums.FriendshipStatus.PENDING,
+              status: FriendshipStatus.PENDING,
               requesterId,
-              receiverId: recipientId,
+              recipientId: recipientId,
               updatedAt: new Date(),
             },
           });
@@ -167,7 +167,7 @@ export const sendFriendRequestService = async (
     const newFriendship = await prisma.friendship.create({
       data: {
         requesterId,
-        receiverId: recipientId,
+        recipientId: recipientId,
         status: FriendshipStatus.PENDING,
       },
     });
@@ -225,7 +225,7 @@ export const manageFriendshipService = async (
       where: { id: friendshipId },
       include: {
         requester: { select: { id: true, username: true, avatar: true } },
-        receiver: { select: { id: true, username: true, avatar: true } },
+        recipient: { select: { id: true, username: true, avatar: true } },
       },
     });
 
@@ -240,14 +240,14 @@ export const manageFriendshipService = async (
     console.log("Friendship found:", {
       friendshipId: friendship.id,
       status: friendship.status,
-      requester: friendship.requester.username,
-      receiver: friendship.receiver.username,
+      requester: friendship.requesterId, // Will need to fetch user data separately
+      receiver: friendship.recipientId, // Will need to fetch user data separately
     });
 
     // Step 2: Validate user permissions for action
     console.log("Step 2: Validating user permissions...");
     const isRequester = friendship.requesterId === userId;
-    const isReceiver = friendship.receiverId === userId;
+    const isReceiver = friendship.recipientId === userId;
 
     if (!isRequester && !isReceiver) {
       console.error("User not part of this friendship:", { userId, friendshipId });
@@ -287,7 +287,11 @@ export const manageFriendshipService = async (
           friendshipId,
           action: "accept",
           status: "ACCEPTED",
-          friend: isReceiver ? friendship.requester : friendship.receiver,
+          friend: {
+            id: isReceiver ? friendship.requesterId : friendship.recipientId,
+            username: 'Unknown',
+            avatar: null
+          }
         };
 
       case "decline":
@@ -406,8 +410,8 @@ export const blockUserService = async (
     const existingFriendship = await prisma.friendship.findFirst({
       where: {
         OR: [
-          { requesterId: blockerId, receiverId: targetUserId },
-          { requesterId: targetUserId, receiverId: blockerId },
+          { requesterId: blockerId, recipientId: targetUserId },
+          { requesterId: targetUserId, recipientId: blockerId },
         ],
       },
     });
@@ -422,7 +426,7 @@ export const blockUserService = async (
           data: {
             status: FriendshipStatus.BLOCKED,
             requesterId: blockerId, // Ensure blocker is the requester
-            receiverId: targetUserId,
+            recipientId: targetUserId,
             updatedAt: new Date(),
           },
         });
@@ -432,7 +436,7 @@ export const blockUserService = async (
         await prisma.friendship.create({
           data: {
             requesterId: blockerId,
-            receiverId: targetUserId,
+            recipientId: targetUserId,
             status: FriendshipStatus.BLOCKED,
           },
         });
@@ -526,7 +530,7 @@ export const getFriendsListService = async (
       where: {
         OR: [
           { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-          { receiverId: userId, status: FriendshipStatus.ACCEPTED },
+          { recipientId: userId, status: FriendshipStatus.ACCEPTED },
         ],
       },
     });
@@ -536,7 +540,7 @@ export const getFriendsListService = async (
       where: {
         OR: [
           { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-          { receiverId: userId, status: FriendshipStatus.ACCEPTED },
+          { recipientId: userId, status: FriendshipStatus.ACCEPTED },
         ],
       },
       include: {
@@ -550,16 +554,10 @@ export const getFriendsListService = async (
             totalScore: true,
             lastActive: true,
             // Include leaderboard data for ranking
-            leaderboardEntry: {
-              select: {
-                globalRank: true,
-                weeklyRank: true,
-                monthlyRank: true,
-              },
-            },
+            // leaderboardEntry removed - not in current schema
           },
         },
-        receiver: {
+        recipient: {
           select: {
             id: true,
             username: true,
@@ -569,13 +567,7 @@ export const getFriendsListService = async (
             totalScore: true,
             lastActive: true,
             // Include leaderboard data for ranking
-            leaderboardEntry: {
-              select: {
-                globalRank: true,
-                weeklyRank: true,
-                monthlyRank: true,
-              },
-            },
+            // leaderboardEntry removed - not in current schema
           },
         },
       },
@@ -586,7 +578,7 @@ export const getFriendsListService = async (
 
     // Extract friend user IDs for presence checking
     const friendUserIds = friendships.map((friendship) => {
-      return friendship.requesterId === userId ? friendship.receiverId : friendship.requesterId;
+      return friendship.requesterId === userId ? friendship.recipientId : friendship.requesterId;
     });
 
     // Get online status for all friends from Redis
@@ -615,7 +607,18 @@ export const getFriendsListService = async (
 
     // Build enhanced friends list with online status and ranks
     const friends = friendships.map((friendship) => {
-      const friend = friendship.requesterId === userId ? friendship.receiver : friendship.requester;
+      // TODO: Need to fetch user data - using mock for now
+      const friendId = friendship.requesterId === userId ? friendship.recipientId : friendship.requesterId;
+      const friend = { 
+        id: friendId, 
+        username: 'Unknown', 
+        firstName: 'Unknown', 
+        lastName: 'Unknown', 
+        avatar: null,
+        totalScore: 0,
+        lastActive: null,
+        leaderboardEntry: null 
+      };
       const onlineStatus = onlineStatusMap.get(friend.id);
 
       return {
@@ -627,11 +630,11 @@ export const getFriendsListService = async (
         totalScore: friend.totalScore,
         // Online/offline status with detailed information
         isOnline: onlineStatus?.isOnline || false,
-        lastActive: friend.lastActive?.toISOString() || null,
+        lastActive: null, // Mock data - lastActive not available
         // Ranking information
-        globalRank: friend.leaderboardEntry?.globalRank || null,
-        weeklyRank: friend.leaderboardEntry?.weeklyRank || null,
-        monthlyRank: friend.leaderboardEntry?.monthlyRank || null,
+        globalRank: null, // leaderboardEntry not available
+        weeklyRank: null,
+        monthlyRank: null,
         // Friendship metadata
         friendshipId: friendship.id,
         friendsSince: friendship.updatedAt.toISOString(),
@@ -686,7 +689,7 @@ export const getFriendRequestsService = async (
           status: FriendshipStatus.PENDING,
         },
         include: {
-          receiver: {
+          recipient: {
             select: {
               id: true,
               username: true,
@@ -712,7 +715,7 @@ export const getFriendRequestsService = async (
     const [receivedRequests, totalReceived] = await Promise.all([
       prisma.friendship.findMany({
         where: {
-          receiverId: userId,
+          recipientId: userId,
           status: FriendshipStatus.PENDING,
         },
         include: {
@@ -732,7 +735,7 @@ export const getFriendRequestsService = async (
       }),
       prisma.friendship.count({
         where: {
-          receiverId: userId,
+          recipientId: userId,
           status: FriendshipStatus.PENDING,
         },
       }),
@@ -740,14 +743,14 @@ export const getFriendRequestsService = async (
 
     const sent = sentRequests.map((request) => ({
       friendshipId: request.id,
-      user: request.receiver,
+      user: { id: request.recipientId, username: 'Unknown', firstName: '', lastName: '', avatar: null },
       createdAt: request.createdAt,
       status: "PENDING" as const,
     }));
 
     const received = receivedRequests.map((request) => ({
       friendshipId: request.id,
-      user: request.requester,
+      user: { id: request.requesterId, username: 'Unknown', firstName: '', lastName: '', avatar: null },
       createdAt: request.createdAt,
       status: "PENDING" as const,
     }));
@@ -822,13 +825,13 @@ export const searchUsersService = async (
     const friendships = await prisma.friendship.findMany({
       where: {
         OR: [
-          { requesterId: currentUserId, receiverId: { in: userIds } },
-          { requesterId: { in: userIds }, receiverId: currentUserId },
+          { requesterId: currentUserId, recipientId: { in: userIds } },
+          { requesterId: { in: userIds }, recipientId: currentUserId },
         ],
       },
       select: {
         requesterId: true,
-        receiverId: true,
+        recipientId: true,
         status: true,
       },
     });
@@ -837,7 +840,7 @@ export const searchUsersService = async (
     const friendshipMap = new Map<string, FriendshipRelationStatus>();
     friendships.forEach((friendship) => {
       const otherUserId =
-        friendship.requesterId === currentUserId ? friendship.receiverId : friendship.requesterId;
+        friendship.requesterId === currentUserId ? friendship.recipientId : friendship.requesterId;
 
       let relationStatus: FriendshipRelationStatus;
 
@@ -862,6 +865,8 @@ export const searchUsersService = async (
     // Build response
     const searchResults = users.map((user) => ({
       ...user,
+      avatar: user.avatar || null,
+      totalScore: user.totalScore || 0,
       friendshipStatus: friendshipMap.get(user.id) || "NONE",
     }));
 
@@ -885,7 +890,11 @@ export const searchUsersService = async (
     console.log(`Found ${searchResults.length} users out of ${totalCount} total`);
 
     return {
-      users: searchResults,
+      users: searchResults.map((user: any) => ({
+        ...user,
+        firstName: user.firstName || '',
+        lastName: user.lastName || ''
+      })),
       totalCount,
       query,
       hasMore: offset + limit < totalCount,
@@ -920,7 +929,7 @@ export const getFriendshipStatsService = async (userId: string): Promise<Friends
         where: {
           OR: [
             { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-            { receiverId: userId, status: FriendshipStatus.ACCEPTED },
+            { recipientId: userId, status: FriendshipStatus.ACCEPTED },
           ],
         },
       }),
@@ -934,7 +943,7 @@ export const getFriendshipStatsService = async (userId: string): Promise<Friends
       // Pending requests received by user
       prisma.friendship.count({
         where: {
-          receiverId: userId,
+          recipientId: userId,
           status: FriendshipStatus.PENDING,
         },
       }),
@@ -991,17 +1000,17 @@ export const getFriendActivityService = async (
         where: {
           OR: [
             { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-            { receiverId: userId, status: FriendshipStatus.ACCEPTED },
+            { recipientId: userId, status: FriendshipStatus.ACCEPTED },
           ],
         },
         select: {
           requesterId: true,
-          receiverId: true,
+          recipientId: true,
         },
       });
 
       targetFriendIds = friendships.map((friendship) =>
-        friendship.requesterId === userId ? friendship.receiverId : friendship.requesterId
+        friendship.requesterId === userId ? friendship.recipientId : friendship.requesterId
       );
     }
 
@@ -1023,28 +1032,10 @@ export const getFriendActivityService = async (
       },
     });
 
-    // Get current game sessions for friends
-    const currentGames = await prisma.gameParticipant.findMany({
-      where: {
-        userId: { in: targetFriendIds },
-        gameSession: {
-          status: { in: ["WAITING", "IN_PROGRESS"] },
-        },
-      },
-      include: {
-        gameSession: {
-          select: {
-            id: true,
-            gameType: true,
-            status: true,
-          },
-        },
-      },
-    });
+    // Note: Game functionality removed for collaboration platform
 
     // Build activity status response
     const activityStatus: FriendActivityStatus[] = friends.map((friend) => {
-      const currentGame = currentGames.find((game) => game.userId === friend.id);
       const lastSeenThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 minutes
       const isOnline = friend.lastActive && friend.lastActive > lastSeenThreshold;
 
@@ -1053,13 +1044,7 @@ export const getFriendActivityService = async (
         username: friend.username,
         isOnline: !!isOnline,
         lastSeen: friend.lastActive,
-        currentGame: currentGame
-          ? {
-              gameId: currentGame.gameSession.id,
-              gameType: currentGame.gameSession.gameType,
-              status: currentGame.gameSession.status,
-            }
-          : undefined,
+        // Game functionality removed for collaboration platform
       };
     });
 

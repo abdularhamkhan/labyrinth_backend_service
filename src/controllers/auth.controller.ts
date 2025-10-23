@@ -4,7 +4,9 @@ import {
   loginService,
   verifyOtpService,
   forgotPasswordService,
+  forgotUsernameService,
   resetPasswordService,
+  resendOtpService,
 } from "../services/auth.service";
 import {
   signupSchema,
@@ -12,7 +14,15 @@ import {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  forgotUsernameSchema,
+  // Note: resend OTP uses same email schema as forgot password
 } from "../schemas/auth.schema";
+import { z } from "zod";
+
+// Schema for resend OTP (reuse email validation)
+const resendOtpSchema = z.object({
+  email: z.string().email("Please provide a valid email address"),
+});
 
 /**
  * =============================================================================
@@ -49,7 +59,7 @@ import {
  */
 export const signupController = async (req: Request, res: Response): Promise<void> => {
   const validatedData = signupSchema.parse(req.body);
-  const result = await signupService(validatedData);
+  const result = await signupService(req, validatedData);
 
   res.status(201).json({
     success: true,
@@ -61,6 +71,37 @@ export const signupController = async (req: Request, res: Response): Promise<voi
   });
 };
 
+/**
+ * =============================================================================
+ * RESEND OTP CONTROLLER
+ * =============================================================================
+ *
+ * Handles OTP resend requests by:
+ * - Validating email input
+ * - Calling resend OTP service
+ * - Sending consistent success response (prevents user enumeration)
+ *
+ * Route: POST /api/auth/resend-otp
+ *
+ * Security Features:
+ * - No user enumeration (same response for valid/invalid emails)
+ * - Rate limiting applied at route level
+ * - OTP cooldown protection
+ *
+ * =============================================================================
+ */
+export const resendOtpController = async (req: Request, res: Response): Promise<void> => {
+  const validatedData = resendOtpSchema.parse(req.body);
+  const result = await resendOtpService(req, validatedData.email);
+
+  res.status(200).json({
+    success: true,
+    message: result.message,
+    data: {
+      emailSent: true,
+    },
+  });
+};
 /**
  * =============================================================================
  * VERIFY OTP CONTROLLER
@@ -77,7 +118,7 @@ export const signupController = async (req: Request, res: Response): Promise<voi
  */
 export const verifyOtpController = async (req: Request, res: Response): Promise<void> => {
   const validatedData = verifyOtpSchema.parse(req.body);
-  const { id, username, token } = await verifyOtpService(validatedData);
+  const { id, username, token } = await verifyOtpService(req, validatedData);
 
   res.status(200).json({
     success: true,
@@ -105,7 +146,7 @@ export const verifyOtpController = async (req: Request, res: Response): Promise<
  */
 export const loginController = async (req: Request, res: Response): Promise<void> => {
   const validatedData = loginSchema.parse(req.body);
-  const { id, username, token } = await loginService(validatedData);
+  const { id, username, token } = await loginService(req, validatedData);
 
   res.status(200).json({
     success: true,
@@ -138,7 +179,7 @@ export const loginController = async (req: Request, res: Response): Promise<void
  */
 export const forgotPasswordController = async (req: Request, res: Response): Promise<void> => {
   const validatedData = forgotPasswordSchema.parse(req.body);
-  const result = await forgotPasswordService(validatedData);
+  const result = await forgotPasswordService(req, validatedData);
 
   res.status(200).json({
     success: true,
@@ -171,7 +212,7 @@ export const forgotPasswordController = async (req: Request, res: Response): Pro
  */
 export const resetPasswordController = async (req: Request, res: Response): Promise<void> => {
   const validatedData = resetPasswordSchema.parse(req.body);
-  const result = await resetPasswordService(validatedData);
+  const result = await resetPasswordService(req, validatedData);
 
   res.status(200).json({
     success: true,
@@ -179,6 +220,37 @@ export const resetPasswordController = async (req: Request, res: Response): Prom
     data: {
       passwordReset: true,
       userId: result.userId,
+    },
+  });
+};
+
+/* =============================================================================
+ * FORGOT USERNAME CONTROLLER
+ * =============================================================================
+ *
+ * Handles username recovery requests by:
+ * - Validating email input
+ * - Calling forgot username service
+ * - Sending consistent success response (prevents user enumeration)
+ *
+ * Route: POST /api/auth/forgot-username
+ *
+ * Security Features:
+ * - No user enumeration (same response for valid/invalid emails)
+ * - Rate limiting applied at route level
+ * - Secure token generation and email sending
+ *
+ * =============================================================================
+ */
+export const forgotUsernameController = async (req: Request, res: Response): Promise<void> => {
+  const validatedData = forgotUsernameSchema.parse(req.body);
+  const result = await forgotUsernameService(validatedData);
+
+  res.status(200).json({
+    success: true,
+    message: result?.message,
+    data: {
+      emailSent: true,
     },
   });
 };

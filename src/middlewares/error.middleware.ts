@@ -248,7 +248,7 @@ export const notFoundHandler = (req: Request, res: Response, next: NextFunction)
       path: req.originalUrl,
       availableRoutes: [
         "GET /",
-        "POST /api/auth/register",
+        "POST /api/auth/signup",
         "POST /api/auth/login",
         "POST /api/auth/verify-otp",
         "GET /api/user/profile",

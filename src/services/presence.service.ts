@@ -51,14 +51,11 @@ export interface OnlineUser {
   username: string;
   firstName: string;
   lastName: string;
-  avatar?: string;
-  totalScore?: number;
-  gamesPlayed?: number;
-  gamesWon?: number;
-  winRate?: number;
-  currentStreak?: number;
-  globalRank?: number;
+  email: string;
+  gitHubProfile?: string;
+  education?: string;
   lastActive: Date;
+  isOnline?: boolean;
 }
 
 export interface PresenceStats {
@@ -260,34 +257,23 @@ export const getOnlineUsers = async (
     }
 
     // Step 2: Get user profile data from database
-    const selectFields = {
-      id: true,
-      username: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      lastActive: true,
-      ...(includeStats && {
-        totalScore: true,
-        gamesPlayed: true,
-        gamesWon: true,
-        winRate: true,
-        currentStreak: true,
-        leaderboardEntry: {
-          select: {
-            globalRank: true,
-          },
-        },
-      }),
-    };
-
     const users = await prisma.user.findMany({
       where: {
         id: { in: onlineUserIds },
-        status: "ACTIVE" as const,
+        deletedAt: null, // Only active users
       },
-      select: selectFields,
-      orderBy: { totalScore: "desc" },
+      select: {
+        id: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        lastActive: true,
+        email: true,
+        gitHubProfile: true,
+        education: true,
+        createdAt: true,
+      },
+      orderBy: { lastActive: "desc" },
     });
 
     console.log("Database query results:", { usersFound: users.length });
@@ -296,18 +282,13 @@ export const getOnlineUsers = async (
     const formattedUsers: OnlineUser[] = users.map((user) => ({
       id: user.id,
       username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatar: user.avatar || undefined,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
       lastActive: user.lastActive || new Date(),
-      ...(includeStats && {
-        totalScore: user.totalScore || 0,
-        gamesPlayed: user.gamesPlayed || 0,
-        gamesWon: user.gamesWon || 0,
-        winRate: user.winRate || 0,
-        currentStreak: user.currentStreak || 0,
-        globalRank: user.leaderboardEntry?.globalRank || undefined,
-      }),
+      email: user.email,
+      gitHubProfile: user.gitHubProfile || undefined,
+      education: user.education || undefined,
+      isOnline: true,
     }));
 
     return {
@@ -353,7 +334,7 @@ export const getOfflineUsers = async (
     recentlyActiveThreshold.setHours(recentlyActiveThreshold.getHours() - hoursBack);
 
     const whereClause: any = {
-      status: "ACTIVE" as const,
+      deletedAt: null, // Only active users
       OR: [
         {
           lastActive: {
@@ -386,18 +367,10 @@ export const getOfflineUsers = async (
         username: true,
         firstName: true,
         lastName: true,
-        avatar: true,
-        totalScore: true,
-        gamesPlayed: true,
-        gamesWon: true,
-        winRate: true,
-        currentStreak: true,
+        email: true,
+        gitHubProfile: true,
+        education: true,
         lastActive: true,
-        leaderboardEntry: {
-          select: {
-            globalRank: true,
-          },
-        },
       },
       orderBy: { lastActive: "desc" },
       skip: (page - 1) * limit,
@@ -413,16 +386,13 @@ export const getOfflineUsers = async (
     const formattedUsers: OnlineUser[] = users.map((user) => ({
       id: user.id,
       username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatar: user.avatar || undefined,
-      totalScore: user.totalScore,
-      gamesPlayed: user.gamesPlayed,
-      gamesWon: user.gamesWon,
-      winRate: user.winRate,
-      currentStreak: user.currentStreak,
-      globalRank: user.leaderboardEntry?.globalRank || undefined,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email,
+      gitHubProfile: user.gitHubProfile || undefined,
+      education: user.education || undefined,
       lastActive: user.lastActive || new Date(),
+      isOnline: false,
     }));
 
     return {
@@ -485,7 +455,7 @@ export const getPresenceStats = async (): Promise<PresenceStats> => {
   try {
     const [totalOnline, totalRegistered] = await Promise.all([
       redis.zcard(PRESENCE_KEYS.ONLINE_SET),
-      prisma.user.count({ where: { status: "ACTIVE" } }),
+      prisma.user.count({ where: { deletedAt: null } }),
     ]);
 
     const onlinePercentage =
@@ -529,7 +499,7 @@ export const searchUsersByUsername = async (
 
     // Base where clause for active users with username search
     const whereClause = {
-      status: "ACTIVE" as const,
+      deletedAt: null,
       username: {
         contains: searchQuery,
         mode: "insensitive" as const,
@@ -541,33 +511,20 @@ export const searchUsersByUsername = async (
       where: whereClause,
     });
 
-    // Prepare select fields based on includeStats parameter
-    const selectFields = {
-      id: true,
-      username: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      lastActive: true,
-      ...(includeStats && {
-        totalScore: true,
-        gamesPlayed: true,
-        gamesWon: true,
-        winRate: true,
-        currentStreak: true,
-        leaderboardEntry: {
-          select: {
-            globalRank: true,
-          },
-        },
-      }),
-    };
-
     // Get paginated search results
     const users = await prisma.user.findMany({
       where: whereClause,
-      select: selectFields,
-      orderBy: [{ totalScore: "desc" }, { username: "asc" }],
+      select: {
+        id: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        gitHubProfile: true,
+        education: true,
+        lastActive: true,
+      },
+      orderBy: [{ username: "asc" }],
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -600,20 +557,13 @@ export const searchUsersByUsername = async (
       return {
         id: user.id,
         username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        avatar: user.avatar || undefined,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email,
+        gitHubProfile: user.gitHubProfile || undefined,
+        education: user.education || undefined,
         lastActive: user.lastActive || new Date(),
-        status: isOnline ? "online" : "offline",
         isOnline,
-        ...(includeStats && {
-          totalScore: user.totalScore || 0,
-          gamesPlayed: user.gamesPlayed || 0,
-          gamesWon: user.gamesWon || 0,
-          winRate: user.winRate || 0,
-          currentStreak: user.currentStreak || 0,
-          globalRank: user.leaderboardEntry?.globalRank || undefined,
-        }),
       };
     });
 

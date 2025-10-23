@@ -3,7 +3,6 @@ import {
   authenticateUser,
   optionalAuth,
   requireRole,
-  AuthenticatedRequest,
 } from "../middlewares/auth.middleware";
 import {
   getUserProfile,
@@ -11,6 +10,14 @@ import {
   deleteUserAccount,
   uploadUserAvatar,
   removeUserAvatar,
+  getLabyrinthProfile,
+  updateLabyrinthProfile,
+  updateUserTechStack,
+  updateUserDemographic,
+  updatePreferences,
+  getWorkspaces,
+  getCollaborationStats,
+  getFullUserProfile,
 } from "../controllers/user.controller";
 import { uploadAvatar, handleUploadError } from "../middlewares/upload.middleware";
 import { asyncHandler } from "../middlewares/error.middleware";
@@ -67,6 +74,54 @@ router.post(
 // Usage: DELETE /api/user/avatar
 // Headers: Authorization: Bearer <jwt_token>
 router.delete("/avatar", authenticateUser, asyncHandler(removeUserAvatar));
+
+// =============================================================================
+// LABYRINTH COLLABORATION PLATFORM ROUTES
+// =============================================================================
+
+// Get comprehensive Labyrinth user profile
+// Usage: GET /api/user/labyrinth-profile
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/labyrinth-profile", authenticateUser, asyncHandler(getLabyrinthProfile));
+
+// Update Labyrinth user profile
+// Usage: PUT /api/user/labyrinth-profile
+// Headers: Authorization: Bearer <jwt_token>
+// Body: { firstName?, lastName?, dateOfBirth?, gitHubProfile?, education?, maxDailySwipes? }
+router.put("/labyrinth-profile", authenticateUser, asyncHandler(updateLabyrinthProfile));
+
+// Update user tech stack
+// Usage: PUT /api/user/tech-stack
+// Headers: Authorization: Bearer <jwt_token>
+// Body: { frameworks: string[], languages: string[], tools?: string[] }
+router.put("/tech-stack", authenticateUser, asyncHandler(updateUserTechStack));
+
+// Update user demographic information
+// Usage: PUT /api/user/demographic
+// Headers: Authorization: Bearer <jwt_token>
+// Body: { country: string, languages: string[] }
+router.put("/demographic", authenticateUser, asyncHandler(updateUserDemographic));
+
+// Update user preferences (matchmaking preferences)
+// Usage: PUT /api/user/preferences
+// Headers: Authorization: Bearer <jwt_token>
+// Body: { preferredTechStackId?: string, preferredDemographicId?: string }
+router.put("/preferences", authenticateUser, asyncHandler(updatePreferences));
+
+// Get user workspaces and projects
+// Usage: GET /api/user/workspaces
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/workspaces", authenticateUser, asyncHandler(getWorkspaces));
+
+// Get user collaboration statistics
+// Usage: GET /api/user/collaboration-stats
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/collaboration-stats", authenticateUser, asyncHandler(getCollaborationStats));
+
+// Get full user profile with all related data
+// Usage: GET /api/user/full-profile
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/full-profile", authenticateUser, asyncHandler(getFullUserProfile));
 
 // =============================================================================
 // ROLE-BASED AUTHENTICATION ROUTES

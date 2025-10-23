@@ -1,0 +1,1904 @@
+\documentclass{FastFyp}
+\usepackage{placeins} 
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{titlesec}
+\titlespacing*{\section} {0pt}{1.5em plus 1ex minus .2ex}{1em}
+\titlespacing*{\subsection} {0pt}{1em plus 1ex minus .2ex}{0.5em}
+% \svgsetup{inkscape=exe,inkscapelatex=false}
+% \bibliographystyle{IEEEtran}
+% \bibliography{fypbib}
+\begin{document}
+\newcommand{\supervisor}{Mr. Muhammad Ishaq Raza}
+\newcommand{\university}{National University of Computer and Emerging Sciences, Lahore}
+\newcommand{\fyptitle}{Labyrinth}
+\newcommand{\degree}{BS}
+\newcommand{\Studentone}{Khizra Yaseen     Roll No. 21L-7517    BS(CS)} 
+\newcommand{\Studenttwo}{Abdul Arham Khan     Roll No. 21L-7728   BS(CS)}
+\newcommand{\Studentthree}{Abdul Raheem     Roll No. 21L-5218    BS(CS)}
+\date{\today}
+\renewcommand{\contentsname}{Table of Contents}
+\makeatletter
+    \begin{titlepage}
+        \includegraphics[width=0.2\linewidth]{Figures/nulogo.png}\hfill
+        \includegraphics[width=0.2\linewidth]{Figures/fast.png}\\
+        \begin{center} 
+            {\large\bfseries \university}\\[7ex]
+            \includegraphics[width=0.4\linewidth]{Figures/fastlogo.png}\\[8ex]
+            {\huge \bfseries  \fyptitle }\\[10ex] 
+            {\Studentone}\\{\Studenttwo}\\{\Studentthree}\\[4ex] 
+            {Supervisor: \supervisor} \\ [10ex]
+            {Final Year Project}\\
+            {\large \@date}
+        \end{center}
+    \end{titlepage}    
+\makeatother
+\frontmatter
+
+\newpage \thispagestyle{empty} \mbox{} \newpage %Aatira
+
+\pagestyle{empty}  %Aatira
+\section*{\begin{center}{Anti-Plagiarism Declaration} \end{center}} %Aatira
+This is to declare that the above publication was produced under the:
+\begin{flushleft}
+\bf Title: \fyptitle
+\end{flushleft}
+
+is the sole contribution of the author(s), and no part hereof has been reproduced as it is the basis (cut and paste) that can be considered Plagiarism. All referenced parts have been used to argue the idea and cited properly. I/We will be responsible and liable for any consequence if a violation of this declaration is determined.
+\\[4ex]
+%% FYPTODO add the date and your names here
+% Date: ..........................
+Date: \today
+
+\begin{flushright}
+% Name: ..........................
+% \\[3ex]
+% Signature: ..........................
+% \\[6ex]
+% Name: ..........................
+% \\[3ex]
+% Signature: ..........................
+% \\[6ex]
+% Name: ..........................
+% \\[3ex]
+% Signature: ..........................
+
+% Name: Khizra Yaseen
+% \\[3ex]
+% Signature: \includegraphics[width=3cm]{Figures/Khizraa.png}
+% \\[6ex]
+% Name: Abdul Arham Khan
+% \\[3ex]
+% Signature: \includegraphics[width=4cm]{Figures/AbdulArham.png}
+% \\[6ex]
+% Name: Abdul Raheem
+% \\[3ex]
+% Signature: \includegraphics[width=4cm]{Figures/AbdulRaheem.png}
+
+\begin{tabular}{ll} 
+    Name: & Khizra Yaseen \\[1ex]
+    Signature: & \includegraphics[width=3cm, height=0.8cm]{Figures/Khizraa.png} \\[3ex]
+    
+    Name: & Abdul Arham Khan \\[1ex]
+    Signature: & \includegraphics[width=3cm, height=0.8cm]{Figures/AbdulArham.png} \\[3ex]
+    
+    Name: & Abdul Raheem \\[1ex]
+    Signature: & \includegraphics[width=3cm, height=0.8cm]{Figures/AbdulRaheem.png} \\[3ex]
+\end{tabular}
+\end{flushright} 
+\vspace{5 cm} %Aatira
+\hrule %Aatira
+\section*{Author's Declaration}
+This states Authors’ declaration that the work presented in the report is their own, and has not been submitted/presented previously to any other institution or organization.
+\pagebreak
+\section*{Abstract}
+In today's rapidly growing tech industry, the collaboration for projects has been a concern for students, freelancers and professionals. To survive in the tech industry, it is needed to have excellent projects, teamwork, networking and expertise. However, the fragmented platforms makes it difficult to collaborate on projects, networking, communication and project management all at one-place. Labyrinth is a web-based platform that makes it easier for developers to collaborate on brilliant projects and improve their skill sets. It provides a comprehensive solution that streamlines collaboration, communication, facilitates teamwork, and provides organized project management. This project includes modules for user profiles, matchmaking, recommendations, exploration, chat, workspaces, and project management.
+% An Abstract is a short summary of the work being reported. Three to five sentences describing the essence of the work. An abstract is a short, 50-125 words summary of a work. An Abstract should state your work's purpose, findings, and conclusion without commenting on or evaluating the work itself.  It should be only one paragraph. Put the abstract on a separate page that follows the title page.
+\pagebreak 
+
+\section*{Executive Summary}
+% Labyrinth is web-based platform developed to facilitate collaboration between professionals seeking to work together on projects. It aims to serve the needs of students, freelancers, and professionals seeking a strong portfolio, collaboration, communication, and project management. The platform allows users to create profiles, explore others' profiles and projects across various tech stacks, and express interest in collaboration. The platform includes project workspaces and chat to facilitate communication among team members, creating a seamless collaboration experience. The platform has a project management module, which allows collaborators to manage tasks and monitor project analytics. \\Labyrinth presents a solution to the existing challenges in other collaboration platforms, all of them are fragmented and professionals has 
+Labyrinth is an innovative web-based platform that simplifies project collaboration, networking, and management for students, freelancers, and businesses.  Labyrinth connects talented people with opportunities by offering a unified platform for users to collaborate, exchange ideas, and interact.  With real-time interactions to boost productivity, the platform enables smooth communication and effective project tracking.\\
+Labyrinth was created to address current problems in project collaboration, as standard solutions frequently lack coherence, resulting in inefficiencies and fragmented workflows.  Many of the solutions that are now available only address networking or task management, forcing users to switch between multiple applications to suit their requirements.  Our platform combines necessary components into a single, integrated system to offer a complete solution.  The project aims to establish an environment where students and professionals can collaborate productively, promoting deep relationships and chances for professional advancement. \\
+The platform includes core features such user authentication, project creation and administration, task assignment, real-time messaging, and personalised recommendations. These features ensure an organised yet adaptable approach to professional networking and project management. By merging these features, Labyrinth reduces inefficiencies in project workflows and boosts productivity while offering a formal foundation for communication. \\
+The system's well-structured architecture, which divides issues into distinct components, was developed with scalability and efficiency in mind.  A dynamic user experience is provided by the Next.js-built frontend, while business logic and data operations are managed by the Node.js/Express-developed backend.  The main database is PostgreSQL, hosted on Supabase, and Prisma ORM makes sure that database interactions are optimised.  Redis is added as a caching layer to improve system performance, while Cloudinary or AWS S3 are used to manage media files.\\
+Labyrinth's clearly defined architecture, which is demonstrated by class diagrams, sequence diagrams, and system flow representations, is one of its main features.  The structure of the system, user interactions, and data flow between different components are all illustrated by these graphic components.  The user interface is made to be easy to use and intuitive, and it incorporates modern design using shadcn/ui and TailwindCSS to guarantee a consistent experience across various devices.  The report's diagrams provide a complete overview of system interactions, highlighting essential operations and design considerations that contribute to platform efficiency and scalability.\\
+Sustainable Development Goal (SDG) 8: Decent Work and Economic Growth is in line with the project.  Labyrinth enables users to get experience, grow their networks, and engage on worthwhile projects by creating an atmosphere that encourages learning, teamwork, and professional development.  The platform facilitates effective teamwork, which boosts output and creates financial prospects for professionals and students.\\
+To sum up, Labyrinth offers a cutting-edge approach to project collaboration by combining necessary components into a unified platform.  With its user-friendly interface, systematic project management, and real-time communication, it's a complete tool for professionals, students, and freelancers.  Labyrinth aspires to reinvent how people interact, collaborate, and complete projects by using industry best practices and current architectural patterns.\\ 
+Future improvements could include deeper integrations with third-party productivity tools, more comprehensive analytics for performance tracking, and broader real-time collaborative options to improve the user experience.  Furthermore, upgrades to the recommendation system and UI will ensure that the platform evolves and responds to the demands of its users.
+
+% The executive summary should be one to two pages’ of an overview of the information contained in the FYP report.  It should give the reader an easy reference, in a very brief form, to the important information contained in the report and explained in more detail in the body of the report. People reading the report will use this section as a reference during presentations. 
+\pagebreak
+\pagestyle{fancy} %Aatira
+\tableofcontents
+\pagebreak
+\listoffigures	% comment this if there are no figures
+\addcontentsline{toc}{chapter}{List of Figures}
+\pagebreak
+\listoftables % comment this if there are no tables
+\addcontentsline{toc}{chapter}{List of Tables}
+\mainmatter
+
+
+\chapter{Introduction}
+As the tech world is growing rapidly, professionals face increasing pressure to prove their capabilities. They are not expected to only have a solid technical skill set, but also a list of finished projects, and successful collaboration experience to work in a team. However, with so many fragmented platforms, developers find themselves juggling multiple tools to find partners for collaboration, communicate, expand their network build good portfolio and manage project tasks in one place. \\
+Many developers also face the challenge of finding the right partners for project collaboration. For example, if you’re looking to develop the front-end for an AI recommendation system but lack expertise in front-end frameworks, collaborating with a front-end developer could be the solution. Or, if you want to turn an idea into a product by working with two or three developers, it can be difficult to find skilled professionals who are not only willing but also available to collaborate effectively. \\
+There are also many aspiring individuals actively seeking partners to collaborate with, as they aim to work in teams and enhance their technical skill sets. By collaborating, they gain the opportunity to not only apply their knowledge in real-world projects but also to learn from others, exchange ideas, and grow their expertise in areas they may not be familiar with. This collaboration fosters continuous learning, strong skill development, and knowledge about trending technologies and market trends.\\
+To address all of the above concerns, we have developed labyrinth, a one-stop platform consists of individual profile creation feature, matchmaking and exploration module, chat box to communication and project management tools. Ultimately, the goal is to develop a web-based platform for students, freelancers, professionals and aspiring individuals to develop their portfolios, communicate and expand their networks, and track their project progress in a straightforward manner. Individual users will also have access to KPI measures based on technical and soft skills reviews received following successful engagement with partners.  It will guarantee that they can monitor their own development, point out areas that require work, and inspire them to hone their abilities for upcoming tasks.  Additionally, this will work to create a merit-based workplace where people are valued for their actual abilities and efforts rather than merely their involvement in projects.\\
+Additionally, the platform will incorporate Key Performance Indicator (KPI) data for individual users based on feedback they receive following successful partnerships regarding their technical and soft abilities.  This tool will make it easier to monitor user progress, identify areas for development, and guarantee that teamwork results in both professional and personal advancement. By collecting and displaying these metrics, the platform will provide users with valuable insights into their performance, fostering continuous learning and motivating them to refine their skills for future projects. \\
+We developed this project as a MVP, which focuses on delivering core features like user profile creation, matchmaking module for finding partners, integrating chat box to communicate, creating workspaces and task management tools for smooth collaboration. It allows us to launch this project quickly and iteratively improve it in future based on user feedback and evolving requirements.\\
+The upcoming chapters of this report will outline our project vision, a thorough literature review we conduct to address the gap in relevant platforms, which we aim to fill.
+% Labyrinth, is a web-based platform developed for students, freelancers and professional looking for developers to collaborate on projects. It facilitates collaboration, communication, networking and project management for potential users. The main aim of the project is to provide centralized solution to help individuals looking for partners to collaborate on projects, communicate and manage project tasks, and availing networking opportunities all within the same platform. 
+% This chapter is mandatory. The introduction should contain a brief overview of the problem being addressed and the background information needed for the reader to understand the work being done and the reasoning behind it.  
+% The last paragraph of the introduction chapter should contain an outline of the entire report.  Summarize each chapter in one line to make the last paragraph.
+\section{Purpose of this Document}
+% \textbf{Specify the purpose of this Project.}
+The purpose of this document is to present a detailed overview of the Labyrinth project, a web-based platform developed to facilitate collaboration, communication, and project management for students, freelancers, and professionals. The project addresses the need for a centralized solution to help individuals find collaborators, manage project tasks, and improve networking opportunities, which are often fragmented across various tools. It ensures a user-friendly UI and seamless UX for users to have a smooth collaboration experience. This document will cover the goals, objectives, scope, and technical aspects of our project to explain the problem being solved, targeted audience, the approach taken and the expected outcome. 
+\section{Intended Audience}
+The project intended audience spans a range of individuals. Firstly. it is for the students, willing to find and collaborate partners for developing projects and build a strong portfolio. Secondly, it caters to freelancers and professionals willing to work on projects and expand their network. The project's intended audience also covers aspiring individuals looking for partners to work and learn a new technical skill set for experience.
+\section{Definitions, Acronyms, and Abbreviations}
+
+\textbf{FYP:} Final Year Project\\
+\textbf{MVP}: Minimum Viable Product\\
+\textbf{KPI}: Key Performance Indicator\\
+\textbf{UI}: User Interface\\
+\textbf{UX}: User Experience\\
+\textbf{B2B}: Business-to-Business\\
+\textbf{ORM}: Object-Relational Mapping\\
+\textbf{HR:} Human Resources \\
+\textbf{SDG: } Sustainable Development Goals \\
+% \textbf{Agile}: Agile Development\\
+% \textbf{SCRUM}: Scrum Development\\
+% \textbf{REST}: Representational State Transfer\\
+% \textbf{ORM}: Object-Relational Mapping\\
+% \textbf{CRUD}: Create, Read, Update, Delete\\
+% \textbf{API}: Application Programming Interface
+\section{Conclusion}
+The Labyrinth project report comprehensively details the design, development, and implementation of a modern project collaboration platform. The report begins with an introduction outlining the motivation behind the project, its objectives, and the target audience. This chapter also defines key terminologies and abbreviations relevant to the system.\\
+Chapter 2 presents the project vision, problem domain, and the specific challenges that Labyrinth seeks to address. It discusses the goals and objectives, project scope, and constraints while highlighting the business opportunities and the stakeholders involved. The chapter also establishes the alignment of Labyrinth with the Sustainable Development Goals, reinforcing its impact on professional growth and digital collaboration. \\
+Chapter 3 provides an in detailed literature review, summarizes related research and existing solutions for the project management and professional networking platforms. It also critically analyzes the strengths and weaknesses of available tools and justifies that there is a need for Labyrinth as a novel solution which will integrate multiple functionalities into a single and unified platform. \\
+Chapter 4 covers the requirements engineering process, and give indepth details on both functional and non-functional requirements. This chapter also emphasizes on the need for scalability, security and usability, which ensures that Labyrinth is designed to meet industry standards. \\
+Chapter 5 explores the high-level and low-level design of the system. It outlines the system architecture, including the frontend and backend components, microservices, and database design. The chapter also presents the class and model diagrams, sequence diagrams, and the design policies and tactics adopted to ensure a modular, scalable, and maintainable system. \\
+Overall, this report provides a structured and in-depth examination of Labyrinth, from conceptualization to design and implementation. The findings and architectural choices presented in this document lay the foundation for further enhancements and potential future developments, ensuring Labyrinth evolves as a powerful tool for seamless project collaboration and networking.
+
+% The last paragraph of the introduction chapter should contain an outline of the entire report. Summarize each chapter in one line to make the last paragraph.
+
+
+
+
+\chapter{Project Vision}
+In today's fast-paced tech world, the need to have a experience and track record of building end-to-end projects calls for collaboration, because of time constraints to develop a project and limited skills set and of an individual student, freelancer and professional. However, the fragmented platforms have made it difficult to find partners for collaboration, communicate and track the project progress all in one. That's where Labyrinth comes to serve, it is a web-based platform developed to streamline the process of finding partners for project, communication, tracking the project progress and expanding the network.
+% For each related work provide a paragraph of introduction and at the end, a paragraph of conclusions. Give a page break after the chapter ends.  This chapter is mandatory.  
+% Clearly specify the goals and objectives of the project along with the scope of the project. (You can make sub-heading of goals and objectives and the scope of the project).
+\section{Problem Domain Overview}
+Labyrinth is developed to address the issue faced by many students, freelancers and professionals. The challenges include difficultly in finding reliable and willing collaborators, communication and managing project, and building a strong portfolio all within the same application. Therefore, it aims to facilitates collaboration, communication. networking and portfolio building. The platform helps users connect with like-minded professionals with their preferred skill sets, by offering a matchmaking module, which suggests the potential collaborators based on user skills and interest. User can also search for users of their interest skill sets to ensure that they all bring relevant expertise to the table. \\
+Once, users are matched, labyrinth provides them an integrated workspace to manage all projects and built-in chat to communicate. It also include a to-do lists and project management tools. Hence, it streamline the workflow, from finding collaborators to completing a project. The KPI metrics generated based on user's feedback ensures to track their progress and contribution in completing projects. By bringing these all features together, labyrinth address the fragmentation of existing platforms and provide a one-stop solution for all addressed issues.  
+% Describe in full detail what your system does. This section can be further divided into sub-sections, but basically, a paragraph description of the system is required.
+\section{Problem Statement}
+The project Labyrinth bridges the gap in existing platforms by offering an one-stop platform. It helps users find compatible collaborators, integrates communication chat box, provides dedicated workspaces, includes task management tool, and expand their network, all in one platform.
+% Provide the \textbf{problem} which you are trying to solve. 
+\section{Problem Elaboration}
+As the tech world is growing rapidly, the aspiring individuals find it difficult in progressing their careers, mainly because of a streamlined solution. One of the their main concerns is difficulty in finding the right people to collaborate on projects. Sometimes, we need to collaborate with individuals having complementary skill sets. A developer working on back-end application may need to collaborate with a skilled front-end developer or a machine learning expert may want to work with a data scientist to build a project. The current platforms don't offer a way to connect with individuals based on skill matching and project tech stack. \\
+Another major issue is that multiple communication tools such as discord, slack, email and others are full of distractions and not centralized for project collaboration. However, integrated chat box in Labyrinth are solely for communication among developers who are willing to or working on projects together.
+Managing a project is also difficult and keep track of tasks, deadlines, progress and team collaboration relies on multiple tools. Tools like Trello for task managements, google docs for documentation and GitHub for code collaboration increases the chances of missing deadlines, as it is impossible to looking at all apps at once. Labyrinth has all these tools at one place to track the progress of their project in real-time, assign tasks and set deadlines, all in one place. \\
+Additionally, many developers, and professionals struggles to have a strong portfolio. Labyrinth addresses this issue by offering an users' profiles listed their technical skills set, track record of projects and feedback from collaborators. The most common problem is also finding the right projects to work on, which aligns well with interest and skills. Platforms like Linkedin and GitHub don't offer a project discovery feature and they rely solely on external and already established links. Labyrinth solves this by offering match making module to suggest based on user's skills, interest and previous projects experience. \\
+In summary, Labyrinth address multiple issues that students, freelancers and professionals face in the pursuit of career growth. It offers a one-stop solution that empowers professionals to become successful in their professional career.
+% Describe the problem in detail and the various sub-problems you would work on.
+\section{Goals and Objectives}
+The primary goal of this project Labyrinth is to develop a holistic platform to streamline the process of finding collaborators, ensure smooth communication, and manage project progress, all while helping in personal skill development and career growth in fast-paced tech industry to stand out. Here are the specific goals and objectives:
+\begin{enumerate}
+    \item Help users to find compatible contributors based on skills set, interests and projects completed.
+    \item Implement a project recommendation module to help user discover projects which aligns with their skills set and interests.
+    \item Integrate a real-time chat box with file sharing to keep users updated about the project.
+    \item  Provide easy-to-use project management tools for tracking project progress, managing deadlines and assigning tasks to each other, all to ensure a smooth project collaboration.
+    \item Implement the feedback based system so users can review each other's technical and soft skills after project completion, enabling to build a analytics module.
+    \item  Encourage users to collaborate with others outside their skill set to build and end-to-end project and promote personal growth.
+    \item  Develop all these features to help users engage with other professionals, expand their network and explore potential collaborations for future projects.
+\end{enumerate}
+% Write goals and objectives here.
+\section{Project Scope}
+The scope of this project covers developing a web-based application for students, freelancers, professionals and aspiring developers. It will help individuals to:
+\begin{itemize}
+    \item Create user profile consists of name, age, location, tech stack and include number of projects done.
+    \item Find and connect with potential users to collaborate on projects.
+    \item Communicate with collaborators through integrated chat box to offer smooth experience.
+    \item Provides separate workspace consists of all projects user is associated with.
+    \item Manage projects progress and task with integrated management tools.
+    \item Provides an easy-to-use user interface and a seamless user experience
+\end{itemize}
+
+The project will be developed using typescript and a trending web-development framework Nextjs. For back-end, we will be using PostgreSQL and Neon. Prisma will be our ORM for DB queries and models/tables, as our project is back-end heavy. We have planned to develop the project as an MVP with future scalability in mind.
+
+The project deliverables will include:
+\begin{itemize}
+    \item A fully functional web-based platform with integrated project management, networking, and collaboration tools.
+    \item Secure authentication and user management features.
+    \item A responsive and intuitive user interface.
+    \item Real-time communication services such as messaging and notifications.
+    \item A robust backend with scalable microservices architecture.
+    \item Comprehensive documentation, including system design, architecture, and usage guidelines.
+\end{itemize}
+\section{Sustainable Development Goal (SDG)}
+Our project Labyrinth align well with the Sustainable Development Goal (SDG), which is decent work and economic growth, as it allows individuals to collaborate. The platform facilitates developers to build a strong portfolio showcasing projects, collaboration, and networking experience with an aim to support their career growth. Hence, it ensures economic growth by providing individuals with valuable experience and access to decent work opportunities.
+
+\begin{figure} [!h]
+    \centering
+\includegraphics[width=0.5\textwidth, height=6.5cm]{Figures/SDG08}
+    \caption{Sustainable Development Goal} \\
+    % \textit{This figure represents our sustainable development goal which is decent work and economic growth.}
+    % }
+    \label{fig:1}
+\end{figure}
+
+\section{Constraints}
+For Labyrinth, the following constraints must be taken into account:
+\begin{itemize}
+    \item As an MVP, Labyrinth will initially built as a web-based platform only, excluding mobile apps or desktop applications. It limits the accessibility to users who prefer mobile apps.
+    \item This initial version will focus on completion of core features only and it will not cover integration with third party platforms like code repositories or advanced project management tools.
+    \item Labyrinth will be developed with scalability in mind, but the initial version may face issues when dealing with high user traffic.
+    \item Labyrinth relies on active user engagement and user profiles for matchmaking module, however, low user activity and less user profiles may cause issue at initial stages.
+\end{itemize}
+\section{Business Opportunity}
+Labyrinth core value lies in it ability to simplify the process of finding right collaborators and allowing them have real-time communication and track their project within the the same application. With its unified interface, it can tap into multiple revenue streams, such as:
+\begin{itemize}
+    \item It can offer premium subscription plans for advanced features such as allowing a team of more than 10 individuals to collaborate based on their roles.
+    \item It can charge for advanced project analytics, additional collaboration tools and enhanced matchmaking capabilities.
+    \item It can explore B2B opportunity by getting licensed from businesses, professional development initiatives and software houses to support team projects, creating opportunities for market expansion and talent scouting.
+    \item Labyrinth can also host sponsored content, partnerships, and advertisements for relevant tools, software, and services from the tech industry.
+    \item As per the demand for remote work, Labyrinth bridges geographical gaps, so it will be a market place for worldwide collaboration and talented pools.
+\end{itemize} 
+\section{Stakeholders Description/ User Characteristics}
+Labyrinth is developed for a vast set of users, such that each of them is taking advantage of the platform in a way or another. The platform will be used by:
+\begin{enumerate}
+    \item \textbf{Students:} These are the users who will use Labyrinth for collaboration of personal projects to enhance their skills set, such that it helps them find potential partners for building technical expertise through teamwork. 
+    \item \textbf{Freelancers and Aspiring Developers:} These users will come to Labyrinth for networking opportunities and collaborating projects, both interested in expanding their client base and professional network.
+    \item \textbf{Experienced Developers/Industry Professionals:}These users will take advantage to collaborate with right and skilled individuals on meaningful projects, as the platform also offers the KPI metrics, analytical and management tools they need to track project progress and team performance. 
+    \item \textbf{Organizations and HRs:} The platform will also help HRs and organizations to initiate projects and have a required structures workspace for all the projects at one place. It will also help them to hunt and hire skilled developers.
+\end{enumerate}
+% Identify and briefly describe who the users of this system will be, and their roles.
+\subsection{Stakeholders Summary}
+To summarize the stakeholders, Labyrinth will serve a diverse group of users from students looking for potential partners or projects for portfolio, freelancers hoping to expand their network, industry professionals seeking for skilled collaborators to aspiring developers seeking a industry level work experience. It also helps project owners and technical leads to hire talents and manage projects with integrated workspace and management tools. To sum it all, these stakeholders will help Labyrinth create a platform with smooth collaboration and seamless experience for individuals' professional growth.  
+\subsection{Key High-Level Goals and Problems of Stakeholders}
+The problem statement of Labyrinth is divided attention of stakeholders because of juggling between niche centered applications. The key goal of Labyrinth is to save time and energy of the stakeholders by streamlining the entire process in a single platform. The users will be able to network, collaborate, manage their projects and showcase a portfolio in a single web application. In addition to this, the minimal and intuitive layout of Labyrinth will help the  users to stay focused instead of being distracted or overwhelmed by the complexity and multitude. In conclusion, Labyrinth aims to save the time and energy of the stakeholders by serving as a singular easy to use platform.
+\section{Conclusion}
+Chapter 2 outlined the vision, scope, and objectives of Labyrinth, addressing the challenges faced by students, freelancers, and professionals in finding collaborators, managing projects, and building portfolios. It highlighted the platform’s key features, technical scope, and alignment with economic growth (SDG). Additionally, it discussed business opportunities, constraints, and stakeholder roles, emphasizing how Labyrinth streamlines collaboration and project management. This chapter provided a solid foundation for understanding the project’s purpose, impact, and feasibility.
+
+
+% Notice how a section’s heading is changed to “heading 1”.  It will show up in the table of contents as a section under a chapter.  Notice its numbering also. Similarly, subsections can have heading 2 and heading 3 styles.\\
+% \textcolor{red}{NOTE: Subsections from 2.7 to 2.9 are optional for Research projects but compulsory for Development projects.}
+
+
+
+
+\chapter{Literature Review / Related Work}
+For each related work we did, this chapter will provide its introduction paragraph, its critical analysis, relationship to the Labyrinth, and at the end, a paragraph of conclusion.
+% For each related work, provide a paragraph of introduction and, at the end, a paragraph of conclusions. Give a page break after the chapter ends. \textcolor{red}{This chapter is mandatory.}
+\section{Definitions, Acronyms, and Abbreviations}
+\textbf{HR: } Human Resources \\
+\textbf{DM: } Direct Message \\
+\textbf{AI: } Artificial Intelligence \\
+
+\section{Detailed Literature Review} 
+This section will cover the detailed literature review of our problem area, including overview of the work we have done in the past. Lastly, a table will summarize the key differences between all platforms and Labyrinth.
+
+% This section will include a detailed literature review of your problem area. Make different categories for different types of work done in the past.  In addition to textual descriptions, make a summary table that describes each paper that you have read, along with references.
+
+
+\subsection{Linkedin}
+Linkedin is widely known networking platform, it is developed for professionals to connect, collaborate and avail opportunities in their career. It has become a hub for HR, and job seekers to facilitate recruitment and smooth on boarding experience. Additionally, it also offers features like Linkedin learning, communication via DM, and content sharing to help professionals have their online presence. 
+
+\subsubsection{Summary of the research item}
+Linkedin was founded by Reid Hoffman in 2002, however, the platform got launched in 2003. It was developed for dedicated professional for networking, and over the years, it has grown to become a professional community for millions of users. The platforms offers users to engage in industry discussions, endorse skills and apply for jobs directly. It has introduced premium subscriptions to expand its services into advanced networking insights, avail Linkedin learning courses and AI-driven job recommendations.
+
+\subsubsection{Critical analysis of the research item}
+Linkedin has offered the platform for career growth and networking. The main key of its strength lies in its millions of user base, making the platform a hub for job seekers and recruiters. The platform offers 1:1 communication opportunity among professionals, Linkedin courses to upscale their skills and stay relevant to the industry's trends and news/ However, it's AI-driven job matching feature enhances the job searching for seekers. \\
+Despite these strengths, Linkedin does have some weakness and limitations. It is primarily focused on career growth for professional, instead of a structured workspace for project collaboration or project-based networking opportunities. The premium features are limited to users who subscribes it, and other non-premium members lack advanced features. It has also been cluttered with spam posts and content, from entertainment memes to irrelevant photos being shared by users, with no check and balance by Linkedin. It has badly effected the professional interactions among professionals and finding the right opportunity for themselves.
+\subsubsection{Relationship to the proposed research work}
+Linkedin excels in searching job opportunities and networking opportunities, but it does not fully address the needs of professionals to find the right partners to collaborate. It is extremely difficult to look for the right fit for you and collaborate, even if you do, the platform does not have structured workspace for collaboration. \\ Meanwhile, Labyrinth aims this bridge by focusing on project-based and skills-based collaboration among professionals, allowing the grow exceptionally in their career. Labyrinth also includes management tools, real-time communication chat box and separate workspace for all projects to enhance productivity. This difference makes Labyrinth a more suitable platform for professionals who are looking to work on industry-level projects instead of just expanding their professional network.
+% \subsection{Related Research Work 1}
+% \subsubsection{Summary of the research item (1 or 2 paragraphs)}
+% \subsubsection{Critical analysis of the research item (Strengths and Weaknesses)}
+% \subsubsection{Relationship to the proposed research work}
+
+\subsection{GitHub}
+GitHub is a widely used web-based platform for collaboration among software developers. It provides them a centralized repository system to create code repositories, and have all members having access to the shared code. It is build around Git, which is a distributed version control system.  It offers features like tracking changes in code, manage branches in a repository, and contribute to projects efficiently. Over the years, GitHub has helped many enterprise solutions and has been a hub to hundreds to open-source projects, making it an essential tool in the software development industry.
+
+\subsubsection{Summary of the research item}
+GitHub was founded in 2008 by Chris Wanstrath, Tom Preston-Werne, and PJ Hyett to enhance project collaboration through version control. It offer users features like creating repositories, commit code, push or pull code, track issues and review code. The platform has contributed impressively to the open-source community by providing a separate space where developers around the world can collaborate and build projects. It has also introduced GitHub Actions for CI/CD automation and GitHub Copilot for AI-assisted coding, which shoes that platform has been evolving over the time. The platform also offers enterprise solutions, which makes it a preferred choice for companies managing large-scale projects. 
+\subsubsection{Critical analysis of the research item}
+GitHub stands out as a one of its type platform for developers, by providing smooth experience for collaborative coding. One of its primarily feature is to offer a centralized hub to many open-source projects, allowing developers around the glob to engage and build projects. It also offers feature like forking, branching, and tracking issue to ensure transparency in project development. Additionally, GitHub has been an important part in devOps workflows, as it facilitates users through various development tools. \\
+However, there are some weakness in platform, such that it lacks built-in features for project management tools like assigning tasks to team members, managing deadlines and project progress analytics. Also, the platform does not have real-time communication feature to engage with team members. The platform also have a complex interface, making it difficult for newbies to work there. Another main drawback is, you can only collaborate with already connected individuals and there is no feature to find the right partner to collaborate based on skills or interests. So, networking and finding projects to collaborate is also a major limitation in GitHub.
+
+
+\subsubsection{Relationship to the proposed research work}
+GitHub seems o be a valuable tool for developer, but it does not fully address other issues related to collaboration for coding. Labyrinth aims to bridge this gap as it extends the concept of collaboration by providing a platform for all features at one place. The features include providing a platform that helps them finding the right project and people for collaboration based on their skills and interests. GitHub focuses on code collaboration only, while Labyrinth will incorporate project management tools, real time communication chat box, separate workspace to manage all projects, and expands the networking opportunities for developers. In short, Labyrinth will fill the gap for developers looking for a simple platforms that goes beyond version control, and become a more versatile choice for collaboration.
+
+\subsection{Fiverr}
+Fiverr is a widely known online marketplace that connects clients with professionals seeking work opportunities. It offers a platform where professionals can offer services such as programming, digital marketing, content writing, video editing and more. The platform is for developers looking for work opportunities as it facilitates them to connect with developers and sell their services. It has gained popularity for allowing professionals to showcase their skills and generate income, and businesses to find affordable solutions as per their needs.
+\subsubsection{Summary of the research item}
+Fiverr was founded in 2010 by Micha Kaufman and Shai Wininger, developed for freelancers to avail remote work opportunities and sell their services. It allows them to create gigs describing their services and fixed rates, allowing clients to send offer on gigs. Over the years, Fiverr has emerged to attract millions of users worldwide and has become a hub for professionals eager to monetize their skills.
+\subsubsection{Critical analysis of the research item}
+Fiverr is a leading online marketplace for interaction between freelancers willing to sell their skills and clients looking to talents. One of its main strength is its simplification where users can set up a profile, create gigs with description of their services and rates. It facilitates them to start earning without any hassle. Additionally, Fiverr's review system enhances transparency and more opportunities for hard working and talented sellers. The platform ensures security throgh an escrow system. \\
+Apart from its strengths, Fiverr does have some limitations which effects both freelancers and clients. Firstly, it does not facilitates managing a project having a separate workspace with more than one member working on the same project and client. It does not offer management tools, like tracking tasks assign to the freelancers, or project progress analytics. Overall, it lacks features for long-term collaboration. Additionally, new freelancers find it difficult to rank their profile because of Fiverr's complex visibility algorithm. 
+\subsubsection{Relationship to the proposed research work}
+Fiverr focuses on facilitating clients and freelancers to connect together, such that freelancers are there to hire and a client is the boss. While, labyrinth offers a one-to-one collaboration among developers with a motive to build projects and upscale their skills. No one paying to each other and they are collaboration within the platform to learn new skills and gain experience. Meanwhile, Fiverr also lacks features for working on long-term projects, which are included in Labyrinth. Labyrinth seeks to bridge the gap by offering separate workspace for all projects, tracking project progress and including project management tools. Therefore, Labyrinth transcends Fiverr because of its emphasize on networking, and workflow management, making it a one-stop for individuals.
+\subsection{Upwork}
+Upwork is a widely used freelancing platforms for connecting clients or businesses with professionals. It is based on a bidding-system where client posts a job listing and professionals submit cover letter to pitch for  the job. The platform offers wide range of services from graphic designing, content writing to software development. It also provides a platform for communication and secure payment for short and long term freelancing projects.
+\subsubsection{Summary of the research item}
+Upwork was created in 2015 by the merger of two innovative freelance websites, Elance and oDesk.  Since then, it has grown to be a major force in the freelance industry.  The platform enables companies to collaborate on hourly or fixed-price contracts and gives them access to a worldwide talent pool.  It is a dependable platform for large enterprises looking for qualified workers because of its well-known screening choices and structured hiring process.
+\subsubsection{Critical analysis of the research item}
+Upwork's methodical approach to freelancing is its primary strength.   Based on their ratings, experience, and expected budget, clients can use the bidding system to select the best candidates.   Its escrow process ensures secure transactions, shielding both parties from fraud.   Additionally, Upwork offers hourly contract job tracking tools that let purchasers follow the development of freelancers.   Because it offers a wide variety of job types, the platform is adaptable to a variety of organisations. \\
+Upwork does have some restrictions, though.   The competitive nature of the bidding process might lead to price undercutting, which lowers freelancer profits.   Additionally, Upwork charges high service fees, which lowers freelancers' earnings.   Lack of feedback and exposure in search results might make it difficult for new freelancers to land their first few jobs.   It might be challenging for new or struggling freelancers to comply with the marketplace's strict rules, which include account bans for low success rates.   Additionally, Upwork is unable to support long-term project management due to its emphasis on individual recruiting rather than team collaboration.
+\subsubsection{Relationship to the proposed research work}
+Upwork is a strong platform for employing freelancers, it mostly concentrates on job-hunting and hiring instead of promoting collaboration. Labyrinth seeks to stand out by offering a specialized collaborative platform rather than a work and client-hunting platform. Instead of depending on a time-consuming and competitive bidding system, Labyrinth will allow professionals, students, and freelancers to interact, network, and collaborate on projects in real time. \\
+In this collaboration, both partners are not paying to each other, and developing projects and ideas for improving their skills set. Labyrinth aims to bridge the gap between freelance marketplaces and networking tools by stressing collaboration over earning, allowing users to more successfully co-develop projects and ideas.
+
+\subsection{Discord}
+Discord is a popular communication tool that enables real-time connection via voice, video, and text channels.  Discord was originally developed for the gaming community, but it has since expanded into a flexible platform for professional and academic reasons like as project collaboration, community participation, and information exchange.  Its server-based structure enables users to establish separate rooms for different interests, resulting in a highly dynamic and customized environment.
+
+\subsubsection{Summary of the research item}
+Discord was founded in 2015 by Jason Citron and Stan Vishnevskiy as a platform for gamers to communicate seamlessly via voice and text.  Over time, its value grew beyond games, drawing in communities, schools, and professionals.  Discord offers video and phone calls, screen sharing, automation bots, and integration with other services.   Discord is widely used by organisations and businesses for event hosting, information sharing, and teamwork.   The platform is a popular choice for controlled discussions and efficient workflows because of its role-based access controls and the capacity to build servers that are both publicly and privately accessible.
+\subsubsection{Critical analysis of the research item}
+Discord is a great platform for community engagement and real-time cooperation since it provides a straightforward and engaging chat experience.  Its ability to facilitate private team-based discussions while serving large groups is a major advantage.  Productivity can be increased by using bots and third-party tools to automate tasks like scheduling, moderation, and project monitoring.  Audio and video communication tools make conversations more immersive and engaging, which is especially useful for remote teams and virtual workspaces.\\
+Discord does have some limitations, though.   Although it lacks built-in tools for structured project management, such as document sharing, task tracking, or deadline management, it is excellent for discussion.   Unlike specialised project management software, Discord is more of a chat platform than a feature-rich workspace for task and workflow management.   Furthermore, the excessive number of channels on large servers may make management challenging, and its informal nature may not be suitable in many professional settings.
+\subsubsection{Relationship to the proposed research work}
+Labyrinth and Discord are similar in that they promote communication and cooperation, but their basic goals are not the same.  While Discord is a general-purpose chat application, Labyrinth is particularly developed as a collaboration platform for students, freelancers, and professionals to collaborate on projects quickly.  Discord lacks project management capabilities, networking features, and organized collaboration processes, all of which Labyrinth offers.  Unlike Discord, which focuses on chats, Labyrinth attempts to provide a dedicated environment for users to plan, coordinate, and execute projects within an organized framework.  Although Discord may serve as a supplemental communication platform, Labyrinth provides a better personalized experience for professional project collaboration.
+
+\subsection{Notion}
+Notion is a well-known productivity and collaboration tool that gives users a single location to take notes, manage tasks, organize databases, and collaborate on documents.  Notion is a well-liked tool for teams, professionals, and students seeking an organized yet flexible digital workplace because of its versatility, which enables users to connect various capabilities and develop personalized workflows.
+\subsubsection{Summary of the research item}
+Ivan Zhao and Simon introduced Notion in 2016 as a platform that integrates note-taking, and project management features into a single user experience.  Calendars, kanban boards, integrated databases, collaborative document editing, and personalised sites are just a few of the numerous features it offers.   Notion is an adaptable tool for both individual and team productivity since it allows users to set up their workspaces anyway they see fit.   Because of its modular design, Notion is widely used in research, education, and business to manage projects, store data, and streamline procedures.
+\subsubsection{Critical analysis of the research item}
+The greatest strength of Notion is its adaptability.   Because of its block-based layout, users may create incredibly customisable pages that let them arrange content whichever best suits their needs.   The ability to integrate databases, task management tools, and real-time document collaboration makes Notion a practical all-in-one workspace.   It enhances usability and accessibility with its intuitive user interface and seamless cross-device syncing.   In order to optimise workflow, Notion also makes third-party integrations possible. \\
+However, Notion has several limitations, especially when dealing with complicated project management requirements.  While it has basic task management capabilities, it lacks advanced automation, reporting, and role-based work assignments that are available in specialist project management applications.  Performance concerns, such as delayed database loading times, can be adverse to efficiency, particularly in data-intensive applications.  Furthermore, its offline capability is restricted, which may be a disadvantage for those who want regular access to their workplace without internet connectivity.
+
+\subsubsection{Relationship to the proposed research work}
+Labyrinth and Notion are both focused on cooperation and organizing, although they serve distinct needs.  Notion is primarily intended as a general-purpose note-taking and information management application, whereas Labyrinth is a platform specifically created for professional, freelance, and student project collaboration.  Unlike Notion, which offers an open-ended workspace, Labyrinth incorporates organized project management, networking, and team communication features inside a set process.
+In this sense, Labyrinth offers a more focused and disciplined approach to professional cooperation than Notion, which is more flexible but less project-specific.
+
+\section{Literature Review Summary Table}
+The related work summary table is shown in the table \ref{tab:1}
+\begin{table}[!h]
+\centering
+\caption{
+% This summary Table is for a development project, and you must identify each column clearly. Must need at least 10 relevant studies
+This summary Table summaries the points discussed throughout this chapter
+}
+
+% \begin{tabular}{|p{2.5cm}|p{2.5cm}|p{4cm}|p{5cm}|}
+\begin{tabular}{|p{3cm}|p{4cm}|p{4cm}|p{4cm}|}
+\hline
+    \textbf{Application} & \textbf{Features} & \textbf{Relevance} & \textbf{Limitations} \\
+\hline
+Linkedin \cite{ref:LinkedIn} & Professional networking, job postings, skill endorsements & Facilitates professional connections and collaborations & Primarily networked-focused rather than project collaboration \\
+\hline
+Github \cite{ref:GitHub} & Version control, repository hosting, collaboration tools & Supports developers in managing and collaborating on code & Limited to software development, lacks broad project management features \\
+\hline
+Fiverr \cite{ref:Fiverr} & Freelance marketplace, service listings, client reviews & Provides a way to connect freelancers with clients & Focuses on gig-based work rather than long-term collaboration \\
+\hline
+Upwork \cite{ref:Upwork} & Freelancer-client matching, project contracts, secure payments & Enables freelancers to find work opportunities & Primarily job-centric, lacks structured collaboration feature \\
+\hline
+Discord \cite{ref:Discord} & Real-time messaging, voice channels, community servers & Supports communication for teams and communities & Lacks structured project management and task-tracking features \\
+\hline
+Notion \cite{ref:Notion} & Document management, task tracking, knowledge organization & Offers a flexible workspace for team collaboration & Lacks built-in networking and structured professional collaboration \\
+\hline
+\end{tabular}
+\label{tab:1}
+\end{table}
+% The Table above explains a way to present your literature review for development projects. If you have a research project, the summary should be written in the below table \ref{tab:2} format.
+% \begin{table}[!h]
+% \caption{This summary Table is for a research project, and you must identify each column clearly. Must need at least 20 relevant studies}
+% \centering
+% \begin{tabular}{|p{3cm}|p{4cm}|p{4cm}|p{3cm}|}
+% \hline
+% \textbf{Author} & \textbf{Method} & \textbf{Results} & \textbf{Limitations} \\
+% \hline
+% Smith et al. \cite{ref:Bishop:2006}& Case study with a sample size of 50 & Positive effects of XYZ on ABC, 93.74\% accuracy & Small sample size \\
+% \hline
+% Johnson et al. \cite{ref:Duda:2000} & Literature review utilizing keyword-based search & A comprehensive overview of XYZ in the field of DEF, 12.8\% precision & Limited to specific subfield \\
+% \hline
+% Williams et al. \cite{ref:IJCNNChallenge:2007} & Survey of 1000 participants using a structured questionnaire & Strong correlation between XYZ and GHI, R-squared = 0.72 & Self-reported data \\
+% \hline
+% Jones et al. \cite{ref:SVMGuide} & Experimental design with 100 participants, Utilized SVM with the combination of PCA & XYZ significantly improves JKL in certain populations, AUC = 0.86 & Limited generalizability \\
+% \hline
+% \end{tabular}
+% \label{tab:2}
+% \end{table}
+\section{Conclusion}
+The literature study emphasizes the various purposes that well-known platforms like as LinkedIn, GitHub, Fiverr, Upwork, Discord, and Notion fulfill in the areas of networking, freelancing, communication, and project management. None, however, completely combine networking, project management, and organized collaboration on a single platform. Labyrinth is made for smooth teamwork and project collaboration, in contrast to job-focused sites like Fiverr and Upwork. It provides a more organized method of task management and professional networking than generic apps like Notion and Discord. Labyrinth fills these gaps by offering a unified environment for professionals, freelancers, and students to work together productively.
+\chapter{Software Requirement Specifications}
+This chapter highlights important features of the our project Labyrinth. It also includes functional and non-functional requirement of our project, defines use cases and risk analysis involved in our project.
+% Describe all modules of requirements and design in clear English text along with the necessary diagram and figures.  Anyone reading your report should be able to reproduce your system/results after reading it. It describes functional requirements, design constraints, and other factors necessary to provide a complete and comprehensive description of the requirements for the software.\\
+% For each chapter, provide a paragraph of introduction and at the end, a paragraph of conclusions. Make sure no heading/subheading is blank.  Write text to introduce each section as well. 
+% \textcolor{red}{NOTE: This Chapter is optional for Research projects but compulsory for Development projects.}
+\section{List of Features}
+\begin{enumerate}
+    \item \textbf{Profile Creation \& Matchmaking:}  Users can create their profiles showcasing their skills, experience, and interests. It has a matchmaking module which connects individuals with potential collaborators and projects based on their interest.
+    \item \textbf{Project Management \& Workspaces:} It has a dedicated workspace which allows users to manage all their projects, featuring built-in chat, to-do lists, task tracking, and progress analytics for smooth collaboration.
+    \item \textbf{Integrated Communication \& Networking: } Labyrinth also promotes professional networking by providing seamless communication via an integrated chat box, to make team interactions efficient.
+    \item \textbf{Personalized Recommendations: } The app has a recommendation module which suggests potential collaborators and projects tailored to users' skills and interests, to ensure that they engage in meaningful and productive opportunities.
+\end{enumerate}
+% List all important features of your system here.
+\section{Functional Requirements}
+The functional requirements fully describe the external behavior of our project Labyrinth.
+\begin{itemize}
+    \item \textbf{User Authentication \& Profile Management:} Users must be able to sign up, log in, and manage their profiles, including adding skills, experience, and interests.
+    \item \textbf{Project Collaboration \& Matchmaking:} The system should match users with relevant collaborators and projects based on their skills and interests.
+    \item \textbf{Integrated Communication Tools:} A built-in chat system and collaborative workspace should enable seamless communication among team members.
+    \item \textbf{Project Tracking \& Management:} Users must be able to create, assign, and track tasks, with analytics to monitor project progress.
+\end{itemize}
+% The functional requirements fully describe the external behavior of the system. Identify and list each functionality and give a brief description, along with the user of each functionality.
+\section{Quality Attributes}
+Labyrinth encourages usability with an intuitive user interface, scalability to handle growing user counts, and security through encryption and authentication.   Reliability ensures minimal downtime, and interoperability allows for easy integration with third-party technology.   Because of its modular architecture, high performance for effective teamwork, and compliance with data protection laws, the platform is easy to maintain and offers a safe and smooth user experience.
+\section{Non-Functional Requirements}
+The essential non-functional requirements for Labyrinth include:
+\begin{itemize}
+    \item \textbf{Scalability:} The system should efficiently handle a growing number of users and projects without performance degradation.
+    \item \textbf{Performance:}The platform must ensure fast response times for matchmaking, communication, and project management features.
+    \item \textbf{Security:} User data, including project details and communications, must be protected using encryption and secure authentication mechanisms.
+    \item \textbf{Usability:} The interface should be intuitive and user-friendly, ensuring a smooth experience for students, freelancers, and professionals.
+    \item \textbf{Availability:} The system should maintain high uptime, minimizing downtime and ensuring continuous accessibility.
+    \item \textbf{Maintainability:} The codebase should be modular and well-documented to facilitate easy updates and bug fixes.
+    \item \textbf{Compatibility:} The platform must be accessible across different devices and browsers without functionality loss.
+\end{itemize}
+% This section should describe all the non-functional requirements, including reusability, performance (how many maximum users can access it at a time), extensibility, etc.
+\section{Assumptions}
+The following assumptions have been made for the specification of Labyrinth:
+\begin{itemize}
+    \item Users will have basic technical literacy to navigate and use the platform effectively.
+    \item A stable internet connection is available for all users to access the web-based platform.
+    \item Users will provide accurate and up-to-date information in their profiles for better matchmaking and recommendations
+    \item The platform will primarily be used by students, freelancers, and professionals seeking collaboration rather than job hunting.
+    \item All users will adhere to ethical and professional conduct when interacting within the platform.
+    \item The system will be expanded and improved over time based on user feedback and evolving requirements.
+    \item Labyrinth will be used on modern web browsers that support its technologies (e.g., Next.js, TypeScript).
+    \item The platform will not be responsible for disputes arising between collaborators regarding project ownership or contributions. 
+    \item Users will respect privacy policies and data-sharing agreements when using the platform.
+    
+\end{itemize}
+
+% List down all the assumptions made for the specification.
+
+
+% \begin{table}[!ht]
+% \centering
+% \caption{Use Case 1: User Registration}
+% \label{tab:user_registration} 
+% \begin{tabular}{|lllll|}
+% \hline
+% \multicolumn{2}{|l|}{\textbf{Name}} &
+%   \multicolumn{3}{l|}{User Registration} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Actors}} &
+%   \multicolumn{3}{l|}{New User} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Summary}} &
+%   \multicolumn{3}{l|}{A new user creates an account on Labyrinth.} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+%   \multicolumn{3}{l|}{None.} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+%   \multicolumn{3}{l|}{User account is created.} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+%   \multicolumn{3}{l|}{None} \\ \hline
+% \multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+% \multicolumn{3}{|c|}{\textbf{Actor Action}} &
+%   \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+% \multicolumn{1}{|l|}{1} &
+%   \multicolumn{2}{l|}{User accesses the signup page.} &
+%   \multicolumn{1}{l|}{2} &
+%   System displays the signup form. \\ \hline
+% \multicolumn{1}{|l|}{2} &
+%   \multicolumn{2}{l|}{User provides personal information.} &
+%   \multicolumn{1}{l|}{3} &
+%   System records the provided information. \\ \hline
+% \multicolumn{1}{|l|}{3} &
+%   \multicolumn{2}{l|}{User selects a username and password.} &
+%   \multicolumn{1}{l|}{4} &
+%   System verifies the uniqueness of the username. \\ \hline
+% \multicolumn{1}{|l|}{4} &
+%   \multicolumn{2}{l|}{User completes the profile setup.} &
+%   \multicolumn{1}{l|}{5} &
+%   System creates the user account. \\ \hline
+% \multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+% \multicolumn{1}{|l|}{3} &
+%   \multicolumn{2}{l|}{User selects a username that is not unique.} &
+%   \multicolumn{1}{l|}{4-A} &
+%   System responds with an error: Username already exists. \\ \hline
+% \end{tabular}
+% \end{table}
+\section{Use Cases}
+Use cases within a system architecture are critical for defining, developing, and verifying the system's functionality and structure.  They define essential scenarios or interactions that will drive the system's development and operation. The following tables detail the Labyrinth project's use cases.
+
+\begin{table}[!ht]
+\centering
+% \vspace{80pt}
+% \caption{Use Case 1: User Registration}
+% \caption*{\textnormal{\textit{A new user creates an account on Labyrinth.}}  }
+\textbf{Use Case 1: User Registration} \\
+% \textit{A new user creates an account on Labyrinth.} \vspace{6pt}
+\label{tab:user_registration} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{User Registration} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{New User} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{A new user creates an account on Labyrinth.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{None.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{User account is created.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User accesses the signup page.} &
+  \multicolumn{1}{l|}{2} &
+  System displays the signup form. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User provides personal information.} &
+  \multicolumn{1}{l|}{3} &
+  System records the provided information. \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User selects a username and password.} &
+  \multicolumn{1}{l|}{4} &
+  System verifies the uniqueness of the username. \\ \hline
+\multicolumn{1}{|l|}{4} &
+  \multicolumn{2}{l|}{User completes the profile setup.} &
+  \multicolumn{1}{l|}{5} &
+  System creates the user account. \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User selects a username that is not unique.} &
+  \multicolumn{1}{l|}{4-A} &
+  System responds with an error: Username already exists. \\ \hline
+\end{tabular} }
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 2: User Login}
+% \caption*{\textnormal{\textit{A registered user logs in to their Labyrinth account.}} }
+\textbf{Use Case 2: User Login}
+\label{tab:user_login} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{User Login} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Registered User} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{A registered user logs in to their Labyrinth account.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User has a registered account.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{User is logged in.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User accesses the login page.} &
+  \multicolumn{1}{l|}{2} &
+  System displays the login form. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User enters their username and password.} &
+  \multicolumn{1}{l|}{3} &
+  System validates the credentials. \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User submits the login form.} &
+  \multicolumn{1}{l|}{4} &
+  System verifies and redirects the user to the workspace. \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User enters incorrect username or password.} &
+  \multicolumn{1}{l|}{3-A} &
+  System responds with an error: Invalid credentials. \\ \hline
+\end{tabular} }
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 3: Matchmaking}
+% \caption*{\textnormal{\textit{System pairs users with other users or projects based on interests.}}}
+\textbf{Use Case 3: Matchmaking}
+\label{tab:matchmaking} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Matchmaking} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{User, Matchmaking Algorithm} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{System pairs users with other users or projects.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User is logged in and has available swipes.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Based on interest  users and project owners, a match is created.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User accesses the people/projects matchmaking page.} &
+  \multicolumn{1}{l|}{2} &
+  System displays the matchmaking page. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User swipes right (like) or left (pass).} &
+  \multicolumn{1}{l|}{3} &
+  System logs the action. \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{Both users swipe right.} &
+  \multicolumn{1}{l|}{4} &
+  System notifies user and grants access to chat. \\ \hline
+\multicolumn{1}{|l|}{4} &
+  \multicolumn{2}{l|}{A project owner accepts a user’s swipe.} &
+  \multicolumn{1}{l|}{5} &
+  System notifies user and allows to chat. \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{4} &
+  \multicolumn{2}{l|}{Project owner rejects the user.} &
+  \multicolumn{1}{l|}{5-A} &
+  System notifies the user of rejection. \\ \hline
+\end{tabular} }
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 4: Direct Messaging}
+% \caption*{\textnormal{\textit{Users send private messages to other users.}}  }
+\textbf{Use Case 4: Direct Messaging}
+\label{tab:direct_messaging} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Direct Messaging} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{User} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Users send private messages to other users.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Both users must be registered.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Message is delivered to recipients.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User clicks the chat icon.} &
+  \multicolumn{1}{l|}{2} &
+  System displays the chatbox. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User selects the recipient.} &
+  \multicolumn{1}{l|}{3} &
+  System opens the chat window. \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User types and sends a message.} &
+  \multicolumn{1}{l|}{4} &
+  System delivers the message. \\ \hline
+\end{tabular} }
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 5: Project Creation}
+% \caption*{\textnormal{\textit{User creates a new project.}}   }
+\textbf{Use Case 5: Project Creation}
+\label{tab:project_creation} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Project Creation} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{User, Project Owner} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{User creates a new project.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User is logged in.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{A new project is created.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User clicks the "+" button in the workspace page.} &
+  \multicolumn{1}{l|}{2} &
+  System displays the project creation form. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User enters project details and submits.} &
+  \multicolumn{1}{l|}{3} &
+  System validates input and creates the project. \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{Project owner navigates to "Manage Roles."} &
+  \multicolumn{1}{l|}{4} &
+  System displays available roles and team members. \\ \hline
+\multicolumn{1}{|l|}{4} &
+  \multicolumn{2}{l|}{Owner selects users and assigns roles.} &
+  \multicolumn{1}{l|}{5} &
+  System updates the assigned roles and permissions. \\ \hline
+\end{tabular} }
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 6: Task Management}
+% \caption*{\textnormal{\textit{Users create, assign, and manage tasks within a project.}}  }
+\textbf{Use Case 6: Task Management}
+
+\label{tab:task_management} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Task Management} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Project Owner, Team Members, Team Lead} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Users create, assign, and manage tasks within a project.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{The project must exist.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Tasks are created, assigned, and updated.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User navigates to the task management section.} &
+  \multicolumn{1}{l|}{2} &
+  System displays task options. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User creates a new task and submits it.} &
+  \multicolumn{1}{l|}{3} &
+  System validates and saves the task. \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User selects a task to assign.} &
+  \multicolumn{1}{l|}{4} &
+  System displays available team members. \\ \hline
+\multicolumn{1}{|l|}{4} &
+  \multicolumn{2}{l|}{User assigns the task to a team member.} &
+  \multicolumn{1}{l|}{5} &
+  System updates the task status and notifies user. \\ \hline
+\end{tabular} }
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 7: Project Chat}
+% \caption*{\textnormal{\textit{Enables real-time messaging and discussion within a project.}} }  
+\textbf{Use Case 7: Project Chat }
+
+\label{tab:project_chat} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Project Chat} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Any Project Member} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Enables real-time messaging and discussion within a project.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Project must exist and the user must be a member of the project.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Messages are sent, received, and stored.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User navigates to the project chat.} &
+  \multicolumn{1}{l|}{2} &
+  System loads the chat interface and displays recent messages. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User types a message and sends it.} &
+  \multicolumn{1}{l|}{3} &
+  System validates and sends the message to all the members. \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{Other members receive the message.} &
+  \multicolumn{1}{l|}{4} &
+  System updates the chat in real-time. \\ \hline
+\end{tabular} }
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 8: Media Management}
+% \caption*{\textnormal{\textit{Users upload relevant files to a project.}} }
+\textbf{Use Case: Media Management}
+
+\label{tab:media_management} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Media Management} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Any Project Member} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Users upload relevant files to a project.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Users must be part of the project.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{File is saved and accessible in the media section of the project.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User navigates to the media section.} &
+  \multicolumn{1}{l|}{2} &
+  System displays file upload options. \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User selects a file and uploads it.} &
+  \multicolumn{1}{l|}{3} &
+  System processes and saves the file. \\ \hline
+\end{tabular}}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\vspace{25pt}
+% \caption{Use Case 9: Viewing Project Analytics}
+% \caption*{\textnormal{\textit{Users view analytics related to project progress.}}}
+\textbf{Use Case 9: Viewing Project Analytics}
+\label{tab:viewing_project_analytics} 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Viewing Project Analytics} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Project Owner, Admin} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Users view analytics related to project progress.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{The project must have recorded tasks.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{User can view project analytics.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User navigates to the analytics section.} &
+  \multicolumn{1}{l|}{2} &
+  System displays project metrics. \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{No data is available.} &
+  \multicolumn{1}{l|}{2-A} &
+  System displays an empty report message. \\ \hline
+\end{tabular}}
+\end{table}
+
+% \begin{table}[!ht]
+% \centering
+% \vspace{25pt}
+% \textbf{Use Case 10: Managing Account Settings}
+% % \caption*{\textnormal{\textit{Users update their account settings.}}}  
+% \textbf{Use Case 10: Managing Account Settings}
+
+% \label{tab:managing_account_settings} 
+% \begin{tabular}{|lllll|}
+% \hline
+% \multicolumn{2}{|l|}{\textbf{Name}} &
+%   \multicolumn{3}{l|}{Managing Account Settings} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Actors}} &
+%   \multicolumn{3}{l|}{User} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Summary}} &
+%   \multicolumn{3}{l|}{Users update their account settings.} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+%   \multicolumn{3}{l|}{Users must be logged in.} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+%   \multicolumn{3}{l|}{Updated settings are saved.} \\ \hline
+% \multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+%   \multicolumn{3}{l|}{None} \\ \hline
+% \multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+% \multicolumn{3}{|c|}{\textbf{Actor Action}} &
+%   \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+% \multicolumn{1}{|l|}{1} &
+%   \multicolumn{2}{l|}{User navigates to settings.} &
+%   \multicolumn{1}{l|}{2} &
+%   System displays settings options. \\ \hline
+% \multicolumn{1}{|l|}{2} &
+%   \multicolumn{2}{l|}{User updates settings or preferences and saves changes.} &
+%   \multicolumn{1}{l|}{3} &
+%   System applies the updates. \\ \hline
+% \end{tabular}
+% \end{table}
+\FloatBarrier
+\section{Hardware and Software Requirements}
+This section will be discussing the hardware and software requirements that are necessary to develop the web-based application Labyrinth.
+% List the hardware and software requirements that will be required to develop and deploy the project.
+\subsection{Hardware Requirements}
+The following hardware requirements are necessary for the project:
+\begin{itemize}
+    \item Desktop PC/Laptop
+    \item Internet connection is required.
+\end{itemize}
+\subsection{Software Requirements}
+The following software requirements are necessary for the project:
+\begin{itemize}
+    \item Vs Code
+    \item Supabase
+    
+\end{itemize}
+
+
+
+\section{Graphical User Interface}
+The following figures illustrate the graphical user interface (GUI) design of Labyrinth, showcasing the key screens and user interactions within the platform.
+
+\begin{figure} [!h]
+    \centering
+    %\includegraphics[width=1\textwidth, height=10cm]{Figures/GUI/LandingPage.png}
+    \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/LandingPage}
+    \caption{Landing Page Screen}
+    % \caption*{\textnormal{\textit{This screen shows the initial landing page of Labyrinth, providing an overview and introduction.}}}
+    \label{fig:landing_page}
+\end{figure}
+
+\begin{figure} [!h]
+    \centering
+    %\includegraphics[width=1\textwidth, height=10cm]{Figures/GUI/Sign Up.png}
+    \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/SignUp}
+    \caption{Sign-Up Page Screen}
+    % \caption*{\textnormal{\textit{This screen allows new users to register on the Labyrinth platform by entering their details.}}}
+    \label{fig:sign_up}
+\end{figure}
+
+\begin{figure} [!h]
+    \centering
+    %\includegraphics[width=1\textwidth, height=10cm]{Figures/GUI/Login.png}
+    \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/Login}
+    \caption{Login Page Screen}
+    % \caption*{\textnormal{\textit{This screen provides users with the option to log in using their credentials to access their workspace.}}}
+    \label{fig:login}
+\end{figure}
+
+\begin{figure} [!h]
+    \centering
+    % \includegraphics[width=1\textwidth, height=10cm]{Figures/GUI/Worksapces.svg}
+     \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/Workspace}
+    \caption{Workspaces Screen}
+    % \caption*{\textnormal{\textit{This screen displays different workspaces available for project collaboration and management.}}}
+    \label{fig:workspaces}
+\end{figure}
+
+\begin{figure} [!h]
+    \centering
+    \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/Project Creation}
+    \caption{Project Creation Screen}
+    % \caption*{\textnormal{\textit{This screen allows users to create new projects, set details, and invite collaborators.}}}
+    \label{fig:project_creation}
+\end{figure}
+
+\begin{figure} [!h]
+    \centering
+    \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/Project Page}
+    \caption{Project Page Screen}
+    % \caption*{\textnormal{\textit{This screen displays an overview of a specific project, including tasks, members, and progress tracking.}}}
+    \label{fig:project_page}
+\end{figure}
+
+\begin{figure} [!h]
+    \centering
+    %\includegraphics[width=1\textwidth, height=10cm]{Figures/GUI/ProjectMatch.png}
+    \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/ProjectMatch}
+    \caption{Project Match Screen}
+    % \caption*{\textnormal{\textit{This screen shows project recommendations based on user skills and interests.}}}
+    \label{fig:project_match}
+\end{figure}
+
+\begin{figure} [!h]
+    \centering
+    %\includegraphics[width=1\textwidth, height=10cm]{Figures/GUI/PartnerMatch.png}
+    \includesvg[width=1\textwidth, height=10cm]{Figures/GUI/PartnerMatch}
+    \caption{Partner Match Screen}
+    % \caption*{\textnormal{\textit{This screen displays recommended collaborators and partners for networking and project collaboration.}}}
+    \label{fig:partner_match}
+\end{figure}
+% This section should give the GUI dumps of each screen, with reference to the users. The navigation flow of each user is also required, and each GUI should mark the functionality/use case that it covers.
+\FloatBarrier
+\section{Database Design (if required)}
+This section showcases the Entity Relationship diagram and the data dictionary tables associated with our project Labyrinth.
+\subsection{ER Diagram}
+The Entity Relationship Diagram of Labyrinth is as follows
+\begin{figure} [!h]
+    \centering
+   %\includesvg[width=\textwidth]{Figures/FinalDiagrams/ERDiagram}
+   \includegraphics[width=\textwidth]{Figures/FinalDiagrams/ER.pdf}
+    %\includegraphics[width=1\textwidth, height=15cm]{Figures/FinalDiagrams/ER Diagram.png}
+    \caption{Entity Relationship Diagram for Labyrinth}
+    % \caption*{\textnormal{\textit{Entity-Relationship (ER) diagram illustrating the data model for Labyrinth, showcasing relationships between users, projects, workspace, preference, tasks, and communication.}}}
+    \label{fig:1}
+\end{figure}
+
+\subsection{Data Dictionary}
+
+\begin{table}[h]
+    \centering
+    \caption{User Table}
+    % \caption*{\textnormal{\textit{This table provides details of the User entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        User & userID & Primary Key & No & - & - & Unique identifier for the user. \\
+        & email & String & No & - & - & User's email address. \\
+        & username & String & No & - & - & User's chosen username. \\
+        & password & String & No & - & - & User's password. \\
+        & dateOfBirth & Date & Yes & - & - & User's date of birth. \\
+        & lastActive & Date & Yes & - & - & Date/time the user was last active. \\
+        & gitHubProfile & String & Yes & - & - & User's GitHub profile link. \\
+        & education & String & Yes & - & - & User's educational background. \\
+        & maxDailySwipes & int & No & - & - & Maximum swipes allowed per day for the user. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    % \vspace{20pt}
+    \caption{Preferences Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Preferences entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+     \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Preferences & preferencesID & Primary Key & No & - & - & Unique identifier for the preferences record. \\
+        & userID & Foreign Key & No & User & One-to-One & User who owns these preferences. \\
+        & preferredTechStack & String & Yes & - & - & Preferred technologies. \\
+        & preferredDemographic & String & Yes & - & - & Preferred demographic. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Match Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Match entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+     \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Match & matchID & Primary Key & No & - & - & Unique identifier for the match. \\
+        & matchStatus & String & Yes & - & - & Status of the match (e.g., "Pending", "Active", "Expired"). \\
+        & preferencesID & Foreign Key & Yes & Preferences & One-to-One & Preferences used in forming this match. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Swipe Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Swipe entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+     \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Swipe & swipeID & Primary Key & No & - & - & Unique identifier for the swipe action. \\
+        & isRightSwipe & Boolean & No & - & - & Indicates if it was a right swipe (true) or left (false). \\
+        & swiperID & Foreign Key & No & User & Many-to-One & User who initiated the swipe. \\
+        & swipeeUserID & Foreign Key & Yes & User & Many-to-One & User who was swiped on (if a user swipe). \\
+        & swipeeProjectID & Foreign Key & Yes & Project & Many-to-One & Project that was swiped on (if a project swipe). \\
+        & matchID & Foreign Key & Yes & Match & Many-to-One & Match record triggered by this swipe. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Demographic Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Demographic entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Demographic & demographicID & Primary Key & No & - & - & Unique identifier for the demographic record. \\
+        & userID & Foreign Key & No & User & One-to-One & User this demographic belongs to. \\
+        & country & String & Yes & - & - & Country of the user. \\
+        & language & String & Yes & - & - & Primary language(s) of the user. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{TechStack Table}
+    % \caption*{\textnormal{\textit{This table provides details of the TechStack entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        TechStack & techStackID & Primary Key & No & - & - & Unique identifier for the tech stack. \\
+        & userID & Foreign Key & Yes & User & One-to-Many & User to whom this tech stack belongs. \\
+        & frameworks & String & Yes & - & - & List of frameworks. \\
+        & languages & String & Yes & - & - & List of programming languages. \\
+        & tools & String & Yes & - & - & List of tools (e.g., Docker, Git). \\
+        \hline
+    \end{tabular} }
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Project Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Project entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Project & projectID & Primary Key & No & - & - & Unique identifier for the project. \\
+        & workspaceID & Foreign Key & No & Workspace & Many-to-One & Workspace that contains this project. \\
+        & chatID & Foreign Key & No & Chat & One-to-One & Chat associated with this project. \\
+        & mediaID & Foreign Key & No & Media & One-to-One & Media record for this project. \\
+        & analyticsID & Foreign Key & No & Analytics & One-to-One & Analytics record for this project. \\
+        & title & String & Yes & - & - & Title or name of the project. \\
+        & description & String & Yes & - & - & Short description of the project. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{ProjectTechStack Table}
+    % \caption*{\textnormal{\textit{This table provides details of the ProjectTechStack bridging entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        ProjectTechStack & id & Primary Key & No & - & - & Unique ID for this association. \\
+        & projectID & Foreign Key & No & Project & Many-to-One & Project that needs the tech stack. \\
+        & techStackID & Foreign Key & No & TechStack & Many-to-One & TechStack required by this project. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Workspace Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Workspace entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Workspace & workspaceID & Primary Key & No & - & - & Unique identifier for the workspace. \\
+        & userID & Foreign Key & No & User & One-to-One & User who owns this workspace. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Role Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Role entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Role & roleID & Primary Key & No & - & - & Unique identifier for the role. \\
+        & projectID & Foreign Key & No & Project & Many-to-One & Project this role belongs to. \\
+        & roleName & String & No & - & - & Name of the role (e.g., "Developer", "Manager"). \\
+        & permissions & String & Yes & - & - & Permissions for this role. \\
+        \hline
+    \end{tabular} }
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{UserRole Table}
+    % \caption*{\textnormal{\textit{This table provides details of the UserRole bridging entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \resizebox{\textwidth}{!}{
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        UserRole & id & Primary Key & No & - & - & Unique ID for this user-role association. \\
+        & userID & Foreign Key & No & User & Many-to-One & User assigned to the role. \\
+        & roleID & Foreign Key & No & Role & Many-to-One & Role assigned to the user. \\
+        \hline
+    \end{tabular} }
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Task Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Task entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Task & taskID & Primary Key & No & - & - & Unique identifier for the task. \\
+        & projectID & Foreign Key & No & Project & One-to-One & Project that this task belongs to. \\
+        & userID & Foreign Key & Yes & User & Many-to-One & User assigned to this task. \\
+        & taskName & String & No & - & - & Name/title of the task. \\
+        & description & String & Yes & - & - & Detailed description of the task. \\
+        & status & String & Yes & - & - & Current status (e.g., "Not started", "In Progress", "Done"). \\
+        & dueDate & Date & Yes & - & - & Due date for completing this task. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Chat Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Chat entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Chat & chatID & Primary Key & No & - & - & Unique identifier for the chat. \\
+        & messages & Text & Yes & - & - & Stored list of messages. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{UserChat Table}
+    % \caption*{\textnormal{\textit{This table provides details of the UserChat bridging entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        UserChat & id & Primary Key & No & - & - & Unique ID for the user-chat association. \\
+        & userID & Foreign Key & No & User & Many-to-One & User participating in the chat. \\
+        & chatID & Foreign Key & No & Chat & Many-to-One & Chat the user is part of. \\
+        \hline
+    \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Chat Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Chat entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Chat & chatID & Primary Key & No & - & - & Unique identifier for the chat. \\
+        & messages & Text & Yes & - & - & Stored list of messages. \\
+        \hline
+    \end{tabular} }
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{UserChat Table}
+    % \caption*{\textnormal{\textit{This table provides details of the UserChat bridging entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        UserChat & id & Primary Key & No & - & - & Unique ID for the user-chat association. \\
+        & userID & Foreign Key & No & User & Many-to-One & User participating in the chat. \\
+        & chatID & Foreign Key & No & Chat & Many-to-One & Chat the user is part of. \\
+        \hline
+    \end{tabular} }
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Media Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Media entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Media & mediaID & Primary Key & No & - & - & Unique identifier for the media record. \\
+        & files & Text & Yes & - & - & One or more file paths/URLs. \\
+        \hline
+    \end{tabular} }
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Analytics Table}
+    % \caption*{\textnormal{\textit{This table provides details of the Analytics entity, including attributes, data types, relationships, and descriptions.}}}
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{5pt}
+    \small
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|l|l|l|c|l|l|p{4cm}|}
+        \hline
+        \textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Relation} & \textbf{Relation Type} & \textbf{Description} \\
+        \hline
+        Analytics & analyticsID & Primary Key & No & - & - & Unique identifier for the analytics record. \\
+        & stats & Text/JSON & Yes & - & - & Statistical data or metrics. \\
+        \hline
+    \end{tabular} }
+\end{table}
+\FloatBarrier
+\section{ Risk Analysis}
+Risk analysis is a crucial aspect of Labyrinth’s project planning, identifying potential challenges that may arise during its development. 
+\subsection{Technical Risks}
+Labyrinth might face technical challenges such as system scalability, security vulnerabilities, and integration complexities. To get rid of these risks, the platform will undergo performance testing, implement security measures, and ensure seamless compatibility if we planned to use third-party tools or APIs.
+\subsection{Business Risks}
+Labyrinth may encounter competition from more established services like as Linkedin, GitHub, and Upwork.  In order to ensure long-term financial sustainability and build a sustainable user base, it also poses a commercial risk.  Without sacrificing user experience, Labyrinth needs to concentrate on developing a distinctive value proposition, strategic marketing, and possible revenue streams.
+\subsection{User Adoption and Engagement Risks}
+Labyrinth must make certain that people interact with the platform in an active manner.  Because it can hinder success, it is critical to search for low adoption rates or poor retention.  Labyrinth will put an emphasis on an easy-to-use user interface, a toolkit that is feasible, and engagement-driven features like matchmaking and suggestion modules in order to overcome this.
+\subsection{Compliance and Privacy Risks}
+It is critical to manage user data safely and in accordance with data protection standards.  It is essential since any improper management could result in dangers to one's reputation and legal standing.  As a result, in order to guarantee user security and confidence, we intend to implement rigorous data encryption and standard compliance.
+\subsection{Operational Risks}
+There is a potential that development delays, resource constraints, or unforeseen technological difficulties will effect project deadlines.  As a result, Labyrinth will use agile development techniques to guarantee precise task distribution and conduct frequent progress evaluations to reduce these hazards. \\ 
+Labyrinth will implement proactive risk management strategies, and conduct regular assessments, to maintain flexibility in its development approach.
+% List and explain the risks that may be encountered during the project. For e.g.: technical risks, business risks, etc.
+% \chapter{Proposed Approach and Methodology}
+% The proposed approach could be a Framework, Heuristic, Algorithm, Protocol, or Mathematical-model.
+% For each chapter, provide a paragraph of introduction and in the end a paragraph of conclusions. Not the programming code but the algorithmic and procedural details especially related to the hidden/ backend algorithms that are not covered in the design.\\
+% \textcolor{red}{NOTE: This chapter is optional for Development projects but compulsory for Research projects.} 
+\section{Conclusion}
+This chapter comprehensively outlined the Software Requirements Specification for Labyrinth, detailing its core functionalities, quality attributes, and system constraints. It included essential artifacts such as the ER diagram, data dictionary tables, use case tables, and GUI prototypes, providing a structured representation of the system's design and interaction flow. These components collectively ensure clarity in system development, facilitating seamless implementation and future scalability.
+\chapter{High-Level and Low-Level Design}
+Labyrinth is a collaboration platform designed to help tech enthusiasts form teams, manage projects, and discover relevant connections in real time. The platform combines several key features: user matchmaking, real-time chat, project management, and a recommendation system that suggests both people and projects based on shared interests or required skill sets. This chapter provided the high- and low-level design of our project.
+\section{System Overview}
+At a high level, our system is split into two core layers: the user-facing frontend (NextJS) and the backend (NodeJS/Express plus microservices). On the frontend, we leverage NextJS (stable version) with React 19 to build interactive interfaces. We incorporate Redux for client-side state management and rely on Zod and React Hook Form to validate data we get from user input. The UI styling is provided by shadcn/ui combined with TailwindCSS, ensuring a modern and consistent look. The frontend interacts with the backend through RESTful APIs for CRUD operations, user authentication, and project management tasks. Where real-time interactions are required such as chat or notifications in which the frontend connects to the Chat Service via Pusher or Agora, both of which integrate well with Kafka for event broadcasting. 
+\\
+Under the hood, the backend consists of a primary NodeJS/Express application and microservices such as the Chat Service and the Recommendation Service. Communication between these services can happen via Kafka, which handles notifications and real-time events. For persistent data, we use Postgres (hosted on Neon, an AWS-based solution) along with Prisma as our ORM. We store large media files in Cloudinary or AWS S3, depending on user preference or cost considerations. Containerization is central to our design, with Docker ensuring a consistent environment and providing the foundation for future Kubernetes orchestration.
+\\
+The Node/Express layer handles business logic, authentication (JWT or OAuth tokens), and orchestrates database operations using Prisma. The chat functionality is divided into a separate Chat Service that may scale on its own to provide flexibility.  The Recommendation Service can also be used with Python-based FastAPI microservices or custom TypeScript logic in the event that sophisticated machine learning models are required.  Every service has the option to communicate synchronously through direct HTTP calls or asynchronously over Kafka. 
+\\
+Each component can change with this modular approach without affecting the system as a whole.  While Cloudinary/AWS S3 manages media, the database (Neon Postgres) continues to be the only source of truth for essential user and project data.  In order to improve performance and lessen the strain on the primary database, Redis will be used as a caching layer for frequently accessed data.
+% Provide a general description of the software system, including its functionality and matters related to the overall system and its design (perhaps including a discussion of the basic design approach or organization). Feel free to split this discussion up into subsections (and sub-subsections, etc. ...).
+\section{Design Considerations}
+Our design is shaped by several key factors, including performance, security, and scalability. We have carefully considered the operating environment, dependencies, and user expectations to ensure a robust and responsive platform. From real-time communication requirements to strict version control and containerization, each decision balances immediate functionality with long-term adaptability. These considerations form the backbone of our architecture, guiding every design choice and future enhancement.
+% This section describes many issues that need to be addressed or resolved before attempting to devise a complete design solution.
+\subsection{Assumptions and Dependencies}
+Building a sophisticated platform such as Labyrinth necessitates a careful articulation of design assumptions and dependencies, as is customary in complex systems. In this section, we systematically categorize these dependencies, acknowledging that some are pertinent to both development and production environments, while others specifically impact end-user interactions.
+% Describe any assumptions or dependencies regarding the software and its use. These may concern such issues as:
+% \begin{itemize}
+% \item Related software or hardware 
+%   \item Operating systems 
+%   \item End-user characteristics 
+%   \item Possible and/or probable changes in functionality
+% \end{itemize}
+% Do not just add random generic statements, be clear and concise about what you are writing.
+
+\subsubsection{User and Browser Requirements}
+
+\begin{itemize}
+\item We expect the users to have reliable network connectivity for real-time features.
+\item Users should use the browsers must be capable of running React 19 based applications efficiently.
+\item For real-time features (chat, notifications), users’ devices must support WebSocket connections.
+\end{itemize}
+% \subparagraph{Stable Internet Connection
+
+% Modern Browser Support
+
+% Real-Time Functionality
+
+\subsubsection{Development Environment and Build Dependencies}
+
+\begin{itemize}
+    \item The application will be developed in the Node environment.  Hence, it depends on the NodeJS being installed on the build servers.
+
+    \item Docker is assumed to be available to ensure consistent development and production environments.
+
+    \item NextJS frontend, Express backend, microservices use TypeScript, necessitating a proper compiler setup.
+
+\end{itemize}
+
+\subsubsection{Database and File Storage Dependencies}
+
+\begin{itemize}
+    \item A Postgres database is expected to be available through Neon or an equivalent AWS-hosted instance.
+
+    \item The environment supports temporary storage for uploads before they are moved to Cloudinary or AWS S3.
+
+\end{itemize}
+
+\subsubsection{Real-Time Features and Messaging Dependencies}
+\begin{itemize}
+    \item Pusher or Agora SDKs are required to enable real-time chat features with stable WebSocket connections.
+    \item A running Kafka cluster or managed Kafka service is necessary if Kafka is used for event streaming, real time notifications or as a message broker.
+
+\end{itemize}
+
+\subsubsection{Containerization and Orchestration}
+
+\begin{itemize}
+    \item We plan to keep all development dependencies and application programs in a container. For now we can assume the need to run several containers in parallel.
+
+    \item Kubernetes may be used for orchestrating multiple containers as the system scales.
+
+\end{itemize}
+
+\subsubsection{Version Control and CI/CD}
+\begin{itemize}
+    \item We will use Git-based system for version control and code collaboration. Github cli along with git will be used for tasks like pull requests, pushing codes, branching, merging and conflict management. Github platform will be used as storage for source code repository of our project. 
+    \item We may automate CI/CD pipelines to ensure consistent development, staging, and production environments. We may use some tools such as Jenkins or the AWS CodeDeploy service for continuous integration and continuous deployment. 
+
+
+\end{itemize}
+
+
+\subsubsection{Recommendation System Dependencies} 
+\begin{itemize}
+    \item For recommendation, we may rely on external search-as-a-service platforms such as Algolia.
+    \item We could also utilize a Python environment for FastAPI-based ML logic for match-making and recommendation.
+\end{itemize}
+
+\subsection{General Constraints}
+The development of Labyrinth is guided by a set of well-defined constraints that shape its performance, security, data management, interoperability, networking, and testing strategies. These constraints ensure that the system remains scalable, secure, and reliable while meeting user expectations and business requirements.
+
+\subsubsection{\textbf{Performance and Scalability Constraints}}
+\begin{itemize}
+\item Real-time chat and recommendation updates must be near-instantaneous.
+        \item Efficient data handling is prioritized to reduce processing delays.
+        \item Users collaborate across regions, which means that the reliability of the network varies.
+        \item The system must support offline or degraded mode operations, where possible.
+        \item Microservices are containerized using Docker, ensuring independent deployments.
+        \item However, containerization introduces overhead in low-memory environments.
+    \end{itemize}
+\subsubsection{Security and Authentication Constraints}}
+    \begin{itemize}
+        \item JWT tokens are used to manage authentication securely.
+        \item Passwords are hashed with bcrypt to prevent unauthorized access.
+        \item Social login functionality follows OAuth 2.0 standards. This affects session management and token handling across the platform.
+    \end{itemize}
+\subsubsection{\textbf{Data Storage and Distribution Constraints}}
+\begin{itemize}
+    \item  As per database throughput, Neon Postgres has read/write limitations, particularly for free and lower-tier plans. This affects how caching strategies (e.g., Redis) are implemented.
+        \item  Large media files (images, videos) are stored in Cloudinary\textbf{/}AWS S3. Storage and bandwidth usage may introduce operational costs and performance trade-offs. 
+    \end{itemize}
+\subsubsection{Interoperability and Compatibility Constraints}
+
+    \begin{itemize}
+        \item The frontend must work on modern browsers and mobile devices.
+        \item Keeping in mind the cross-platform compatibility the web technologies with limited browser support cannot be used.
+    \end{itemize}
+
+\subsubsection{Network and Communication Constraints}}
+    \begin{itemize}
+        \item For reliable real-time messaging Kafka-based event streaming is required for message queueing and event-driven features.
+        \item The system must ensure message consistency even under heavy loads.
+    \end{itemize} 
+    \begin{itemize}
+        \item Real-time chat and notification services depend on persistent WebSocket connections.
+        \item The system must handle connection drops and reconnections gracefully.
+    \end{itemize} 
+\subsubsection{\textbf{Testing and Validation Constraints}}
+
+\begin{itemize}
+\item GitHub CI/CD pipelines enforce automated testing and linting for JavaScript/TypeScript using prettier, eslint and husky tools.
+        \item The codebase follows strict linting rules to maintain readability and prevent errors.
+    \end{itemize} 
+    \begin{itemize}
+        \item Performance tests are needed to validate real-time message delivery and database response times.
+        \item Stress testing is required to assess system behavior under high user loads.
+    \end{itemize}
+
+
+
+
+
+
+
+
+
+\subsection{Goals and Guidelines}
+We follow a set of key principles to ensure our system remains clean, maintainable, and future-proof. Our guidelines are:
+% Describe any goals, guidelines, principles, or priorities which dominate or embody the design of the system's software. Such goals might be:
+% \begin{itemize}
+% \item The KISS principle ("Keep it simple stupid!") 
+% \item Emphasis on speed versus memory use 
+% \item Working, looking, or "feeling" like an existing product
+% \end{itemize}
+% For each such goal or guideline, unless it is implicitly obvious, describe the reason for its desirability. Feel free to state and describe each goal in its own sub subsection if you wish.
+
+\subsubsection{Modularity} 
+Each microservice (Chat, Recommendation, and the core Express API) is self-contained, ensuring minimal coupling and the ability to scale or replace components independently.
+
+   
+\subsubsection{Simplicity}
+We add complexity only when absolutely necessary—using proven solutions (e.g., Kafka for event management) instead of developing in-house alternatives.
+
+ 
+\subsubsection{Performance First}
+Our real-time chat and recommendation engine must be responsive under peak loads. This goal drives our adoption of Redis caching, efficient query patterns via Prisma, and a containerized infrastructure to support horizontal scaling.
+
+\subsubsection{Adaptability}
+We design the system to be flexible and open to future expansions. For example, the recommendation logic may evolve to incorporate advanced ML models or integrate third-party solutions like Algolia.
+
+\subsubsection{User Experience}
+ 
+We strive for a smooth, consistent interface using shadcn/ui with TailwindCSS, coupled with robust form handling via React Hook Form and Zod.
+
+ 
+\subsubsection{Security and Resilience}
+Security is built-in through JWT authentication, encryption, and strict validation measures, while resilience is ensured via fault-tolerant design and container orchestration.
+
+\subsubsection{Observability and Continuous Improvement}
+Emphasis is placed on comprehensive logging, monitoring, and testing (using Jest and CI/CD pipelines) to facilitate rapid feedback and continuous system improvements.
+
+
+By adhering to these guidelines, we balance performance, security, and ease of ongoing development, ensuring the platform remains robust, scalable, and adaptable to future needs.
+
+
+
+% Describe any goals, guidelines, principles, or priorities which dominate or embody the design of the system's software. Such goals might be:
+% \begin{itemize}
+% \item The KISS principle ("Keep it simple stupid!") 
+% \item Emphasis on speed versus memory use 
+% \item Working, looking, or "feeling" like an existing product
+% \end{itemize}
+% For each such goal or guideline, unless it is implicitly obvious, describe the reason for its desirability. Feel free to state and describe each goal in its own sub subsection if you wish.
+
+
+
+\subsection{Development Methods}
+% Briefly describe the method or approach used for this software design. If one or more formal/published methods were adopted or adapted, then include a reference to a more detailed description of these methods. If several methods were seriously considered, then each such method should be mentioned, along with a brief explanation of why all or part of it was used or not used.
+Our development process aligns with Agile principles, favoring iterative releases and continuous feedback. We divide the project into frontend and backend modules, each containerized via Docker. The frontend, powered by NextJS, is deployed on Vercel for rapid builds and easy rollbacks. The backend, including Node/Express and microservices, typically resides on AWS, though the exact hosting approach can be changed without disrupting our Docker workflow. \\
+We use GitHub for version control, enabling branch-based feature development and pull requests for peer review. GitHub Actions or similar CI/CD tools automate tests, lint checks, and container builds. Prisma migrations are managed within the backend repository, ensuring database schema changes remain consistent across environments. Our approach to environment configuration involves storing sensitive credentials (like OAuth keys) in secure secrets management systems or environment variables, never in source control. \\
+To maintain quality, we employ code linting (ESLint, Prettier) and thorough testing (unit and integration via Jest). Any additional microservice (e.g., chat, recommendation) follows the same containerization pattern, promoting a uniform deployment process. This consistent method makes it straightforward to pivot to Kubernetes for orchestration once the application demands more sophisticated load balancing or scaling.
+% Briefly describe the method or approach used for this software design. If one or more formal/published methods were adopted or adapted, then include a reference to a more detailed description of these methods. If several methods were seriously considered, then each such method should be mentioned, along with a brief explanation of why all or part of it was used or not used.
+
+
+\section{System Architecture}
+The system Architecture of Labyrinth is given which highlights how the system will process data and
+interact with components within the system.
+
+
+\begin{figure} [!h]
+    \centering
+    \includegraphics[width=1\textwidth,height=22cm,]{Figures/FinalDiagrams/Final System Architecture SVG1.pdf}
+    % \includegraphics[width=1\textwidth, height=15cm]{Figures/Diagrams/Sdiagram.png}
+    \caption{System Architecture Diagram for Labyrinth}
+    % \caption*{\textnormal{\textit{Illustrates the overall structure of Labyrinth, highlighting key components and interactions.}}}
+    \label{fig:1}
+    
+\end{figure}
+
+\FloatBarrier
+Our high-level architecture places the NextJS frontend at the top, communicating with the Node/Express backend through RESTful endpoints. The backend orchestrates database operations (via Prisma and Neon Postgres) and handles security through JWT tokens. For real-time operations, the system routes chat-related traffic to the Chat Service, which can use Pusher or Agora to manage WebSocket-like connections without directly implementing raw sockets. This Chat Service also integrates with Kafka for broadcasting events (like message deliveries or typing notifications). \\
+Similarly, a Recommendation Service either uses TypeScript-based logic (e.g., a priority queue that factors in user demographics and preferences) or a Python FastAPI microservice if advanced ML is required. Both microservices store relevant data in Postgres or a suitable alternative. Cloudinary or AWS S3 handles file storage for images, documents, and media shared in chat. We adopt Redis where needed to cache frequently accessed data or session information. Docker images encapsulate each component, ensuring consistent runtime environments. 
+\\
+While we can deploy everything on AWS, the frontend specifically benefits from Vercel’s optimized build process. This modular setup simplifies updates and expansions—new microservices or features can be added without disrupting the core functionality.
+\subsection{Chat Service}
+% If a particular component is one which merits a more detailed discussion than what was presented in the System Architecture section, provide that more detailed discussion in a subsection of the System Architecture section (or it may even be more appropriate to describe the component in its own design document). If necessary, describe how the component was further divided into subcomponents, and the relationships and interactions between the subcomponents (similar to what was done for top-level components in the System Architecture section).\\
+% If any subcomponents are also deemed to further merit discussion, then describe them in a separate subsection of this section (and in a similar fashion). Proceed to go into as many levels/subsections of discussion as needed in order for the reader to gain a high-level understanding of the entire system or subsystem (but remember to leave the gory details for the Detailed System Design section).\\
+% If this component is very large and/or complex, you may want to consider documenting its design in a separate document and simply including a reference to it in this section. If this is the option you choose, the design document for this component should have an organizational format that is very similar (if not identical to) this document.
+The Chat Service is designed as a dedicated microservice to handle user-to-user and group conversations. It relies on Pusher or Agora to establish real-time channels for sending and receiving messages, which reduces the complexity of implementing raw WebSocket servers. Internally, messages can be stored in Postgres, but we may opt for Firebase or Supabase if we need an out-of-the-box real-time database solution. We use Kafka to handle asynchronous events like message notifications or presence updates. This approach ensures that if the Chat Service experiences high traffic, it can scale horizontally by spinning up additional Docker containers that subscribe to the same Kafka topics. \\
+Messages are typically indexed by conversation ID, sender ID, and timestamps to allow fast lookups. For security, each message is validated to ensure the sender is authenticated via JWT. Large files (like voice notes or screen recordings) are uploaded to Cloudinary/AWS S3 first, and the service simply stores references to these assets. By decoupling the Chat Service from the main Express API, we minimize cross-service dependencies and keep the chat logic specialized, which ultimately improves performance and maintainability.
+
+\subsection{Recommendation Service}
+Our Recommendation Service is responsible for suggesting people or projects that match a user’s profile, skill set, and preferences. The simplest version uses a priority queue to rank recommendations based on user actions, such as “swiping right” on certain projects or endorsing certain skills. Over time, this data refines the matching algorithm, factoring in language preferences, regional attributes, and technology stacks. In more advanced scenarios, we might switch to a Python-based FastAPI microservice that runs ML models (e.g., collaborative filtering or content-based approaches). \\
+We can also integrate Algolia if we need lightning-fast search and filtering capabilities. Regardless of the underlying logic, the service queries Postgres for user profiles and relevant project data, caching hot queries in Redis to reduce response times. Similar to the Chat Service, the Recommendation Service can publish events to Kafka whenever user preference data changes, allowing other services (like analytics) to stay in sync. By keeping recommendation logic in its own microservice, we ensure it can be iterated upon independently—whether we are tweaking scoring parameters or experimenting with a new AI model—without disrupting the rest of the platform.
+
+\section{Architectural Strategies}
+
+% Explain all strategies that you use for designing of the Architecture. Describe any design decisions and/or strategies that affect the overall organization of the system and its higher-level structures. These strategies should provide insight into the key abstractions and mechanisms used in the system architecture. Describe the reasoning employed for each decision and/or strategy (possibly referring to previously stated design goals and principles) and how any design goals or priorities were balanced or traded-off. Such decisions might concern (but are not limited to) things like the following:
+% \begin{itemize}
+%     \item Use of a particular type of product (programming language, database, library, etc. ...) 
+%   \item Reuse of existing software components to implement various parts/features of the system 
+%   \item Future plans for extending or enhancing the software 
+%   \item User interface paradigms (or system input and output models) 
+%   \item Hardware and/or software interface paradigms 
+%   \item Error detection and recovery 
+%   \item Memory management policies 
+%   \item External databases and/or data storage management and persistence 
+%   \item Distributed data or control over a network 
+%   \item Generalized approaches to control 
+%   \item Concurrency and synchronization 
+%   \item Communication mechanisms 
+%   \item Management of other resources
+% \end{itemize}
+Our architectural strategies focus on building the system that is scalable, maintainable, and adaptable for future enhancements. In this section, we detail the key strategies we employ, including our choices for microservices, containerization, and event-driven communication. Each strategy is presented with its rationale, the alternatives considered and the trade-offs we balanced.
+\subsection{Microservices and Containerization} 
+We chose a microservices architecture to isolate major functionalities such as chat, recommendation, and core API operations. This approach minimizes interdependencies, allowing each service to scale and evolve independently. Each microservice is packaged in a Docker container, which ensures a consistent environment across development, testing, and production. This strategy offers several advantages:
+
+
+\subsubsection{Isolation and Scalability}
+    \begin{itemize}
+        \item Independent scaling of services means that if the Chat Service experiences high load, additional containers can be spun up without impacting the recommendation engine.
+        \item Reduced blast radius in the event of a failure—issues in one microservice are contained and do not cascade through the entire system.
+    \end{itemize}
+\subsubsection{Parallel Development}
+    \begin{itemize}
+        \item   Our team members can work concurrently on different microservices, enabling faster iteration and focused optimization.
+        \item Docker’s standardized environments help mitigate the “it works on my machine” syndrome and simplify collaboration via container orchestration.
+    \end{itemize}
+
+Our alternatives included a monolithic Node/Express application, but this was rejected due to the anticipated complexity of real-time chat and advanced recommendations. By adopting Docker and planning for Kubernetes-based orchestration, we have built a system that is robust, flexible, and prepared for future expansion. Additionally, using containerization supports other key areas such as continuous integration and deployment, which are critical to our agile development process.
+
+\subsection{Event-Driven with Kafka} 
+For asynchronous communication and real-time notifications, we have adopted an event-driven approach using Kafka as our central event bus. This strategy decouples components, allowing services like the Chat Service, Recommendation Service, and main Express API to communicate efficiently through published events. Some key aspects include:
+
+
+\subsubsection{High Throughput and Durability}
+    \begin{itemize}
+        \item Kafka’s robust partitioning and replication mechanisms enable the system to handle large volumes of events reliably.
+        \item It also provides durability in event storage, ensuring that messages are not lost even if a service is temporarily offline.
+    \end{itemize}
+
+\subsubsection{Loose Coupling}
+    \begin{itemize}
+        \item By using Kafka, services do not need to know about each other’s internal implementations; they simply publish and subscribe to topics.
+        \itemBecause maintenance and future upgrades are made easier by the separation of concerns, we can apply sophisticated patterns like CQRS or streaming analytics without having to completely redesign the system.
+    \end{itemize}
+\subsubsection{Resilience and Scalability}
+    \begin{itemize}
+        \item The event-driven approach supports dynamic scaling, for example, if the message load increases, Kafka’s consumer groups can be scaled horizontally.
+        \item In comparison to alternatives like RabbitMQ or direct WebSocket connections, Kafka offers higher throughput and better handles distributed data flows.
+    \end{itemize}
+
+Although we looked at more straightforward options like RabbitMQ and direct socket connections, Kafka was selected because to its scalability and performance in managing the demanding nature of real-time communication. Its integration not only meets our present needs but also provides a solid basis for upcoming additions like sophisticated error recovery and in-depth analytics. Our overall objectives of performance, adaptability, and modularity are all in line with this approach. \\
+Through the implementation of these tactics, we establish a strong architectural basis that strikes a balance between short-term performance demands and long-term maintainability and scalability, guaranteeing that our system is ready to adapt to changing needs.
+
+\section{Domain Model/Class Diagram}
+% In this subsection, we have added the Class Diagram of our web app Labyrinth, which represents the structure design of your system.
+\begin{figure} [!h]
+    \centering
+    % \includegraphics[width=1.15\textwidth, height=20cm]
+    % {Figures/Diagrams/classDiagramF.png}
+    \includesvg[width=1\textwidth, height=40cm]{Figures/FinalDiagrams/ClassDiagram}
+    
+    \caption{Class Diagram for Labyrinth}
+    % \caption*{\textnormal{\textit{Class diagram illustrating relationships between classes User, Swipe, Workspace, Role, Match, Project, Preferences, Demographic, TechStack, Media, Analytics, Task and Chat.}}}
+    \label{fig:1}
+\end{figure}
+\FloatBarrier
+% % \section{Sequence Diagrams}
+% In this subsection, we have added all the sequence diagrams to explain the flow of our web app labyrinth. 
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/User Signup - Profile Setup- sequence}}
+%     \caption{User Signup and Profile Setup Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Illustrates the process of user registration and profile setup in Labyrinth.}}}
+%     \label{fig:signup-profile-setup}
+% \end{figure}
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{12cm}{\includesvg{Figures/Diagrams/User Login - Dashboard-sequence}}
+%     \caption{User Login and Dashboard Access Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Demonstrates the flow of user authentication and dashboard loading after login.}}}
+%     \label{fig:user-login-dashboard}
+% \end{figure}
+% % \begin{figure} [!h]
+% %     \centering
+% %     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/User Login - Dashboard-sequence}}
+% %     \caption{User Login and Dashboard Access Sequence Diagram}
+% %     \caption*{\textnormal{\textit{Demonstrates the flow of user authentication and dashboard loading after login.}}}
+% %     \label{fig:user-login-dashboard}
+% % \end{figure}
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/Matchmaking-sequence}}
+%     \caption{Matchmaking Process Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Shows how users are matched based on their preferences and project requirements.}}}
+%     \label{fig:matchmaking}
+% \end{figure}
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/Task Management-sequence}}
+%     \caption{Task Management Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Describes the process of creating, assigning, and managing tasks within a project.}}}
+%     \label{fig:task-management}
+% \end{figure}
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/DMs after match-sequence}}
+%     \caption{Direct Messages After Match Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Details how users communicate via direct messages after a successful match.}}}
+%     \label{fig:dms-after-match}
+% \end{figure}
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/Workspace--sequence}}
+%     \caption{Workspace Management Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Illustrates the creation, access, and management of workspaces in Labyrinth.}}}
+%     \label{fig:workspace-management}
+% \end{figure}
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/Analytics--sequence}}
+%     \caption{Analytics and Insights Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Shows the process of generating and viewing analytics for user and project performance.}}}
+%     \label{fig:analytics}
+% \end{figure}
+% \begin{figure} [!h]
+%     \centering
+%     \resizebox{\textwidth}{!}{\includesvg{Figures/Diagrams/Communication-Chat-Media-sequence}}
+%     \caption{Communication, Chat, and Media Sharing Sequence Diagram}
+%     % \caption*{\textnormal{\textit{Illustrates the interaction between users for messaging, chat, and media sharing within Labyrinth.}}}
+%     \label{fig:communication-chat-media}
+% \end{figure}
+\FloatBarrier
+\section{Policies and Tactics}
+% Describe any design policies and/or tactics that do not have sweeping architectural implications (meaning they would not significantly affect the overall organization of the system and its high-level structures) but which nonetheless affect the details of the interface and/or implementation of various aspects of the system. Such decisions might concern (but are not limited to) things like the following:
+% \begin{itemize}
+%     \item Choice of which specific product to use (compiler, interpreter, database, library, etc. ...) 
+%  \item Engineering trade-offs 
+%  \item	Coding guidelines and conventions 
+%  \item	The protocol of one or more subsystems, modules, or subroutines 
+%  \item The choice of a particular algorithm or programming idiom (design pattern) to implement portions of the system's functionality 
+%  \item	Plans for ensuring requirements traceability 
+%  \item	Plans for testing the software 
+%  \item	Plans for maintaining the software 
+%  \item	Interfaces for end-users, software, hardware, and communications 
+%  \item	Hierarchical organization of the source code into its physical components (files and directories). 
+%  \item	How to build and/or generate the system's deliverables (how to compile, link, load, etc. ...) 
+% \end{itemize}
+Our approach to building and maintaining the platform is driven by a comprehensive set of planned policies and tactics that guide every phase of the project, from coding and testing to deployment and ongoing maintenance. These carefully devised strategies ensure that our development process is both systematic and adaptable, enabling us to maintain high quality and scalability across the entire system. By enforcing strict coding standards, comprehensive testing protocols, and robust version control practices, we create an environment that fosters consistent, error-free code development.  \\
+Additionally, our deployment and automation strategies, usingls such as Docker, Kubernetes, and CI /CI / CD pipelines, ensurethat changes are efficiently integrated and released with minimal disruption. Through planned tactics for error handling, logging, and real-time communication, we address potential issues proactively, thereby minimizing downtime and maximizing system resilience. Ultimately, these policies and tactics form the backbone of our engineering methodology, ensuring that every component of the system is designed for ease of maintenance, future scalability, and seamless collaboration among team members.
+\subsection{Software Quality Standards}
+We adhere to TypeScript for type safety across both frontend and backend, reducing runtime errors. Our coding guidelines include ESLint and Prettier configurations to maintain a consistent style and catch common issues early. Each service is expected to have unit tests in Jest, covering critical functions and APIs. We also employ integration tests that verify end-to-end flows, such as creating a new user, initiating a chat, and confirming the message is delivered. For more complex scenarios, we consider using Playwright or Cypress for UI testing. \\
+Every pull request undergoes an automated CI pipeline (e.g., GitHub Actions) that runs lint checks, unit tests, and builds Docker images to ensure no breaking changes are introduced. This pipeline also handles environment-specific tasks, like generating Prisma migrations. We keep environment variables in a secure storage solution, ensuring secrets (API keys, OAuth credentials) are never exposed. By enforcing these policies, we maintain high code quality and reduce the likelihood of regressions or production issues.
+
+\subsection{Implementation and Deployment Tactics}
+To ensure a smooth developer experience, we adopt a feature-branch workflow in Git, where each developer works on a self-contained feature or bug fix. Merges into the main branch trigger automated tests and container builds, making continuous deployment seamless. For performance tactics, we rely on indexing frequently queried fields in Postgres (like userID or projectID), and we store ephemeral data in Redis when quick lookups are required. \\
+When implementing chat features, we prefer Pusher or Agora over raw WebSockets because these services handle reconnection logic and scaling. This frees us from writing extensive socket management code. For the recommendation system, we may start with a straightforward queue-based approach—ranking users or projects by similarity scores—and gradually incorporate advanced ML if user data grows complex. If we need external search capabilities, we integrate Algolia to handle full-text queries. Finally, we use Cloudinary/AWS S3 for file uploads to keep media out of our primary database. This ensures database queries remain fast and our storage remains cost-effective. By blending these tactics, we create a robust system that is easy to develop, test, and maintain while still allowing for future expansion.
+
+
+\section{Conclusion}
+The architecture of Labyrinth addresses practical limitations while giving performance, security, scalability, and interoperability first priority.  It ensures real-time interactions, effective data management, and safe authentication through sound architectural choices.  Low-latency updates, JWT authentication, OAuth compliance, encrypted data management, caching, and cloud storage are among the key optimisations.  Event-driven architectures and WebSocket-based communication improve dependability, and system stability is guaranteed by CI/CD, performance testing, and stress testing.  All in all, Labyrinth's design decisions produce a user-focused, safe, and scalable platform that can expand with the company and keep up with new developments in technology.
+
+\chapter{Implementation and Test Cases}
+Labyrinth is an online platform created to help professionals, freelancers, and students connect, collaborate, and manage projects.  This chapter contains the work that was finished during FYP-1, namely the frontend interface design and development.  Although state management and backend integration will be covered in FYP-2, the current phase is on creating a responsive and user-friendly user interface (UI) that will act as the basis for future integration.
+% For each chapter, provide a paragraph of introduction and at the end, a paragraph of conclusions. (Not the programming code but the algorithmic and procedural details especially related to the hidden/ backend algorithms that are not covered in the design)
+\section{Implementation}
+The frontend of Labyrinth was developed using Next.js (a React-based framework), with TailwindCSS and Shadcn UI for styling and UI components. TypeScript has been used to ensure type safety and maintainability. The layout was designed with scalability and modularity in mind, using a component-based structure.
+
+\subsection{Landing Page and Onboarding Flow}
+\begin{itemize}
+    \item The Landing Page serves as the first point of interaction. It includes a brief introduction to the platform, a call-to-action (CTA), and UI elements that guide new users toward setting up their profiles.
+    \item The onboarding flow collects user data including name, tech stack, experience, and preferences. This data will later be used by the matchmaking and recommendation engines.
+    \item The flow is designed with conditional rendering and form validation mechanisms to ensure smooth navigation between steps.
+\end{itemize}
+
+\subsection{Profile Module}
+\begin{itemize}
+    \item Users fill out a detailed profile that includes demographic information, skills, interests, and project preferences.
+    \item A multi-step form is implemented using reusable input components, each validated on the client-side.
+    \item Though not connected to a backend in FYP-1, the form simulates real user input to demonstrate expected behavior.
+\end{itemize} 
+
+
+\subsection{Matchmaking and Recommendation}
+
+\begin{itemize}
+    \item These sections demonstrate how the system will recommend collaborators and projects.
+    \item Dummy user cards and project boards are displayed, with filters and sorting options available for future backend functionality.
+    \item This interface is built with performance in mind, using optimized rendering and component memoization.
+\end{itemize}
+
+\subsection{Workspace Dashboard}
+The workspace page displays project tiles the user is involved in.
+Each project card includes sections for:
+\begin{itemize}
+    \item Chat (UI only, not functional).
+    \item To-do lists (using static tasks).
+    \item Progress indicators (static charts/graphs for now).
+\end{itemize}
+Designed to simulate how real-time data will be handled and updated in FYP-2 via WebSockets or polling APIs.
+\subsection{Responsive Design and UX Enhancements}
+\begin{itemize}
+    \item TailwindCSS and media queries were used to ensure full responsiveness across screen sizes.
+    \item Elements such as modals, buttons, navigation bars, and hover states were refined to deliver a smooth UX.
+\end{itemize}
+\section{Testing and Evaluation}
+\begin{itemize}
+    \item Manual Testing: All pages were manually tested for UI bugs, layout inconsistencies, and responsiveness.
+    \item Browser Compatibility: Ensured compatibility with Chrome, Firefox, and Edge.
+    \item UI Heuristics Evaluation: Applied basic usability principles to evaluate whether users could navigate through the platform intuitively.
+\end{itemize}
+\section{Conclusion}
+The implementation phase of FYP-1 has resulted in a functional and visually complete frontend prototype of Labyrinth. This prototype includes the landing page, user onboarding, matchmaking UI, and the workspace dashboard. While no backend or state management systems were implemented in this phase, the structure is built in a modular fashion to support easy integration in FYP-2. The frontend serves as a reliable blueprint for further development of the system’s backend logic, APIs, real-time features, and user data handling.
+
+\chapter{Conclusion and Future Work}
+This chapter summarizes the key accomplishments and challenges faced during FYP-1 and outlines the roadmap for FYP-2. 
+
+\section{Conclusion}
+In FYP-1, the Labyrinth team focused on creating a responsive, modular, and user-centric frontend prototype that captures the vision of a collaborative platform. Key screens and interfaces have been developed using Next.js, TailwindCSS, and TypeScript. While backend functionalities such as authentication, real-time chat, task tracking, and recommendations were not implemented, the groundwork has been laid for their seamless integration. Challenges included narrowing down the scope to prioritize UI/UX, ensuring a scalable layout, and designing intuitive navigation flows.
+\section{Future Work}
+In FYP-2, the following development phases will be pursued:
+\begin{itemize}
+    \item Set up APIs using Node.js or Next.js API routes.
+    \item Integrate PostgreSQL database with Prisma ORM.
+    \item Implement user authentication and authorization (likely with Supabase or NextAuth).
+    \item Implement global state management using Zustand or Redux Toolkit.
+    \item Ensure smooth data flow across modules.
+    \item Implement chat integration and analytics dashboard.
+    \item Conduct unit and integration testing.
+    \item Deploy MVP using Vercel (frontend) and Supabase (backend services).
+\end{itemize}
+Through these efforts, Labyrinth will evolve into a robust platform ready for real-world usage.
+{
+\bibliographystyle{ieeetr}
+\bibliography{fypbib} %specify your .bib file here
+}
+\end{document}
+% Incorrect placement of Authors' Declaration.  Inconsistent space before headings. SDG Figure is too large, make it small. Remove subcaptions from figures and tables only captions are required. Remove captions of use case tables. Instead, add Subheadings. Very bad resolution of GUI's. Very bad design of ER diagram and beyond page margins. Very bad resolution of the Architecture Diagram. Very bad resolution of the class diagram.
+%  Text in figure is not readable. Figure is too big or too small
+%  No sequence diagrams are required remove them. 

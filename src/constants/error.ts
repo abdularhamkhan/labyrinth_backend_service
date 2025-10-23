@@ -232,9 +232,9 @@ export const USER_ERRORS = {
   },
   EMAIL_ALREADY_EXISTS: {
     code: "USER_EMAIL_EXISTS",
-    message: "An account with this email address already exists",
+    message: "This email is already registered",
     statusCode: 409,
-    type: "ConflictError" as const,
+    type: "AuthenticationError" as const,
   },
   USERNAME_ALREADY_EXISTS: {
     code: "USER_USERNAME_EXISTS",
@@ -506,6 +506,12 @@ export const EXTERNAL_SERVICE_ERRORS = {
     statusCode: 503,
     type: "ExternalServiceError" as const,
   },
+  EMAIL_SEND_FAILED: {
+    code: "EXTERNAL_EMAIL_SEND_FAILED",
+    message: "Email delivery failed. Please check your email address or contact support",
+    statusCode: 502,
+    type: "ExternalServiceError" as const,
+  },
   THIRD_PARTY_API_ERROR: {
     code: "EXTERNAL_API_ERROR",
     message: "External API service is temporarily unavailable",
@@ -546,19 +552,19 @@ export const RATE_LIMIT_ERRORS = {
 export const SERVER_ERRORS = {
   INTERNAL_SERVER_ERROR: {
     code: "SERVER_INTERNAL_ERROR",
-    message: "An unexpected error occurred. Please try again later",
+    message: "A server error occurred while processing your request",
     statusCode: 500,
     type: "AppError" as const,
   },
   SERVICE_UNAVAILABLE: {
     code: "SERVER_SERVICE_UNAVAILABLE",
-    message: "Service is temporarily unavailable. Please try again later",
+    message: "The requested service is currently unavailable",
     statusCode: 503,
     type: "AppError" as const,
   },
   MAINTENANCE_MODE: {
     code: "SERVER_MAINTENANCE",
-    message: "Server is under maintenance. Please try again later",
+    message: "The server is currently undergoing maintenance. Please check back shortly",
     statusCode: 503,
     type: "AppError" as const,
   },

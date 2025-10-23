@@ -1,0 +1,202 @@
+#docker-compose-dev.yaml
+# version: '3.8'
+
+services:
+  # =============================================================================
+  # LABYRINTH BACKEND APPLICATION
+  # =============================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+      - "8080:8080" # WebSocket port
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL="postgresql://postgres.gdkezkjgalzldgohfwfs:9ofVhwu9QyV7S6h1@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - SUPABASE_URL=https://gdkezkjgalzldgohfwfs.supabase.co
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdka2V6a2pnYWx6bGRnb2hmd2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NDU2NDIsImV4cCI6MjA3NDUyMTY0Mn0.GpAVfRRwLoVM2ILG3eEdepwFHtGplXUeL-zj_nLYxIU
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdka2V6a2pnYWx6bGRnb2hmd2ZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NTY0MiwiZXhwIjoyMDc0NTIxNjQyfQ.wzKqIOg4kgCOb8CEuC4nzpp44CTJVaL3DOg0ayaQEuA
+      - JWT_SECRET=TuTtK3qHgmJQiFJS/42tQZIgNPfn/ALB4mVXNiy8uheOLuxkVoQBsjp9h8KCjnQckDjIcyhYhmiOuyO4HrXrDA==
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - labyrinth-network
+
+  # =============================================================================
+  # POSTGRESQL DATABASE
+  # =============================================================================
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=labyrinth_db
+      - POSTGRES_USER=labyrinth_user
+      - POSTGRES_PASSWORD=labyrinth_pass
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements,pg_trgm
+      -c pg_stat_statements.track=all
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+    networks:
+      - labyrinth-network
+
+  # =============================================================================
+  # REDIS CACHE & SESSION STORE
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server 
+      --appendonly yes 
+      --maxmemory 256mb 
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+    networks:
+      - labyrinth-network
+
+  # =============================================================================
+  # APACHE KAFKA MESSAGE BROKER
+  # =============================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - labyrinth-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      # Performance optimizations
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_CLEANUP_POLICY: delete
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - labyrinth-network
+
+  # =============================================================================
+  # KAFKA UI (Optional - for development)
+  # =============================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: labyrinth-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - labyrinth-network
+
+  # =============================================================================
+  # REDIS INSIGHT (Optional - for development)
+  # =============================================================================
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "8001:8001"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - labyrinth-network
+
+  # =============================================================================
+  # PGADMIN (Optional - for development)
+  # =============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - "8082:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@labyrinth.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - labyrinth-network
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  kafka_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  zookeeper_logs:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  labyrinth-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
