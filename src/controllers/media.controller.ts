@@ -9,7 +9,7 @@ import {
   deleteMedia,
   getMediaStats,
   generateSignedUrl,
-  initializeMediaBuckets
+  initializeMediaBuckets,
 } from "../services/media.service";
 import {
   fileUploadRequestSchema,
@@ -18,7 +18,7 @@ import {
   mediaDeletionRequestSchema,
   avatarUploadSchema,
   projectImageUploadSchema,
-  chatMediaUploadSchema
+  chatMediaUploadSchema,
 } from "../schemas/media.schema";
 import { MediaCategory } from "../types/media.types";
 import { AuthRequest } from "../types/auth.types";
@@ -27,17 +27,17 @@ import { AuthRequest } from "../types/auth.types";
  * =============================================================================
  * MEDIA CONTROLLER - COMPREHENSIVE MEDIA MANAGEMENT
  * =============================================================================
- * 
+ *
  * Controller handling all media operations for the Labyrinth platform:
- * 
+ *
  * - File uploads (single and multiple)
  * - Media retrieval and querying
  * - Media deletion and cleanup
  * - Statistics and analytics
  * - URL generation and access control
- * 
+ *
  * All endpoints are protected and validate user permissions.
- * 
+ *
  * =============================================================================
  */
 
@@ -48,17 +48,17 @@ import { AuthRequest } from "../types/auth.types";
 export const initializeStorage = async (req: Request, res: Response): Promise<void> => {
   try {
     await initializeMediaBuckets();
-    
+
     res.status(200).json({
       success: true,
-      message: "Media storage initialized successfully"
+      message: "Media storage initialized successfully",
     });
   } catch (error) {
     logger.error("Failed to initialize media storage:", error instanceof Error ? error : undefined);
     res.status(500).json({
       success: false,
       message: "Failed to initialize media storage",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -73,7 +73,7 @@ export const uploadAvatar = async (req: AuthRequest, res: Response): Promise<voi
       res.status(400).json({
         success: false,
         message: "No file provided",
-        error: "MISSING_FILE"
+        error: "MISSING_FILE",
       });
       return;
     }
@@ -84,7 +84,7 @@ export const uploadAvatar = async (req: AuthRequest, res: Response): Promise<voi
         success: false,
         message: "Invalid request data",
         error: "VALIDATION_ERROR",
-        details: validation.error.issues
+        details: validation.error.issues,
       });
       return;
     }
@@ -101,22 +101,21 @@ export const uploadAvatar = async (req: AuthRequest, res: Response): Promise<voi
       {
         generateThumbnail,
         quality,
-        tags: [`avatar:${size}`]
+        tags: [`avatar:${size}`],
       }
     );
 
     res.status(201).json({
       success: true,
       message: "Avatar uploaded successfully",
-      data: { media: result }
+      data: { media: result },
     });
-
   } catch (error) {
     logger.error("Avatar upload failed:", error instanceof Error ? error : undefined);
     res.status(500).json({
       success: false,
       message: "Avatar upload failed",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -131,7 +130,7 @@ export const uploadProjectImage = async (req: AuthRequest, res: Response): Promi
       res.status(400).json({
         success: false,
         message: "No file provided",
-        error: "MISSING_FILE"
+        error: "MISSING_FILE",
       });
       return;
     }
@@ -142,7 +141,7 @@ export const uploadProjectImage = async (req: AuthRequest, res: Response): Promi
         success: false,
         message: "Invalid request data",
         error: "VALIDATION_ERROR",
-        details: validation.error.issues
+        details: validation.error.issues,
       });
       return;
     }
@@ -159,22 +158,21 @@ export const uploadProjectImage = async (req: AuthRequest, res: Response): Promi
       {
         generateThumbnail,
         quality,
-        tags: [...(tags || []), `project:${projectId}`]
+        tags: [...(tags || []), `project:${projectId}`],
       }
     );
 
     res.status(201).json({
       success: true,
       message: "Project image uploaded successfully",
-      data: { media: result }
+      data: { media: result },
     });
-
   } catch (error) {
     logger.error("Project image upload failed:", isError(error) ? error : new Error(String(error)));
     res.status(500).json({
       success: false,
       message: "Project image upload failed",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -190,7 +188,7 @@ export const uploadChatMedia = async (req: AuthRequest, res: Response): Promise<
       res.status(400).json({
         success: false,
         message: "No files provided",
-        error: "MISSING_FILES"
+        error: "MISSING_FILES",
       });
       return;
     }
@@ -201,7 +199,7 @@ export const uploadChatMedia = async (req: AuthRequest, res: Response): Promise<
         success: false,
         message: "Invalid request data",
         error: "VALIDATION_ERROR",
-        details: validation.error.issues
+        details: validation.error.issues,
       });
       return;
     }
@@ -209,35 +207,29 @@ export const uploadChatMedia = async (req: AuthRequest, res: Response): Promise<
     const userId = req.user!.id;
     const { chatId, messageType, generateThumbnail, quality } = validation.data;
 
-    const fileData = files.map(file => ({
+    const fileData = files.map((file) => ({
       buffer: file.buffer,
       filename: file.originalname,
-      mimeType: file.mimetype
+      mimeType: file.mimetype,
     }));
 
-    const result = await uploadMultipleMedia(
-      userId,
-      fileData,
-      MediaCategory.CHAT_MEDIA,
-      {
-        generateThumbnail,
-        quality,
-        tags: [`chat:${chatId}`, `type:${messageType}`]
-      }
-    );
+    const result = await uploadMultipleMedia(userId, fileData, MediaCategory.CHAT_MEDIA, {
+      generateThumbnail,
+      quality,
+      tags: [`chat:${chatId}`, `type:${messageType}`],
+    });
 
     res.status(201).json({
       success: true,
       message: "Chat media uploaded successfully",
-      data: result
+      data: result,
     });
-
   } catch (error) {
     logger.error("Chat media upload failed:", isError(error) ? error : new Error(String(error)));
     res.status(500).json({
       success: false,
       message: "Chat media upload failed",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -253,7 +245,7 @@ export const uploadProjectFiles = async (req: AuthRequest, res: Response): Promi
       res.status(400).json({
         success: false,
         message: "No files provided",
-        error: "MISSING_FILES"
+        error: "MISSING_FILES",
       });
       return;
     }
@@ -264,7 +256,7 @@ export const uploadProjectFiles = async (req: AuthRequest, res: Response): Promi
         success: false,
         message: "Invalid request data",
         error: "VALIDATION_ERROR",
-        details: validation.error.issues
+        details: validation.error.issues,
       });
       return;
     }
@@ -272,36 +264,30 @@ export const uploadProjectFiles = async (req: AuthRequest, res: Response): Promi
     const userId = req.user!.id;
     const { folder, generateThumbnail, quality, tags } = validation.data;
 
-    const fileData = files.map(file => ({
+    const fileData = files.map((file) => ({
       buffer: file.buffer,
       filename: file.originalname,
-      mimeType: file.mimetype
+      mimeType: file.mimetype,
     }));
 
-    const result = await uploadMultipleMedia(
-      userId,
-      fileData,
-      MediaCategory.PROJECT_FILE,
-      {
-        folder,
-        generateThumbnail,
-        quality,
-        tags
-      }
-    );
+    const result = await uploadMultipleMedia(userId, fileData, MediaCategory.PROJECT_FILE, {
+      folder,
+      generateThumbnail,
+      quality,
+      tags,
+    });
 
     res.status(201).json({
       success: true,
       message: "Project files uploaded successfully",
-      data: result
+      data: result,
     });
-
   } catch (error) {
     logger.error("Project files upload failed:", isError(error) ? error : new Error(String(error)));
     res.status(500).json({
       success: false,
       message: "Project files upload failed",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -316,7 +302,7 @@ export const uploadWorkspaceBanner = async (req: AuthRequest, res: Response): Pr
       res.status(400).json({
         success: false,
         message: "No file provided",
-        error: "MISSING_FILE"
+        error: "MISSING_FILE",
       });
       return;
     }
@@ -327,7 +313,7 @@ export const uploadWorkspaceBanner = async (req: AuthRequest, res: Response): Pr
         success: false,
         message: "Invalid request data",
         error: "VALIDATION_ERROR",
-        details: validation.error.issues
+        details: validation.error.issues,
       });
       return;
     }
@@ -344,22 +330,24 @@ export const uploadWorkspaceBanner = async (req: AuthRequest, res: Response): Pr
       {
         generateThumbnail,
         quality,
-        tags: [...(tags || []), 'workspace:banner']
+        tags: [...(tags || []), "workspace:banner"],
       }
     );
 
     res.status(201).json({
       success: true,
       message: "Workspace banner uploaded successfully",
-      data: { media: result }
+      data: { media: result },
     });
-
   } catch (error) {
-    logger.error("Workspace banner upload failed:", isError(error) ? error : new Error(String(error)));
+    logger.error(
+      "Workspace banner upload failed:",
+      isError(error) ? error : new Error(String(error))
+    );
     res.status(500).json({
       success: false,
       message: "Workspace banner upload failed",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -374,12 +362,12 @@ export const getMedia = async (req: AuthRequest, res: Response): Promise<void> =
     const userId = req.user!.id;
 
     const media = await getMediaById(id);
-    
+
     if (!media) {
       res.status(404).json({
         success: false,
         message: "Media not found",
-        error: "MEDIA_NOT_FOUND"
+        error: "MEDIA_NOT_FOUND",
       });
       return;
     }
@@ -391,7 +379,7 @@ export const getMedia = async (req: AuthRequest, res: Response): Promise<void> =
       res.status(403).json({
         success: false,
         message: "Access denied",
-        error: "ACCESS_DENIED"
+        error: "ACCESS_DENIED",
       });
       return;
     }
@@ -399,15 +387,14 @@ export const getMedia = async (req: AuthRequest, res: Response): Promise<void> =
     res.status(200).json({
       success: true,
       message: "Media retrieved successfully",
-      data: { media }
+      data: { media },
     });
-
   } catch (error) {
     logger.error("Failed to get media:", isError(error) ? error : new Error(String(error)));
     res.status(500).json({
       success: false,
       message: "Failed to retrieve media",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -419,18 +406,18 @@ export const getMedia = async (req: AuthRequest, res: Response): Promise<void> =
 export const getMediaList = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
-    
+
     const validation = mediaQuerySchema.safeParse({
       ...req.query,
-      userId // Always filter by current user
+      userId, // Always filter by current user
     });
-    
+
     if (!validation.success) {
       res.status(400).json({
         success: false,
         message: "Invalid query parameters",
         error: "VALIDATION_ERROR",
-        details: validation.error.issues
+        details: validation.error.issues,
       });
       return;
     }
@@ -440,15 +427,14 @@ export const getMediaList = async (req: AuthRequest, res: Response): Promise<voi
     res.status(200).json({
       success: true,
       message: "Media list retrieved successfully",
-      data: result
+      data: result,
     });
-
   } catch (error) {
     logger.error("Failed to get media list:", isError(error) ? error : new Error(String(error)));
     res.status(500).json({
       success: false,
       message: "Failed to retrieve media list",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -465,7 +451,7 @@ export const deleteMediaFiles = async (req: AuthRequest, res: Response): Promise
         success: false,
         message: "Invalid request data",
         error: "VALIDATION_ERROR",
-        details: validation.error.issues
+        details: validation.error.issues,
       });
       return;
     }
@@ -480,7 +466,7 @@ export const deleteMediaFiles = async (req: AuthRequest, res: Response): Promise
         res.status(403).json({
           success: false,
           message: "Access denied to one or more media files",
-          error: "ACCESS_DENIED"
+          error: "ACCESS_DENIED",
         });
         return;
       }
@@ -491,15 +477,14 @@ export const deleteMediaFiles = async (req: AuthRequest, res: Response): Promise
     res.status(200).json({
       success: true,
       message: "Media deletion completed",
-      data: result
+      data: result,
     });
-
   } catch (error) {
     logger.error("Failed to delete media:", isError(error) ? error : new Error(String(error)));
     res.status(500).json({
       success: false,
       message: "Failed to delete media",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -516,15 +501,14 @@ export const getMediaStatistics = async (req: AuthRequest, res: Response): Promi
     res.status(200).json({
       success: true,
       message: "Media statistics retrieved successfully",
-      data: { stats }
+      data: { stats },
     });
-
   } catch (error) {
     logger.error("Failed to get media stats:", isError(error) ? error : new Error(String(error)));
     res.status(500).json({
       success: false,
       message: "Failed to retrieve media statistics",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -545,7 +529,7 @@ export const getSignedUrl = async (req: AuthRequest, res: Response): Promise<voi
       res.status(403).json({
         success: false,
         message: "Access denied",
-        error: "ACCESS_DENIED"
+        error: "ACCESS_DENIED",
       });
       return;
     }
@@ -555,19 +539,21 @@ export const getSignedUrl = async (req: AuthRequest, res: Response): Promise<voi
     res.status(200).json({
       success: true,
       message: "Signed URL generated successfully",
-      data: { 
+      data: {
         signedUrl,
         expiresIn,
-        expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString()
-      }
+        expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+      },
     });
-
   } catch (error) {
-    logger.error("Failed to generate signed URL:", isError(error) ? error : new Error(String(error)));
+    logger.error(
+      "Failed to generate signed URL:",
+      isError(error) ? error : new Error(String(error))
+    );
     res.status(500).json({
       success: false,
       message: "Failed to generate signed URL",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };

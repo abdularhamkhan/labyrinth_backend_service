@@ -12,6 +12,8 @@ import {
   addUserToProjectChat,
 } from "../services/chat.service";
 import { ValidationError } from "../constants/error";
+import { authenticateChannel } from "../services/pusher.service";
+import { prisma } from "../config/prisma";
 
 // =============================================================================
 // CHAT CONTROLLERS - LABYRINTH COLLABORATION PLATFORM
@@ -23,14 +25,11 @@ import { ValidationError } from "../constants/error";
  * Auth: Required
  * Body: { targetUserId: string }
  */
-export const createDirectChat = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> => {
+export const createDirectChat = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.id;
   const { targetUserId } = req.body;
 
-  if (!targetUserId || typeof targetUserId !== 'string') {
+  if (!targetUserId || typeof targetUserId !== "string") {
     throw new ValidationError("targetUserId is required");
   }
 
@@ -56,7 +55,7 @@ export const createProjectChatController = async (
   const userId = req.user!.id;
   const { projectId } = req.body;
 
-  if (!projectId || typeof projectId !== 'string') {
+  if (!projectId || typeof projectId !== "string") {
     throw new ValidationError("projectId is required");
   }
 
@@ -83,7 +82,7 @@ export const sendMessageController = async (
   const { chatId } = req.params;
   const { content, messageType = "TEXT", mediaUrl } = req.body;
 
-  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+  if (!content || typeof content !== "string" || content.trim().length === 0) {
     throw new ValidationError("Message content is required");
   }
 
@@ -182,7 +181,7 @@ export const setTypingIndicatorController = async (
   const { chatId } = req.params;
   const { isTyping } = req.body;
 
-  if (typeof isTyping !== 'boolean') {
+  if (typeof isTyping !== "boolean") {
     throw new ValidationError("isTyping must be a boolean");
   }
 
@@ -250,7 +249,7 @@ export const addUserToProjectChatController = async (
   const { projectId } = req.params;
   const { userId } = req.body;
 
-  if (!userId || typeof userId !== 'string') {
+  if (!userId || typeof userId !== "string") {
     throw new ValidationError("userId is required");
   }
 
@@ -264,20 +263,59 @@ export const addUserToProjectChatController = async (
 };
 
 /**
+ * PUSHER CHANNEL AUTHENTICATION
+ * Route: POST /api/chat/pusher/auth
+ * Auth: Required
+ * Body: { socket_id: string, channel_name: string }
+ */
+export const pusherAuthController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { socket_id, channel_name } = req.body;
+
+  if (!socket_id || !channel_name) {
+    throw new ValidationError("socket_id and channel_name are required");
+  }
+
+  // For chat channels, verify user is a participant
+  if (channel_name.startsWith("private-chat-")) {
+    const chatId = channel_name.replace("private-chat-", "");
+
+    // Verify user is participant in this chat
+    const chat = await prisma.chat.findFirst({
+      where: {
+        id: chatId,
+        participants: {
+          some: { userId },
+        },
+      },
+    });
+
+    if (!chat) {
+      throw new ValidationError("Unauthorized: Not a participant in this chat");
+    }
+  }
+
+  // Generate Pusher auth response
+  const auth = authenticateChannel(socket_id, channel_name, userId);
+
+  res.status(200).json(auth);
+};
+
+/**
  * GET CHAT DETAILS
  * Route: GET /api/chat/:chatId
  * Auth: Required
  */
-export const getChatDetails = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> => {
+export const getChatDetails = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.id;
   const { chatId } = req.params;
 
   // Get chat with participants and recent message
   const chats = await getUserChats(userId);
-  const chat = chats.find(c => c.id === chatId);
+  const chat = chats.find((c) => c.id === chatId);
 
   if (!chat) {
     throw new ValidationError("Chat not found or access denied");

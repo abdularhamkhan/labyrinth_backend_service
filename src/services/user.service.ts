@@ -9,11 +9,19 @@ import {
   DatabaseError,
 } from "../constants/error";
 import { uploadAvatar, deleteUserAvatarFiles } from "./avatar.service";
-import { UserProfile, UpdateProfileInput, UpdateProfileResponse, 
-  LabyrinthUserProfile, CreateTechStackInput, CreateDemographicInput, 
-  UpdatePreferencesInput, UserProfileWithRelations } from "../schemas/user.schema";
+import {
+  UserProfile,
+  UpdateProfileInput,
+  UpdateProfileResponse,
+  LabyrinthUserProfile,
+  CreateTechStackInput,
+  CreateDemographicInput,
+  UpdatePreferencesInput,
+  UserProfileWithRelations,
+} from "../schemas/user.schema";
 import { FileUpload } from "../schemas/avatar.schema";
 import { kafkaProducer } from "./kafka-producer.service";
+import { getOrSetCache, CacheKeys, CACHE_TTL, deleteCache } from "../utils/cache.util";
 
 /**
  * =============================================================================
@@ -34,28 +42,35 @@ import { kafkaProducer } from "./kafka-producer.service";
 
 export const getUserProfileService = async (userId: string): Promise<UserProfile> => {
   try {
-    const userProfile = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        dateOfBirth: true,
-        lastActive: true,
-        gitHubProfile: true,
-        education: true,
-        createdAt: true,
-        updatedAt: true,
+    // Try to get from cache first
+    return await getOrSetCache(
+      CacheKeys.userProfile(userId),
+      async () => {
+        const userProfile = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            dateOfBirth: true,
+            lastActive: true,
+            gitHubProfile: true,
+            education: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+
+        if (!userProfile) {
+          throw new NotFoundError(USER_ERRORS.USER_NOT_FOUND.message, USER_ERRORS.USER_NOT_FOUND.code);
+        }
+
+        return userProfile;
       },
-    });
-
-    if (!userProfile) {
-      throw new NotFoundError(USER_ERRORS.USER_NOT_FOUND.message, USER_ERRORS.USER_NOT_FOUND.code);
-    }
-
-    return userProfile;
+      CACHE_TTL.USER_PROFILE
+    );
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
       throw error; // Re-throw our custom errors
@@ -215,7 +230,10 @@ export const updateUserProfileService = async (
     if (updateData.username !== undefined && updateData.username !== currentUser.username) {
       changedFields.username = updateData.username;
     }
-    if (updateData.gitHubProfile !== undefined && updateData.gitHubProfile !== currentUser.gitHubProfile) {
+    if (
+      updateData.gitHubProfile !== undefined &&
+      updateData.gitHubProfile !== currentUser.gitHubProfile
+    ) {
       changedFields.gitHubProfile = updateData.gitHubProfile;
     }
     if (updateData.education !== undefined && updateData.education !== currentUser.education) {
@@ -476,7 +494,7 @@ export const upsertUserTechStack = async (
     }
 
     let techStack;
-    
+
     if (user.techStackId) {
       // Update existing tech stack
       techStack = await prisma.techStack.update({
@@ -544,7 +562,7 @@ export const upsertUserDemographic = async (
     }
 
     let demographic;
-    
+
     if (user.demographicId) {
       // Update existing demographic
       demographic = await prisma.demographic.update({
@@ -570,6 +588,9 @@ export const upsertUserDemographic = async (
       });
     }
 
+    // Invalidate demographic cache
+    await deleteCache(CacheKeys.userDemographic(userId));
+
     // Publish demographic updated event
     await kafkaProducer.publishUserActivity(userId, "demographic_updated", {
       demographicId: demographic.id,
@@ -579,6 +600,45 @@ export const upsertUserDemographic = async (
     });
 
     return demographic;
+  } catch (error) {
+    if (error instanceof Error && error.name.includes("Error")) {
+      throw error;
+    }
+    throw new DatabaseError(
+      DATABASE_ERRORS.QUERY_FAILED.message,
+      DATABASE_ERRORS.QUERY_FAILED.code,
+      { originalError: error }
+    );
+  }
+};
+
+/**
+ * Get user's demographic information
+ */
+export const getUserDemographic = async (userId: string): Promise<any> => {
+  try {
+    // Try to get from cache first
+    return await getOrSetCache(
+      CacheKeys.userDemographic(userId),
+      async () => {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            demographic: {
+              select: { id: true, country: true, languages: true },
+            },
+          },
+        });
+
+        if (!user) {
+          throw new NotFoundError(USER_ERRORS.USER_NOT_FOUND.message, USER_ERRORS.USER_NOT_FOUND.code);
+        }
+
+        return user.demographic || null;
+      },
+      CACHE_TTL.USER_PROFILE
+    );
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
       throw error;
@@ -647,10 +707,7 @@ export const updateUserPreferences = async (
 /**
  * Update user's core profile information for Labyrinth
  */
-export const updateLabyrinthUserProfile = async (
-  userId: string,
-  updateData: any
-): Promise<any> => {
+export const updateLabyrinthUserProfile = async (userId: string, updateData: any): Promise<any> => {
   try {
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -671,7 +728,7 @@ export const updateLabyrinthUserProfile = async (
 
     // Build update object with only changed fields
     const changedFields: any = {};
-    
+
     Object.keys(updateData).forEach((key) => {
       if (updateData[key] !== undefined && updateData[key] !== (currentUser as any)[key]) {
         changedFields[key] = updateData[key];
@@ -685,6 +742,17 @@ export const updateLabyrinthUserProfile = async (
       };
     }
 
+    // Convert dateOfBirth to ISO-8601 DateTime if present
+    if (changedFields.dateOfBirth && typeof changedFields.dateOfBirth === 'string') {
+      // If dateOfBirth is in YYYY-MM-DD format, convert to full DateTime
+      if (/^\d{4}-\d{2}-\d{2}$/.test(changedFields.dateOfBirth)) {
+        changedFields.dateOfBirth = new Date(changedFields.dateOfBirth + 'T00:00:00.000Z');
+      } else {
+        // Otherwise try to parse as Date
+        changedFields.dateOfBirth = new Date(changedFields.dateOfBirth);
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -692,6 +760,9 @@ export const updateLabyrinthUserProfile = async (
         updatedAt: new Date(),
       },
     });
+
+    // Invalidate user profile cache
+    await deleteCache(CacheKeys.userProfile(userId));
 
     // Publish user profile updated event
     await kafkaProducer.publishUserProfileUpdated(userId, {
@@ -830,6 +901,6 @@ export const updateUserLastActive = async (userId: string): Promise<void> => {
     });
   } catch (error) {
     // Don't throw error for activity tracking to avoid breaking main flows
-    console.error('Failed to update user last active:', error);
+    console.error("Failed to update user last active:", error);
   }
 };

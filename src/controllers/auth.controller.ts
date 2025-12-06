@@ -7,6 +7,7 @@ import {
   forgotUsernameService,
   resetPasswordService,
   resendOtpService,
+  verifyOtpResetService,
 } from "../services/auth.service";
 import {
   signupSchema,
@@ -15,6 +16,8 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   forgotUsernameSchema,
+  verifyOtpResetSchema,
+  newResetPasswordSchema,
   // Note: resend OTP uses same email schema as forgot password
 } from "../schemas/auth.schema";
 import { z } from "zod";
@@ -61,13 +64,26 @@ export const signupController = async (req: Request, res: Response): Promise<voi
   const validatedData = signupSchema.parse(req.body);
   const result = await signupService(req, validatedData);
 
+  // Build response data based on whether user was auto-verified
+  const responseData: any = {
+    requiresVerification: result.requiresVerification,
+    userId: result.id,
+    username: result.username,
+  };
+
+  // If token is present (auto-verified), include it in response
+  if (result.token) {
+    responseData.user = {
+      id: result.id,
+      username: result.username,
+    };
+    responseData.token = result.token;
+  }
+
   res.status(201).json({
     success: true,
     message: result.message,
-    data: {
-      requiresVerification: true,
-      userId: result.id,
-    },
+    data: responseData,
   });
 };
 
@@ -184,9 +200,37 @@ export const forgotPasswordController = async (req: Request, res: Response): Pro
   res.status(200).json({
     success: true,
     message: result.message,
-    data: {
-      emailSent: true,
-    },
+    data: result.data,
+  });
+};
+
+/**
+ * =============================================================================
+ * VERIFY OTP FOR PASSWORD RESET CONTROLLER
+ * =============================================================================
+ *
+ * Handles OTP verification for password reset by:
+ * - Validating OTP and email input data
+ * - Calling verify OTP reset service
+ * - Sending success response
+ *
+ * Route: POST /api/auth/verify-otp-reset
+ *
+ * Security Features:
+ * - OTP validation with expiration
+ * - Rate limiting applied at route level
+ * - Secure verification token generation for next step
+ *
+ * =============================================================================
+ */
+export const verifyOtpResetController = async (req: Request, res: Response): Promise<void> => {
+  const validatedData = verifyOtpResetSchema.parse(req.body);
+  const result = await verifyOtpResetService(req, validatedData);
+
+  res.status(200).json({
+    success: true,
+    message: result.message,
+    data: result.data,
   });
 };
 
@@ -196,22 +240,21 @@ export const forgotPasswordController = async (req: Request, res: Response): Pro
  * =============================================================================
  *
  * Handles password reset completion by:
- * - Validating token and new password
+ * - Validating email and new password
  * - Calling reset password service
  * - Sending success response with user information
  *
  * Route: POST /api/auth/reset-password
  *
  * Security Features:
- * - Token validation with expiration
- * - Single-use tokens
+ * - Password validation with strength requirements
  * - Session invalidation after password change
- * - Secure password hashing
+ * - Secure password hashing via Supabase
  *
  * =============================================================================
  */
 export const resetPasswordController = async (req: Request, res: Response): Promise<void> => {
-  const validatedData = resetPasswordSchema.parse(req.body);
+  const validatedData = newResetPasswordSchema.parse(req.body);
   const result = await resetPasswordService(req, validatedData);
 
   res.status(200).json({

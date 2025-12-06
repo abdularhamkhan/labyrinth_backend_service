@@ -39,11 +39,7 @@ import { AuthRequest } from "../types/auth.types";
  * @param res - Express response object
  * @param next - Express next function to continue to next middleware/controller
  */
-export const authenticateUser = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const authenticateUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // Extract Authorization header
     const authHeader = req.headers.authorization;
@@ -119,11 +115,7 @@ export const authenticateUser = async (
  * @param res - Express response object
  * @param next - Express next function to continue to next middleware/controller
  */
-export const optionalAuth = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // Check if Authorization header exists
     const authHeader = req.headers.authorization;

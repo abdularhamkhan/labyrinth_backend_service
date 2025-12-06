@@ -25,7 +25,7 @@ export interface MediaMetadata {
   url: string;
   thumbnailUrl?: string;
   cdnUrl?: string;
-  storageProvider: 'CLOUDINARY' | 'AWS_S3' | 'LOCAL';
+  storageProvider: "CLOUDINARY" | "AWS_S3" | "LOCAL";
   storageKey: string;
   uploadedBy: string;
   createdAt: Date;
@@ -44,7 +44,7 @@ export interface MediaUploadOptions {
 }
 
 export interface MediaTransformation {
-  type: 'resize' | 'crop' | 'rotate' | 'filter' | 'format' | 'quality';
+  type: "resize" | "crop" | "rotate" | "filter" | "format" | "quality";
   params: Record<string, any>;
 }
 
@@ -66,29 +66,29 @@ export interface MediaUploadResult {
 // =============================================================================
 
 export enum MediaCategory {
-  USER_AVATAR = 'user_avatar',
-  PROJECT_IMAGE = 'project_image',
-  CHAT_MEDIA = 'chat_media',
-  PROJECT_FILE = 'project_file',
-  WORKSPACE_BANNER = 'workspace_banner',
-  SYSTEM_ASSET = 'system_asset',
+  USER_AVATAR = "user_avatar",
+  PROJECT_IMAGE = "project_image",
+  CHAT_MEDIA = "chat_media",
+  PROJECT_FILE = "project_file",
+  WORKSPACE_BANNER = "workspace_banner",
+  SYSTEM_ASSET = "system_asset",
 }
 
 export enum MediaType {
-  IMAGE = 'image',
-  VIDEO = 'video',
-  AUDIO = 'audio',
-  DOCUMENT = 'document',
-  ARCHIVE = 'archive',
-  OTHER = 'other',
+  IMAGE = "image",
+  VIDEO = "video",
+  AUDIO = "audio",
+  DOCUMENT = "document",
+  ARCHIVE = "archive",
+  OTHER = "other",
 }
 
 export enum ImageFormat {
-  JPEG = 'jpg',
-  PNG = 'png',
-  WEBP = 'webp',
-  GIF = 'gif',
-  SVG = 'svg',
+  JPEG = "jpg",
+  PNG = "png",
+  WEBP = "webp",
+  GIF = "gif",
+  SVG = "svg",
 }
 
 // =============================================================================
@@ -113,7 +113,7 @@ export interface MultipleFileUpload {
 export interface ProcessingJob {
   id: string;
   mediaId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: "pending" | "processing" | "completed" | "failed";
   transformations: MediaTransformation[];
   progress: number;
   error?: string;
@@ -138,7 +138,7 @@ export interface MediaValidationRule {
 export const MEDIA_VALIDATION_RULES: Record<MediaCategory, MediaValidationRule> = {
   [MediaCategory.USER_AVATAR]: {
     maxSize: 5 * 1024 * 1024, // 5MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    allowedTypes: ["image/jpeg", "image/png", "image/webp"],
     maxWidth: 2048,
     maxHeight: 2048,
     minWidth: 100,
@@ -147,7 +147,7 @@ export const MEDIA_VALIDATION_RULES: Record<MediaCategory, MediaValidationRule> 
   },
   [MediaCategory.PROJECT_IMAGE]: {
     maxSize: 10 * 1024 * 1024, // 10MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+    allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
     maxWidth: 4096,
     maxHeight: 4096,
     minWidth: 200,
@@ -156,9 +156,15 @@ export const MEDIA_VALIDATION_RULES: Record<MediaCategory, MediaValidationRule> 
   [MediaCategory.CHAT_MEDIA]: {
     maxSize: 20 * 1024 * 1024, // 20MB
     allowedTypes: [
-      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-      'video/mp4', 'video/webm',
-      'audio/mp3', 'audio/wav', 'audio/ogg'
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "video/mp4",
+      "video/webm",
+      "audio/mp3",
+      "audio/wav",
+      "audio/ogg",
     ],
     maxWidth: 2048,
     maxHeight: 2048,
@@ -166,17 +172,22 @@ export const MEDIA_VALIDATION_RULES: Record<MediaCategory, MediaValidationRule> 
   [MediaCategory.PROJECT_FILE]: {
     maxSize: 100 * 1024 * 1024, // 100MB
     allowedTypes: [
-      'image/*', 'video/*', 'audio/*',
-      'application/pdf', 'application/zip', 'application/x-zip-compressed',
-      'text/plain', 'application/json',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      "image/*",
+      "video/*",
+      "audio/*",
+      "application/pdf",
+      "application/zip",
+      "application/x-zip-compressed",
+      "text/plain",
+      "application/json",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     ],
   },
   [MediaCategory.WORKSPACE_BANNER]: {
     maxSize: 8 * 1024 * 1024, // 8MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    allowedTypes: ["image/jpeg", "image/png", "image/webp"],
     maxWidth: 3840,
     maxHeight: 2160,
     minWidth: 800,
@@ -184,7 +195,7 @@ export const MEDIA_VALIDATION_RULES: Record<MediaCategory, MediaValidationRule> 
   },
   [MediaCategory.SYSTEM_ASSET]: {
     maxSize: 5 * 1024 * 1024, // 5MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
+    allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/svg+xml"],
     maxWidth: 2048,
     maxHeight: 2048,
   },
@@ -211,7 +222,7 @@ export interface AWSS3Config {
 }
 
 export interface StorageProvider {
-  type: 'CLOUDINARY' | 'AWS_S3';
+  type: "CLOUDINARY" | "AWS_S3";
   config: CloudinaryConfig | AWSS3Config;
 }
 
@@ -228,8 +239,8 @@ export interface MediaQuery {
   dateTo?: Date;
   limit?: number;
   offset?: number;
-  sortBy?: 'createdAt' | 'size' | 'filename';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "size" | "filename";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface MediaDeletionResult {
@@ -256,7 +267,7 @@ export interface MediaStats {
 // =============================================================================
 
 export interface MediaUploadEvent {
-  type: 'MEDIA_UPLOAD_STARTED' | 'MEDIA_UPLOAD_COMPLETED' | 'MEDIA_UPLOAD_FAILED';
+  type: "MEDIA_UPLOAD_STARTED" | "MEDIA_UPLOAD_COMPLETED" | "MEDIA_UPLOAD_FAILED";
   mediaId: string;
   userId: string;
   category: MediaCategory;
@@ -268,7 +279,7 @@ export interface MediaUploadEvent {
 }
 
 export interface MediaProcessingEvent {
-  type: 'MEDIA_PROCESSING_STARTED' | 'MEDIA_PROCESSING_COMPLETED' | 'MEDIA_PROCESSING_FAILED';
+  type: "MEDIA_PROCESSING_STARTED" | "MEDIA_PROCESSING_COMPLETED" | "MEDIA_PROCESSING_FAILED";
   jobId: string;
   mediaId: string;
   transformations: MediaTransformation[];
@@ -278,7 +289,7 @@ export interface MediaProcessingEvent {
 }
 
 export interface MediaDeletionEvent {
-  type: 'MEDIA_DELETED';
+  type: "MEDIA_DELETED";
   mediaId: string;
   userId: string;
   category: MediaCategory;
@@ -304,4 +315,3 @@ export interface MediaCacheOptions {
   includeMetadata?: boolean;
   generateThumbnail?: boolean;
 }
-

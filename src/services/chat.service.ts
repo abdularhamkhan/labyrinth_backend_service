@@ -10,6 +10,14 @@ import {
   ConflictError,
 } from "../constants/error";
 import { kafkaProducer } from "./kafka-producer.service";
+import {
+  broadcastMessage,
+  broadcastTypingIndicator,
+  notifyUserNewChat,
+  notifyUserAddedToChat,
+  broadcastMessageDeleted,
+} from "./pusher.service";
+import { getOrSetCache, CacheKeys, CACHE_TTL, deleteCache } from "../utils/cache.util";
 
 // =============================================================================
 // REAL-TIME CHAT SERVICE - LABYRINTH PLATFORM
@@ -18,10 +26,7 @@ import { kafkaProducer } from "./kafka-producer.service";
 /**
  * Create or get existing chat between users (Direct Message)
  */
-export const createOrGetDirectChat = async (
-  user1Id: string,
-  user2Id: string
-): Promise<any> => {
+export const createOrGetDirectChat = async (user1Id: string, user2Id: string): Promise<any> => {
   try {
     if (user1Id === user2Id) {
       throw new ValidationError("Cannot create chat with yourself");
@@ -90,10 +95,7 @@ export const createOrGetDirectChat = async (
         type: "DIRECT",
         name: null, // Direct chats don't have names
         participants: {
-          create: [
-            { userId: user1Id },
-            { userId: user2Id },
-          ],
+          create: [{ userId: user1Id }, { userId: user2Id }],
         },
       },
       include: {
@@ -137,6 +139,21 @@ export const createOrGetDirectChat = async (
       },
     });
 
+    // Notify both users via Pusher about new chat
+    const otherParticipants = newChat.participants.filter((p) => p.userId !== user1Id);
+    if (otherParticipants.length > 0) {
+      await notifyUserNewChat(user2Id, {
+        chatId: newChat.id,
+        type: newChat.type || "DIRECT",
+        otherParticipant: {
+          id: user1Id,
+          username: newChat.participants.find((p) => p.userId === user1Id)?.user.username || "",
+          firstName: newChat.participants.find((p) => p.userId === user1Id)?.user.firstName || null,
+          lastName: newChat.participants.find((p) => p.userId === user1Id)?.user.lastName || null,
+        },
+      });
+    }
+
     return newChat;
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
@@ -153,10 +170,7 @@ export const createOrGetDirectChat = async (
 /**
  * Create project chat
  */
-export const createProjectChat = async (
-  projectId: string,
-  creatorId: string
-): Promise<any> => {
+export const createProjectChat = async (projectId: string, creatorId: string): Promise<any> => {
   try {
     // Verify project exists and user has access
     const project = await prisma.project.findFirst({
@@ -184,7 +198,7 @@ export const createProjectChat = async (
         name: `${project.title} Discussion`,
         projectId: project.id,
         participants: {
-          create: project.collaborators.map(collaborator => ({
+          create: project.collaborators.map((collaborator) => ({
             userId: collaborator.id,
           })),
         },
@@ -304,18 +318,18 @@ export const sendMessage = async (
     // Update chat's last message timestamp
     await prisma.chat.update({
       where: { id: chatId },
-      data: { 
+      data: {
         updatedAt: new Date(),
         lastMessageAt: new Date(),
       },
     });
 
     // Update unread counts for other participants
-    const otherParticipants = chat.participants.filter(p => p.userId !== senderId);
-    
+    const otherParticipants = chat.participants.filter((p) => p.userId !== senderId);
+
     if (otherParticipants.length > 0) {
       await Promise.all(
-        otherParticipants.map(participant =>
+        otherParticipants.map((participant) =>
           prisma.userChat.upsert({
             where: {
               userId_chatId: {
@@ -336,7 +350,7 @@ export const sendMessage = async (
       );
     }
 
-    // Publish message sent event
+    // Publish message sent event to Kafka
     await kafkaProducer.publishEvent({
       type: "MESSAGE_SENT",
       data: {
@@ -346,10 +360,24 @@ export const sendMessage = async (
         content,
         messageType,
         mediaUrl,
-        recipients: otherParticipants.map(p => p.userId),
+        recipients: otherParticipants.map((p) => p.userId),
         sentAt: new Date().toISOString(),
       },
     });
+
+    // Broadcast message to chat channel via Pusher for real-time delivery
+    await broadcastMessage(chatId, {
+      id: message.id,
+      content: message.content,
+      messageType: message.messageType || "TEXT",
+      mediaUrl: message.mediaUrl,
+      senderId: message.senderId,
+      sender: message.sender,
+      createdAt: message.createdAt,
+    });
+
+    // Invalidate chat messages cache for this chat
+    await deleteCache(CacheKeys.chatMessages(chatId, 1, 50));
 
     return message;
   } catch (error) {
@@ -372,26 +400,59 @@ export const getChatMessages = async (
   userId: string,
   page: number = 1,
   limit: number = 50
-): Promise<{ messages: any[], totalCount: number, hasMore: boolean }> => {
+): Promise<{ messages: any[]; totalCount: number; hasMore: boolean }> => {
   try {
-    // Verify user is participant in chat
-    const chat = await prisma.chat.findFirst({
-      where: {
-        id: chatId,
-        participants: {
-          some: { userId },
+    // Only cache first page for better performance
+    if (page === 1) {
+      return await getOrSetCache(
+        CacheKeys.chatMessages(chatId, page, limit),
+        async () => {
+          return await fetchChatMessages(chatId, userId, page, limit);
         },
-      },
-    });
-
-    if (!chat) {
-      throw new NotFoundError("Chat not found or access denied", "CHAT_NOT_FOUND");
+        CACHE_TTL.CHAT_MESSAGES
+      );
     }
 
-    const skip = (page - 1) * limit;
+    return await fetchChatMessages(chatId, userId, page, limit);
+  } catch (error) {
+    if (error instanceof Error && error.name.includes("Error")) {
+      throw error;
+    }
+    throw new DatabaseError(
+      DATABASE_ERRORS.QUERY_FAILED.message,
+      DATABASE_ERRORS.QUERY_FAILED.code,
+      { originalError: error }
+    );
+  }
+};
 
-    // Get messages with pagination
-    const [messages, totalCount] = await Promise.all([
+/**
+ * Helper function to fetch chat messages (used by getChatMessages with caching)
+ */
+const fetchChatMessages = async (
+  chatId: string,
+  userId: string,
+  page: number,
+  limit: number
+): Promise<{ messages: any[]; totalCount: number; hasMore: boolean }> => {
+  // Verify user is participant in chat
+  const chat = await prisma.chat.findFirst({
+    where: {
+      id: chatId,
+      participants: {
+        some: { userId },
+      },
+    },
+  });
+
+  if (!chat) {
+    throw new NotFoundError("Chat not found or access denied", "CHAT_NOT_FOUND");
+  }
+
+  const skip = (page - 1) * limit;
+
+  // Get messages with pagination
+  const [messages, totalCount] = await Promise.all([
       prisma.message.findMany({
         where: { chatId },
         include: {
@@ -431,23 +492,13 @@ export const getChatMessages = async (
       },
     });
 
-    const hasMore = skip + limit < totalCount;
+  const hasMore = skip + limit < totalCount;
 
-    return {
-      messages: messages.reverse(), // Return in chronological order
-      totalCount,
-      hasMore,
-    };
-  } catch (error) {
-    if (error instanceof Error && error.name.includes("Error")) {
-      throw error;
-    }
-    throw new DatabaseError(
-      DATABASE_ERRORS.QUERY_FAILED.message,
-      DATABASE_ERRORS.QUERY_FAILED.code,
-      { originalError: error }
-    );
-  }
+  return {
+    messages: messages.reverse(), // Return in chronological order
+    totalCount,
+    hasMore,
+  };
 };
 
 /**
@@ -499,16 +550,19 @@ export const getUserChats = async (userId: string): Promise<any[]> => {
       select: { chatId: true, unreadCount: true },
     });
 
-    const unreadCountMap = unreadCounts.reduce((acc, userChat) => {
-      acc[userChat.chatId] = userChat.unreadCount;
-      return acc;
-    }, {} as Record<string, number>);
+    const unreadCountMap = unreadCounts.reduce(
+      (acc, userChat) => {
+        acc[userChat.chatId] = userChat.unreadCount;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    return chats.map(chat => ({
+    return chats.map((chat) => ({
       ...chat,
       unreadCount: unreadCountMap[chat.id] || 0,
       lastMessage: chat.messages[0] || null,
-      otherParticipants: chat.participants.filter(p => p.userId !== userId),
+      otherParticipants: chat.participants.filter((p) => p.userId !== userId),
     }));
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
@@ -525,10 +579,7 @@ export const getUserChats = async (userId: string): Promise<any[]> => {
 /**
  * Delete message
  */
-export const deleteMessage = async (
-  messageId: string,
-  userId: string
-): Promise<any> => {
+export const deleteMessage = async (messageId: string, userId: string): Promise<any> => {
   try {
     // Verify user owns the message
     const message = await prisma.message.findFirst({
@@ -563,7 +614,10 @@ export const deleteMessage = async (
       },
     });
 
-    // Publish message deleted event
+    // Broadcast message deletion via Pusher
+    await broadcastMessageDeleted(message.chatId, messageId);
+
+    // Publish message deleted event to Kafka
     await kafkaProducer.publishEvent({
       type: "MESSAGE_DELETED",
       data: {
@@ -638,7 +692,10 @@ export const addUserToChat = async (
       },
     });
 
-    // Publish user added to chat event
+    // Notify user via Pusher about being added to chat
+    await notifyUserAddedToChat(userId, chatId, addedBy);
+
+    // Publish user added to chat event to Kafka
     await kafkaProducer.publishEvent({
       type: "USER_ADDED_TO_CHAT",
       data: {
@@ -669,7 +726,18 @@ export const setTypingIndicator = async (
   isTyping: boolean
 ): Promise<void> => {
   try {
-    // Publish typing indicator event
+    // Get user info for typing indicator
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+
+    // Broadcast typing indicator via Pusher for real-time updates
+    if (user) {
+      await broadcastTypingIndicator(chatId, userId, user.username, isTyping);
+    }
+
+    // Publish typing indicator event to Kafka
     await kafkaProducer.publishEvent({
       type: "TYPING_INDICATOR",
       data: {

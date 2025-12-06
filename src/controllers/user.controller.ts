@@ -15,6 +15,7 @@ import {
   getUserCollaborationStats,
   updateUserLastActive,
 } from "../services/user.service";
+import { getUserDemographic } from "../services/user.service";
 import { initializeAvatarBucket } from "../services/avatar.service";
 import { ValidationError } from "../constants/error";
 
@@ -301,6 +302,42 @@ export const updateUserDemographic = async (
 };
 
 /**
+ * GET USER DEMOGRAPHIC (SELF)
+ * Route: GET /api/user/demographic
+ * Auth: Required
+ */
+export const getOwnUserDemographic = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const demographic = await getUserDemographic(userId);
+  res.status(200).json({
+    success: true,
+    message: "Demographic retrieved successfully",
+    data: { demographic },
+  });
+};
+
+/**
+ * GET USER DEMOGRAPHIC BY ID (READ-ONLY)
+ * Route: GET /api/user/:userId/demographics
+ * Auth: Required
+ */
+export const getUserDemographicById = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const { userId } = req.params as { userId: string };
+  const demographic = await getUserDemographic(userId);
+  res.status(200).json({
+    success: true,
+    message: "Demographic retrieved successfully",
+    data: { demographic },
+  });
+};
+
+/**
  * UPDATE USER PREFERENCES
  * Route: PUT /api/user/preferences
  * Auth: Required
@@ -329,10 +366,7 @@ export const updatePreferences = async (
  * Route: GET /api/user/workspaces
  * Auth: Required
  */
-export const getWorkspaces = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> => {
+export const getWorkspaces = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.id;
 
   const workspaces = await getUserWorkspaces(userId);

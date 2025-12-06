@@ -7,7 +7,7 @@ import z from "zod";
 /**
  * TASK STATUS ENUM SCHEMA
  */
-export const taskStatusSchema = z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED']);
+export const taskStatusSchema = z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "BLOCKED"]);
 
 export type TaskStatus = z.infer<typeof taskStatusSchema>;
 
@@ -15,7 +15,7 @@ export type TaskStatus = z.infer<typeof taskStatusSchema>;
  * PROJECT ROLE PERMISSIONS SCHEMA
  */
 export const rolePermissionsSchema = z.array(
-  z.enum(['READ', 'WRITE', 'DELETE', 'MANAGE_USERS', 'MANAGE_ROLES'])
+  z.enum(["READ", "WRITE", "DELETE", "MANAGE_USERS", "MANAGE_ROLES"])
 );
 
 export type RolePermissions = z.infer<typeof rolePermissionsSchema>;
@@ -36,13 +36,15 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 /**
  * UPDATE PROJECT SCHEMA
  */
-export const updateProjectSchema = z.object({
-  title: z.string().min(1).max(100).optional(),
-  description: z.string().min(1).max(1000).optional(),
-  techStackIds: z.array(z.string().uuid()).optional(),
-}).refine((data) => Object.keys(data).length > 0, {
-  message: "At least one field must be provided for update",
-});
+export const updateProjectSchema = z
+  .object({
+    title: z.string().min(1).max(100).optional(),
+    description: z.string().min(1).max(1000).optional(),
+    techStackIds: z.array(z.string().uuid()).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  });
 
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 
@@ -51,7 +53,7 @@ export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
  */
 export const addCollaboratorSchema = z.object({
   collaboratorId: z.string().uuid(),
-  permissions: rolePermissionsSchema.default(['READ', 'WRITE']),
+  permissions: rolePermissionsSchema.default(["READ", "WRITE"]),
 });
 
 export type AddCollaboratorInput = z.infer<typeof addCollaboratorSchema>;
@@ -73,7 +75,7 @@ export const createTaskSchema = z.object({
   description: z.string().max(1000).optional(),
   assignedToId: z.string().uuid().optional(),
   dueDate: z.string().datetime().optional(),
-  status: taskStatusSchema.default('PENDING'),
+  status: taskStatusSchema.default("PENDING"),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
@@ -81,15 +83,17 @@ export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 /**
  * UPDATE TASK SCHEMA
  */
-export const updateTaskSchema = z.object({
-  title: z.string().min(1).max(100).optional(),
-  description: z.string().max(1000).optional(),
-  status: taskStatusSchema.optional(),
-  assignedToId: z.string().uuid().optional(),
-  dueDate: z.string().datetime().optional(),
-}).refine((data) => Object.keys(data).length > 0, {
-  message: "At least one field must be provided for update",
-});
+export const updateTaskSchema = z
+  .object({
+    title: z.string().min(1).max(100).optional(),
+    description: z.string().max(1000).optional(),
+    status: taskStatusSchema.optional(),
+    assignedToId: z.string().uuid().optional(),
+    dueDate: z.string().datetime().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 
@@ -114,11 +118,13 @@ export const collaboratorSchema = z.object({
   firstName: z.string().nullable(),
   lastName: z.string().nullable(),
   lastActive: z.date().nullable(),
-  techStack: z.object({
-    frameworks: z.array(z.string()),
-    languages: z.array(z.string()),
-    tools: z.array(z.string()),
-  }).nullable(),
+  techStack: z
+    .object({
+      frameworks: z.array(z.string()),
+      languages: z.array(z.string()),
+      tools: z.array(z.string()),
+    })
+    .nullable(),
 });
 
 export type Collaborator = z.infer<typeof collaboratorSchema>;
@@ -132,12 +138,14 @@ export const taskSchema = z.object({
   description: z.string().nullable(),
   status: taskStatusSchema,
   dueDate: z.date().nullable(),
-  assignedTo: z.object({
-    id: z.string().uuid(),
-    username: z.string(),
-    firstName: z.string().nullable(),
-    lastName: z.string().nullable(),
-  }).nullable(),
+  assignedTo: z
+    .object({
+      id: z.string().uuid(),
+      username: z.string(),
+      firstName: z.string().nullable(),
+      lastName: z.string().nullable(),
+    })
+    .nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -151,14 +159,16 @@ export const projectRoleSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   permissions: rolePermissionsSchema,
-  userRoles: z.array(z.object({
-    user: z.object({
-      id: z.string().uuid(),
-      username: z.string(),
-      firstName: z.string().nullable(),
-      lastName: z.string().nullable(),
-    }),
-  })),
+  userRoles: z.array(
+    z.object({
+      user: z.object({
+        id: z.string().uuid(),
+        username: z.string(),
+        firstName: z.string().nullable(),
+        lastName: z.string().nullable(),
+      }),
+    })
+  ),
 });
 
 export type ProjectRole = z.infer<typeof projectRoleSchema>;
@@ -183,12 +193,14 @@ export const projectDetailsSchema = z.object({
   description: z.string(),
   workspace: workspaceSchema,
   collaborators: z.array(collaboratorSchema),
-  techStacks: z.array(z.object({
-    id: z.string().uuid(),
-    frameworks: z.array(z.string()),
-    languages: z.array(z.string()),
-    tools: z.array(z.string()),
-  })),
+  techStacks: z.array(
+    z.object({
+      id: z.string().uuid(),
+      frameworks: z.array(z.string()),
+      languages: z.array(z.string()),
+      tools: z.array(z.string()),
+    })
+  ),
   roles: z.array(projectRoleSchema),
   tasks: z.array(taskSchema),
   _count: z.object({
@@ -209,16 +221,20 @@ export const userProjectSchema = z.object({
   title: z.string(),
   description: z.string(),
   workspace: workspaceSchema,
-  userRole: z.object({
-    name: z.string(),
-    permissions: rolePermissionsSchema,
-  }).nullable(),
-  pendingTasks: z.array(z.object({
-    id: z.string().uuid(),
-    title: z.string(),
-    status: taskStatusSchema,
-    dueDate: z.date().nullable(),
-  })),
+  userRole: z
+    .object({
+      name: z.string(),
+      permissions: rolePermissionsSchema,
+    })
+    .nullable(),
+  pendingTasks: z.array(
+    z.object({
+      id: z.string().uuid(),
+      title: z.string(),
+      status: taskStatusSchema,
+      dueDate: z.date().nullable(),
+    })
+  ),
   _count: z.object({
     collaborators: z.number().int(),
     tasks: z.number().int(),
@@ -281,4 +297,3 @@ export const collaboratorResponseSchema = z.object({
     permissions: rolePermissionsSchema,
   }),
 });
-

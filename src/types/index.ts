@@ -4,7 +4,7 @@
  * =============================================================================
  *
  * This file provides centralized access to all type definitions used
- * throughout the Labyrinth collaboration platform. Import types from here 
+ * throughout the Labyrinth collaboration platform. Import types from here
  * rather than individual files for better maintainability.
  *
  * =============================================================================
@@ -127,4 +127,3 @@ export type {
 // =============================================================================
 // LEGACY TYPES (TO BE PHASED OUT)
 // =============================================================================
-

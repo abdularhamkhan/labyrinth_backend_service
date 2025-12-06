@@ -47,7 +47,7 @@ export interface EmailResult {
   success: boolean;
   messageId?: string;
   error?: string;
-  provider?: 'resend' | 'resend-smtp' | 'supabase' | 'nodemailer';
+  provider?: "resend" | "resend-smtp" | "supabase" | "nodemailer";
 }
 
 export interface ResendEmailData {
@@ -66,20 +66,73 @@ export interface ResendEmailData {
  * =============================================================================
  */
 
-const EMAIL_TEMPLATES = {
-  username_recovery: (username: string) => ({
-    subject: "Your Username Recovery - With A Twist",
+/**
+ * Generate password reset OTP email template
+ */
+export function generatePasswordResetOtpEmail(otp: string, email: string) {
+  return {
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #2D3748; margin: 0;">With A Twist</h1>
+          <h1 style="color: #2D3748; margin: 0;">Labyrinth</h1>
+          <p style="color: #718096; margin: 5px 0;">Password Reset Verification</p>
+        </div>
+        
+        <div style="background: #F7FAFC; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h2 style="color: #2D3748; margin-top: 0;">Reset Your Password</h2>
+          <p style="color: #4A5568; line-height: 1.6;">
+            You requested to reset your password for your Labyrinth account. Use the OTP code below to verify your identity.
+          </p>
+          <div style="background: white; border: 2px solid #E2E8F0; border-radius: 6px; padding: 20px; margin: 20px 0; text-align: center;">
+            <p style="margin: 0; color: #2D3748; font-size: 16px;">Your verification code is:</p>
+            <p style="margin: 10px 0 0 0; color: #1A365D; font-size: 32px; font-weight: bold; letter-spacing: 4px; font-family: 'Courier New', monospace;">${otp}</p>
+          </div>
+          <p style="color: #4A5568; line-height: 1.6; font-size: 14px;">
+            Enter this code in the app to verify your password reset request. This code will expire in 2 minutes.
+          </p>
+          <p style="color: #E53E3E; line-height: 1.6; font-size: 14px; margin-top: 20px;">
+            <strong>Security Notice:</strong> If you didn't request this password reset, please ignore this email and ensure your account is secure.
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
+          <p style="color: #718096; font-size: 12px;">
+            This email was sent to ${email} because a password reset was requested for your Labyrinth account.
+          </p>
+        </div>
+      </div>
+    `,
+    text: `
+Password Reset Verification - Labyrinth
+
+You requested to reset your password for your Labyrinth account.
+
+Your verification code is: ${otp}
+
+Enter this code in the app to verify your password reset request. This code will expire in 2 minutes.
+
+If you didn't request this password reset, please ignore this email and ensure your account is secure.
+
+---
+Labyrinth Team
+    `.trim(),
+  };
+}
+
+const EMAIL_TEMPLATES = {
+  username_recovery: (username: string) => ({
+    subject: "Your Username Recovery - Labyrinth",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #2D3748; margin: 0;">Labyrinth</h1>
           <p style="color: #718096; margin: 5px 0;">Username Recovery</p>
         </div>
         
         <div style="background: #F7FAFC; border-radius: 8px; padding: 20px; margin: 20px 0;">
           <h2 style="color: #2D3748; margin-top: 0;">Username Recovery Request</h2>
           <p style="color: #4A5568; line-height: 1.6;">
-            Hello! You requested to recover your username for your With A Twist account.
+            Hello! You requested to recover your username for your Labyrinth account.
           </p>
           <div style="background: white; border: 2px solid #E2E8F0; border-radius: 6px; padding: 15px; margin: 15px 0; text-align: center;">
             <p style="margin: 0; color: #2D3748; font-size: 14px;">Your username is:</p>
@@ -92,38 +145,38 @@ const EMAIL_TEMPLATES = {
         
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
           <p style="color: #718096; font-size: 12px;">
-            This email was sent to you because you requested username recovery for your With A Twist account.
+            This email was sent to you because you requested username recovery for your Labyrinth account.
           </p>
         </div>
       </div>
     `,
     text: `
-Username Recovery - With A Twist
+Username Recovery - Labyrinth
 
-Hello! You requested to recover your username for your With A Twist account.
+Hello! You requested to recover your username for your Labyrinth account.
 
 Your username is: ${username}
 
 If you didn't request this username recovery, you can safely ignore this email.
 
 ---
-With A Twist Team
+Labyrinth Team
     `.trim(),
   }),
 
   password_reset: (resetToken: string) => ({
-    subject: "Reset Your Password - With A Twist",
+    subject: "Reset Your Password - Labyrinth",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #2D3748; margin: 0;">With A Twist</h1>
+          <h1 style="color: #2D3748; margin: 0;">Labyrinth</h1>
           <p style="color: #718096; margin: 5px 0;">Password Reset</p>
         </div>
         
         <div style="background: #F7FAFC; border-radius: 8px; padding: 20px; margin: 20px 0;">
           <h2 style="color: #2D3748; margin-top: 0;">Reset Your Password</h2>
           <p style="color: #4A5568; line-height: 1.6;">
-            You requested to reset your password for your With A Twist account. Use the reset token below in the app to set a new password.
+            You requested to reset your password for your Labyrinth account. Use the reset token below in the app to set a new password.
           </p>
           <div style="background: white; border: 2px solid #E2E8F0; border-radius: 6px; padding: 20px; margin: 20px 0; text-align: center;">
             <p style="margin: 0; color: #2D3748; font-size: 16px;">Your password reset token is:</p>
@@ -139,15 +192,15 @@ With A Twist Team
         
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
           <p style="color: #718096; font-size: 12px;">
-            This email was sent to you because you requested a password reset for your With A Twist account.
+            This email was sent to you because you requested a password reset for your Labyrinth account.
           </p>
         </div>
       </div>
     `,
     text: `
-Password Reset - With A Twist
+Password Reset - Labyrinth
 
-You requested to reset your password for your With A Twist account.
+You requested to reset your password for your Labyrinth account.
 
 Your password reset token is: ${resetToken}
 
@@ -156,23 +209,23 @@ Enter this token in the app along with your new password to complete the reset p
 This token will expire in 1 hour. If you didn't request this reset, please ignore this email.
 
 ---
-With A Twist Team
+Labyrinth Team
     `.trim(),
   }),
 
   verification: (verificationCode: string) => ({
-    subject: "Verify Your Email - With A Twist",
+    subject: "Verify Your Email - Labyrinth",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #2D3748; margin: 0;">With A Twist</h1>
+          <h1 style="color: #2D3748; margin: 0;">Labyrinth</h1>
           <p style="color: #718096; margin: 5px 0;">Email Verification</p>
         </div>
         
         <div style="background: #F7FAFC; border-radius: 8px; padding: 20px; margin: 20px 0;">
           <h2 style="color: #2D3748; margin-top: 0;">Verify Your Email Address</h2>
           <p style="color: #4A5568; line-height: 1.6;">
-            Welcome to With A Twist! Please verify your email address by entering the verification code below:
+            Welcome to Labyrinth! Please verify your email address by entering the verification code below:
           </p>
           <div style="background: white; border: 2px solid #E2E8F0; border-radius: 6px; padding: 20px; margin: 20px 0; text-align: center;">
             <p style="margin: 0; color: #2D3748; font-size: 16px;">Your verification code is:</p>
@@ -185,22 +238,22 @@ With A Twist Team
         
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
           <p style="color: #718096; font-size: 12px;">
-            This email was sent to you because you created an account with With A Twist.
+            This email was sent to you because you created an account with Labyrinth.
           </p>
         </div>
       </div>
     `,
     text: `
-Email Verification - With A Twist
+Email Verification - Labyrinth
 
-Welcome to With A Twist! Please verify your email address by entering this verification code:
+Welcome to Labyrinth! Please verify your email address by entering this verification code:
 
 ${verificationCode}
 
 This code will expire in 10 minutes. If you didn't create an account, you can safely ignore this email.
 
 ---
-With A Twist Team
+Labyrinth Team
     `.trim(),
   }),
 };

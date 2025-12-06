@@ -1,9 +1,5 @@
 import { Router } from "express";
-import {
-  authenticateUser,
-  optionalAuth,
-  requireRole,
-} from "../middlewares/auth.middleware";
+import { authenticateUser, optionalAuth, requireRole } from "../middlewares/auth.middleware";
 import {
   getUserProfile,
   updateUserProfile,
@@ -14,6 +10,8 @@ import {
   updateLabyrinthProfile,
   updateUserTechStack,
   updateUserDemographic,
+  getOwnUserDemographic,
+  getUserDemographicById,
   updatePreferences,
   getWorkspaces,
   getCollaborationStats,
@@ -101,6 +99,15 @@ router.put("/tech-stack", authenticateUser, asyncHandler(updateUserTechStack));
 // Headers: Authorization: Bearer <jwt_token>
 // Body: { country: string, languages: string[] }
 router.put("/demographic", authenticateUser, asyncHandler(updateUserDemographic));
+
+// Get own user demographic information
+// Usage: GET /api/user/demographic
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/demographic", authenticateUser, asyncHandler(getOwnUserDemographic));
+
+// Get user demographic by id (read-only)
+// Usage: GET /api/user/:userId/demographics
+router.get("/:userId/demographics", authenticateUser, asyncHandler(getUserDemographicById));
 
 // Update user preferences (matchmaking preferences)
 // Usage: PUT /api/user/preferences

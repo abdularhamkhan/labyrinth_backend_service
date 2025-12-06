@@ -1,5 +1,5 @@
 // =============================================================================
-// WEBSOCKET CHAT SERVICE - LABYRINTH PLATFORM  
+// WEBSOCKET CHAT SERVICE - LABYRINTH PLATFORM
 // =============================================================================
 // This service handles WebSocket chat functionality
 // The actual WebSocket server is initialized in server.ts
@@ -8,7 +8,7 @@ export class WebSocketChatService {
   private connectedUsers: Map<string, any> = new Map();
 
   constructor() {
-    console.log('WebSocket chat service initialized');
+    console.log("WebSocket chat service initialized");
   }
 
   /**
@@ -22,14 +22,14 @@ export class WebSocketChatService {
    * Handle new WebSocket connection
    */
   public handleConnection(socket: any): void {
-    console.log('New WebSocket connection');
-    
-    socket.on('message', (data: any) => {
-      console.log('Received message:', data.toString());
+    console.log("New WebSocket connection");
+
+    socket.on("message", (data: any) => {
+      console.log("Received message:", data.toString());
     });
 
-    socket.on('close', () => {
-      console.log('WebSocket connection closed');
+    socket.on("close", () => {
+      console.log("WebSocket connection closed");
     });
   }
 }

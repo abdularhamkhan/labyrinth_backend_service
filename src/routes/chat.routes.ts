@@ -12,6 +12,7 @@ import {
   getUnreadCountController,
   addUserToProjectChatController,
   getChatDetails,
+  pusherAuthController,
 } from "../controllers/chat.controller";
 
 // =============================================================================
@@ -53,6 +54,16 @@ router.post("/project", asyncHandler(createProjectChatController));
 // Usage: GET /api/chat/unread-count
 // Headers: Authorization: Bearer <jwt_token>
 router.get("/unread-count", asyncHandler(getUnreadCountController));
+
+// =============================================================================
+// PUSHER REAL-TIME AUTHENTICATION
+// =============================================================================
+
+// Authenticate Pusher channel subscriptions
+// Usage: POST /api/chat/pusher/auth
+// Headers: Authorization: Bearer <jwt_token>
+// Body: { socket_id: string, channel_name: string }
+router.post("/pusher/auth", asyncHandler(pusherAuthController));
 
 // =============================================================================
 // MESSAGE MANAGEMENT

@@ -23,12 +23,15 @@ import { queueRedis } from "../config/redis.production.config";
 
 export enum JobType {
   SEND_NOTIFICATION = "send_notification",
-  UPDATE_LEADERBOARD = "update_leaderboard",
-  PROCESS_GAME_RESULT = "process_game_result",
+  SEND_EMAIL = "send_email",
+  PROCESS_MATCH = "process_match",
+  UPDATE_RECOMMENDATIONS = "update_recommendations",
   SEND_FRIEND_REQUEST = "send_friend_request",
-  GENERATE_DAILY_CHALLENGE = "generate_daily_challenge",
+  PROCESS_PROJECT_UPDATE = "process_project_update",
   CALCULATE_USER_STATS = "calculate_user_stats",
   CLEANUP_EXPIRED_SESSIONS = "cleanup_expired_sessions",
+  SYNC_PROJECT_ANALYTICS = "sync_project_analytics",
+  PROCESS_CHAT_MESSAGE = "process_chat_message",
 }
 
 export enum JobPriority {
@@ -264,20 +267,24 @@ export class QueueManager {
         await this.sendNotification(job.data);
         break;
 
-      case JobType.UPDATE_LEADERBOARD:
-        await this.updateLeaderboard(job.data);
+      case JobType.SEND_EMAIL:
+        await this.sendEmail(job.data);
         break;
 
-      case JobType.PROCESS_GAME_RESULT:
-        await this.processGameResult(job.data);
+      case JobType.PROCESS_MATCH:
+        await this.processMatch(job.data);
+        break;
+
+      case JobType.UPDATE_RECOMMENDATIONS:
+        await this.updateRecommendations(job.data);
         break;
 
       case JobType.SEND_FRIEND_REQUEST:
         await this.sendFriendRequest(job.data);
         break;
 
-      case JobType.GENERATE_DAILY_CHALLENGE:
-        await this.generateDailyChallenge(job.data);
+      case JobType.PROCESS_PROJECT_UPDATE:
+        await this.processProjectUpdate(job.data);
         break;
 
       case JobType.CALCULATE_USER_STATS:
@@ -286,6 +293,14 @@ export class QueueManager {
 
       case JobType.CLEANUP_EXPIRED_SESSIONS:
         await this.cleanupExpiredSessions(job.data);
+        break;
+
+      case JobType.SYNC_PROJECT_ANALYTICS:
+        await this.syncProjectAnalytics(job.data);
+        break;
+
+      case JobType.PROCESS_CHAT_MESSAGE:
+        await this.processChatMessage(job.data);
         break;
 
       default:
@@ -303,15 +318,21 @@ export class QueueManager {
     // Add actual implementation here
   }
 
-  private async updateLeaderboard(data: any): Promise<void> {
-    // Implement leaderboard update logic
-    console.log("🏆 Updating leaderboard:", data);
+  private async sendEmail(data: any): Promise<void> {
+    // Implement email sending logic
+    console.log("📧 Sending email:", data);
     // Add actual implementation here
   }
 
-  private async processGameResult(data: any): Promise<void> {
-    // Implement game result processing
-    console.log("🎮 Processing game result:", data);
+  private async processMatch(data: any): Promise<void> {
+    // Implement match processing for user/project recommendations
+    console.log("🤝 Processing match:", data);
+    // Add actual implementation here
+  }
+
+  private async updateRecommendations(data: any): Promise<void> {
+    // Implement recommendation algorithm update
+    console.log("✨ Updating recommendations:", data);
     // Add actual implementation here
   }
 
@@ -321,9 +342,9 @@ export class QueueManager {
     // Add actual implementation here
   }
 
-  private async generateDailyChallenge(data: any): Promise<void> {
-    // Implement daily challenge generation
-    console.log("📅 Generating daily challenge:", data);
+  private async processProjectUpdate(data: any): Promise<void> {
+    // Implement project update processing
+    console.log("📂 Processing project update:", data);
     // Add actual implementation here
   }
 
@@ -336,6 +357,18 @@ export class QueueManager {
   private async cleanupExpiredSessions(data: any): Promise<void> {
     // Implement session cleanup
     console.log("🧹 Cleaning up expired sessions:", data);
+    // Add actual implementation here
+  }
+
+  private async syncProjectAnalytics(data: any): Promise<void> {
+    // Implement project analytics synchronization
+    console.log("📈 Syncing project analytics:", data);
+    // Add actual implementation here
+  }
+
+  private async processChatMessage(data: any): Promise<void> {
+    // Implement chat message processing
+    console.log("💬 Processing chat message:", data);
     // Add actual implementation here
   }
 
@@ -551,8 +584,20 @@ export const queueManager = QueueManager.getInstance();
 export const addNotificationJob = (data: any, priority = JobPriority.NORMAL) =>
   queueManager.addJob(JobType.SEND_NOTIFICATION, data, { priority });
 
-export const addLeaderboardUpdateJob = (data: any, priority = JobPriority.HIGH) =>
-  queueManager.addJob(JobType.UPDATE_LEADERBOARD, data, { priority });
+export const addEmailJob = (data: any, priority = JobPriority.NORMAL) =>
+  queueManager.addJob(JobType.SEND_EMAIL, data, { priority });
 
-export const addGameResultJob = (data: any, priority = JobPriority.HIGH) =>
-  queueManager.addJob(JobType.PROCESS_GAME_RESULT, data, { priority });
+export const addMatchProcessingJob = (data: any, priority = JobPriority.HIGH) =>
+  queueManager.addJob(JobType.PROCESS_MATCH, data, { priority });
+
+export const addRecommendationUpdateJob = (data: any, priority = JobPriority.NORMAL) =>
+  queueManager.addJob(JobType.UPDATE_RECOMMENDATIONS, data, { priority });
+
+export const addProjectUpdateJob = (data: any, priority = JobPriority.HIGH) =>
+  queueManager.addJob(JobType.PROCESS_PROJECT_UPDATE, data, { priority });
+
+export const addProjectAnalyticsJob = (data: any, priority = JobPriority.LOW) =>
+  queueManager.addJob(JobType.SYNC_PROJECT_ANALYTICS, data, { priority });
+
+export const addChatMessageJob = (data: any, priority = JobPriority.HIGH) =>
+  queueManager.addJob(JobType.PROCESS_CHAT_MESSAGE, data, { priority });

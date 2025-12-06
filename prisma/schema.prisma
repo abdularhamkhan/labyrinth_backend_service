@@ -9,12 +9,13 @@ generator client {
 //   binaryTargets = ["native", "debian-openssl-1.1.x"]
 // }
 
-
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [uuid_ossp(map: "uuid-ossp"), pg_trgm]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+        
+
 
 // =============================================================================
 // ENUMS - Type Safety and Consistency for Labyrinth Platform
@@ -86,9 +87,11 @@ model User {
   userChats           UserChat[]
   chatParticipants    ChatParticipant[] @relation("ChatParticipants")
   matchUsers          MatchUser[]
-  uploadedMedia       Media[]           @relation("MediaUploader")
-  sentFriendships     Friendship[]      @relation("FriendshipRequester")
-  receivedFriendships Friendship[]      @relation("FriendshipRecipient")
+  uploadedMedia       Media[]                 @relation("MediaUploader")
+  sentFriendships     Friendship[]            @relation("FriendshipRequester")
+  receivedFriendships Friendship[]            @relation("FriendshipRecipient")
+  recommendations     RecommendationMetric[]  @relation("UserRecommendations")
+  passwordResetTokens PasswordResetToken[]    @relation("UserPasswordResetTokens")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -510,6 +513,52 @@ model Friendship {
   @@index([deletedAt]) // For soft delete queries
 }
 
+model RecommendationMetric {
+  id            String   @id @default(uuid())
+  userId        String
+  targetId      String   // could be a userId or projectId
+  type          String   // 'USER' or 'PROJECT'
+  totalSwipes   Int      @default(0)
+  rightSwipes   Int      @default(0)
+  score         Float?
+  lastUpdated   DateTime @updatedAt
+
+  user          User     @relation("UserRecommendations", fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([targetId])
+  @@index([type])
+  @@index([userId, type])
+  @@index([lastUpdated])
+}
+
+// =============================================================================
+// PASSWORD RESET TOKEN MODEL - Secure Password Recovery
+// =============================================================================
+
+model PasswordResetToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation("UserPasswordResetTokens", fields: [userId], references: [id], onDelete: Cascade)
+  token      String    @unique // SHA-256 hashed token (OTP or verification token)
+  used       Boolean   @default(false)
+  usedAt     DateTime?
+  expiresAt  DateTime  // Token expiration time
+  type       String?   @default("OTP") // OTP or VERIFICATION
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@index([used])
+  @@index([userId, used, expiresAt]) // Composite index for finding valid tokens
+  @@index([createdAt])
+}
 
 // generator erd {
 //   provider = "prisma-erd-generator"

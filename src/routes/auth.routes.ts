@@ -7,6 +7,7 @@ import {
   forgotUsernameController,
   resetPasswordController,
   resendOtpController,
+  verifyOtpResetController,
 } from "../controllers/auth.controller";
 import { asyncHandler } from "../middlewares/error.middleware";
 import { rateLimitMiddleware } from "../utils/accountSecurity";
@@ -78,7 +79,7 @@ router.post("/login", rateLimitMiddleware("login"), asyncHandler(loginController
  * Body: { email }
  * Response: { message, emailSent: true }
  *
- * Initiates password reset process by sending reset email
+ * Initiates password reset process by sending 6-digit OTP to email
  * Note: Returns success message regardless of email existence for security
  * Rate Limited: 3 attempts per hour per IP
  */
@@ -89,13 +90,32 @@ router.post(
 );
 
 /**
+ * VERIFY OTP FOR PASSWORD RESET
+ *
+ * Endpoint: POST /api/auth/verify-otp-reset
+ * Body: { email, otp }
+ * Response: { message, verificationToken, expiresIn }
+ *
+ * Step 2 of 3-step password reset: Verifies OTP and returns verification token
+ * The verification token is required for the final reset step
+ * Rate Limited: 5 attempts per 10 minutes per IP
+ */
+router.post(
+  "/verify-otp-reset",
+  rateLimitMiddleware("otp"),
+  asyncHandler(verifyOtpResetController)
+);
+
+/**
  * RESET PASSWORD
  *
  * Endpoint: POST /api/auth/reset-password
- * Body: { token, password }
+ * Body: { email, password, verificationToken }
  * Response: { message, passwordReset: true, userId }
  *
- * Completes password reset using secure token validation
+ * Step 3 of 3-step password reset: Sets new password using verification token
+ * Completes password reset using secure token validation from OTP verification step
+ * Invalidates all existing user sessions for security
  */
 router.post("/reset-password", asyncHandler(resetPasswordController));
 

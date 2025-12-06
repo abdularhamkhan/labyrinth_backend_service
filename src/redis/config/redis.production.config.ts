@@ -39,7 +39,7 @@ export interface ProductionRedisClients {
   primary: Redis | Cluster;
   cache: Redis | Cluster;
   session: Redis | Cluster;
-  gameState: Redis | Cluster;
+  projectState: Redis | Cluster;
   pubsub: Redis | Cluster;
   queue: Redis | Cluster;
 }
@@ -114,7 +114,7 @@ export class ProductionRedisManager {
         ...clusterOptions,
         scaleReads: "master",
       }),
-      gameState: new Cluster(config.redis.cluster.nodes, {
+      projectState: new Cluster(config.redis.cluster.nodes, {
         ...clusterOptions,
         scaleReads: "master",
       }),
@@ -136,7 +136,7 @@ export class ProductionRedisManager {
       primary: new Redis({ ...baseConfig, db: 0 }),
       cache: new Redis({ ...baseConfig, db: 1 }),
       session: new Redis({ ...baseConfig, db: 2 }),
-      gameState: new Redis({ ...baseConfig, db: 3 }),
+      projectState: new Redis({ ...baseConfig, db: 3 }),
       pubsub: new Redis({ ...baseConfig, db: 4 }),
       queue: new Redis({ ...baseConfig, db: 5 }),
     };
@@ -451,7 +451,7 @@ export const sessionRedis = productionRedisManager.getClient("session");
 export const cacheRedis = productionRedisManager.getClient("cache");
 export const pubsubRedis = productionRedisManager.getClient("pubsub");
 export const queueRedis = productionRedisManager.getClient("queue");
-export const gameStateRedis = productionRedisManager.getClient("gameState");
+export const projectStateRedis = productionRedisManager.getClient("projectState");
 
 // Export manager and utility functions
 // Note: ProductionRedisManager is already exported above
@@ -467,5 +467,5 @@ export const productionRedisClients = {
   cache: cacheRedis,
   pubsub: pubsubRedis,
   queue: queueRedis,
-  gameState: gameStateRedis,
+  projectState: projectStateRedis,
 };

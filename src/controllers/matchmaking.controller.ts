@@ -84,15 +84,15 @@ export const handleSwipeController = async (
   const userId = req.user!.id;
   const { targetType, targetId, isRightSwipe } = req.body;
 
-  if (!targetType || !targetId || typeof isRightSwipe !== 'boolean') {
+  if (!targetType || !targetId || typeof isRightSwipe !== "boolean") {
     throw new ValidationError("targetType, targetId, and isRightSwipe are required");
   }
 
-  if (targetType !== 'user' && targetType !== 'project') {
+  if (targetType !== "user" && targetType !== "project") {
     throw new ValidationError("targetType must be 'user' or 'project'");
   }
 
-  if (typeof targetId !== 'string' || targetId.length === 0) {
+  if (typeof targetId !== "string" || targetId.length === 0) {
     throw new ValidationError("targetId must be a valid string");
   }
 

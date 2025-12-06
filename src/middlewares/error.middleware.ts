@@ -10,6 +10,11 @@ import {
   RateLimitError,
   DatabaseError,
   ExternalServiceError,
+  AUTH_ERRORS,
+  VALIDATION_ERRORS,
+  DATABASE_ERRORS,
+  REDIS_ERRORS,
+  EXTERNAL_SERVICE_ERRORS,
 } from "../constants/error";
 
 /**
@@ -152,10 +157,10 @@ export const errorHandler = (
     message = error.message;
     details = sanitizeErrorDetails(error.details);
   } else if (error.name === "ValidationError" || error.name === "ZodError") {
-    // Zod validation errors
-    statusCode = 400;
-    errorCode = "VALIDATION_ERROR";
-    message = "Invalid input data";
+    // Zod validation errors - Use constants
+    statusCode = VALIDATION_ERRORS.INVALID_INPUT.statusCode;
+    errorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
+    message = VALIDATION_ERRORS.INVALID_INPUT.message;
 
     if (error instanceof z.ZodError) {
       details = isDevelopment
@@ -169,37 +174,42 @@ export const errorHandler = (
         : undefined;
     }
   } else if (error.name === "PrismaClientKnownRequestError") {
-    // Prisma database errors
-    statusCode = 500;
-    errorCode = "DATABASE_ERROR";
-    message = "Database operation failed";
-
-    // Handle specific Prisma error codes
+    // Prisma database errors - Use constants
     const prismaError = error as any;
     if (prismaError.code === "P2002") {
-      statusCode = 409;
-      errorCode = "DUPLICATE_ENTRY";
-      message = "A record with this information already exists";
+      statusCode = DATABASE_ERRORS.DUPLICATE_ENTRY.statusCode;
+      errorCode = DATABASE_ERRORS.DUPLICATE_ENTRY.code;
+      message = DATABASE_ERRORS.DUPLICATE_ENTRY.message;
     } else if (prismaError.code === "P2025") {
-      statusCode = 404;
-      errorCode = "RECORD_NOT_FOUND";
-      message = "The requested record was not found";
+      statusCode = DATABASE_ERRORS.RECORD_NOT_FOUND.statusCode;
+      errorCode = DATABASE_ERRORS.RECORD_NOT_FOUND.code;
+      message = DATABASE_ERRORS.RECORD_NOT_FOUND.message;
+    } else {
+      statusCode = DATABASE_ERRORS.QUERY_FAILED.statusCode;
+      errorCode = DATABASE_ERRORS.QUERY_FAILED.code;
+      message = DATABASE_ERRORS.QUERY_FAILED.message;
     }
   } else if (error.name === "JsonWebTokenError") {
-    // JWT errors
-    statusCode = 401;
-    errorCode = "INVALID_TOKEN";
-    message = "Invalid authentication token";
+    // JWT errors - Use constants
+    statusCode = AUTH_ERRORS.TOKEN_INVALID.statusCode;
+    errorCode = AUTH_ERRORS.TOKEN_INVALID.code;
+    message = AUTH_ERRORS.TOKEN_INVALID.message;
   } else if (error.name === "TokenExpiredError") {
-    // JWT expiration errors
-    statusCode = 401;
-    errorCode = "TOKEN_EXPIRED";
-    message = "Authentication token has expired";
+    // JWT expiration errors - Use constants
+    statusCode = AUTH_ERRORS.TOKEN_EXPIRED.statusCode;
+    errorCode = AUTH_ERRORS.TOKEN_EXPIRED.code;
+    message = AUTH_ERRORS.TOKEN_EXPIRED.message;
   } else if (error.name === "SyntaxError" && error.message.includes("JSON")) {
-    // JSON parsing errors
-    statusCode = 400;
-    errorCode = "INVALID_JSON";
-    message = "Invalid JSON in request body";
+    // JSON parsing errors - Use constants
+    statusCode = VALIDATION_ERRORS.INVALID_JSON.statusCode;
+    errorCode = VALIDATION_ERRORS.INVALID_JSON.code;
+    message = VALIDATION_ERRORS.INVALID_JSON.message;
+  } else if (error.message && error.message.includes("Redis")) {
+    // Redis errors - Use constants
+    statusCode = REDIS_ERRORS.OPERATION_FAILED.statusCode;
+    errorCode = REDIS_ERRORS.OPERATION_FAILED.code;
+    message = REDIS_ERRORS.OPERATION_FAILED.message;
+    details = isDevelopment ? { originalError: error.message } : undefined;
   }
 
   // Build error response

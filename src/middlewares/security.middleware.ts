@@ -1,17 +1,22 @@
 import { Request, Response, NextFunction } from "express";
-import { logger, isError } from '../utils/logger';
+import { logger, isError } from "../utils/logger";
 import { prisma } from "../config/prisma";
 import { redis as redisClient } from "../config/redis";
-import { createError, AuthorizationError, RateLimitError, ValidationError } from "../constants/error";
+import {
+  createError,
+  AuthorizationError,
+  RateLimitError,
+  ValidationError,
+} from "../constants/error";
 import { AuthRequest } from "../types/auth.types";
 
 /**
  * =============================================================================
  * ENHANCED SECURITY MIDDLEWARE - LABYRINTH COLLABORATION PLATFORM
  * =============================================================================
- * 
+ *
  * Comprehensive security middleware suite for the Labyrinth platform providing:
- * 
+ *
  * - Dynamic rate limiting based on user actions and endpoints
  * - Project-based access control and permissions
  * - API key validation for service-to-service communication
@@ -19,7 +24,7 @@ import { AuthRequest } from "../types/auth.types";
  * - Activity monitoring and anomaly detection
  * - Resource ownership validation
  * - Collaboration permission checks
- * 
+ *
  * =============================================================================
  */
 
@@ -48,25 +53,25 @@ export const authRateLimit = createDynamicRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 login attempts per 15 minutes
   message: "Too many authentication attempts, please try again later",
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
 });
 
 export const uploadRateLimit = createDynamicRateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes  
+  windowMs: 10 * 60 * 1000, // 10 minutes
   max: 20, // 20 uploads per 10 minutes
-  message: "Upload rate limit exceeded"
+  message: "Upload rate limit exceeded",
 });
 
 export const apiRateLimit = createDynamicRateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 100, // 100 requests per minute
-  message: "API rate limit exceeded"
+  message: "API rate limit exceeded",
 });
 
 export const sensitiveActionRateLimit = createDynamicRateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10, // 10 sensitive actions per hour
-  message: "Too many sensitive actions, please try again later"
+  message: "Too many sensitive actions, please try again later",
 });
 
 // User-specific rate limiting
@@ -78,8 +83,8 @@ export const createUserRateLimit = (config: {
   return createDynamicRateLimit({
     ...config,
     keyGenerator: (req: AuthRequest) => {
-      return req.user?.id || req.ip || 'anonymous';
-    }
+      return req.user?.id || req.ip || "anonymous";
+    },
   });
 };
 
@@ -98,7 +103,7 @@ export const validateContent = (options: {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const content = req.body.content || req.body.message || req.body.description;
-      
+
       if (content) {
         // Length validation
         if (options.maxLength && content.length > options.maxLength) {
@@ -111,10 +116,7 @@ export const validateContent = (options: {
 
         // HTML validation
         if (!options.allowHtml && /<[^>]*>/g.test(content)) {
-          throw new ValidationError(
-            "HTML content is not allowed",
-            "HTML_NOT_ALLOWED"
-          );
+          throw new ValidationError("HTML content is not allowed", "HTML_NOT_ALLOWED");
         }
 
         // Restricted patterns check
@@ -133,7 +135,7 @@ export const validateContent = (options: {
         const xssPatterns = [
           /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
           /javascript:/gi,
-          /on\w+\s*=/gi
+          /on\w+\s*=/gi,
         ];
 
         for (const pattern of xssPatterns) {
@@ -165,20 +167,19 @@ export const validateFileUpload = (options: {
     try {
       const files = req.files as Express.Multer.File[] | undefined;
       const file = req.file as Express.Multer.File | undefined;
-      
+
       const uploadedFiles = files || (file ? [file] : []);
-      
+
       if (uploadedFiles.length === 0) {
         return next();
       }
 
       // File count validation
       if (options.maxFiles && uploadedFiles.length > options.maxFiles) {
-        throw new ValidationError(
-          `Maximum ${options.maxFiles} files allowed`,
-          "TOO_MANY_FILES",
-          { maxFiles: options.maxFiles, actualFiles: uploadedFiles.length }
-        );
+        throw new ValidationError(`Maximum ${options.maxFiles} files allowed`, "TOO_MANY_FILES", {
+          maxFiles: options.maxFiles,
+          actualFiles: uploadedFiles.length,
+        });
       }
 
       // Validate each file
@@ -204,10 +205,7 @@ export const validateFileUpload = (options: {
         // Filename sanitization
         const dangerousChars = /[<>:"|?*\x00-\x1f]/g;
         if (dangerousChars.test(uploadedFile.originalname)) {
-          throw new ValidationError(
-            "Filename contains dangerous characters",
-            "DANGEROUS_FILENAME"
-          );
+          throw new ValidationError("Filename contains dangerous characters", "DANGEROUS_FILENAME");
         }
       }
 
@@ -235,19 +233,16 @@ export const validateProjectOwnership = async (
     const userId = req.user!.id;
 
     if (!projectId) {
-      throw new ValidationError(
-        "Project ID is required",
-        "MISSING_PROJECT_ID"
-      );
+      throw new ValidationError("Project ID is required", "MISSING_PROJECT_ID");
     }
 
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
         workspace: {
-          userId: userId
-        }
-      }
+          userId: userId,
+        },
+      },
     });
 
     if (!project) {
@@ -279,10 +274,7 @@ export const validateProjectCollaboration = async (
     const userId = req.user!.id;
 
     if (!projectId) {
-      throw new ValidationError(
-        "Project ID is required",
-        "MISSING_PROJECT_ID"
-      );
+      throw new ValidationError("Project ID is required", "MISSING_PROJECT_ID");
     }
 
     const project = await prisma.project.findFirst({
@@ -291,22 +283,22 @@ export const validateProjectCollaboration = async (
         OR: [
           {
             workspace: {
-              userId: userId
-            }
+              userId: userId,
+            },
           },
           {
             collaborators: {
               some: {
-                id: userId
-              }
-            }
-          }
-        ]
+                id: userId,
+              },
+            },
+          },
+        ],
       },
       include: {
         workspace: true,
-        collaborators: true
-      }
+        collaborators: true,
+      },
     });
 
     if (!project) {
@@ -319,11 +311,11 @@ export const validateProjectCollaboration = async (
 
     // Attach project and user role to request
     const isOwner = project.workspace.userId === userId;
-    const isCollaborator = project.collaborators.some(collaborator => collaborator.id === userId);
+    const isCollaborator = project.collaborators.some((collaborator) => collaborator.id === userId);
 
     (req as any).project = project;
-    (req as any).projectRole = isOwner ? 'owner' : (isCollaborator ? 'collaborator' : null);
-    
+    (req as any).projectRole = isOwner ? "owner" : isCollaborator ? "collaborator" : null;
+
     next();
   } catch (error) {
     next(error);
@@ -333,17 +325,14 @@ export const validateProjectCollaboration = async (
 /**
  * Resource ownership validator (generic)
  */
-export const validateResourceOwnership = (resourceName: string, idField: string = 'id') => {
+export const validateResourceOwnership = (resourceName: string, idField: string = "id") => {
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const resourceId = req.params[idField] || req.body[idField];
       const userId = req.user!.id;
 
       if (!resourceId) {
-        throw new ValidationError(
-          `${resourceName} ID is required`,
-          "MISSING_RESOURCE_ID"
-        );
+        throw new ValidationError(`${resourceName} ID is required`, "MISSING_RESOURCE_ID");
       }
 
       // Cache key for resource ownership
@@ -351,7 +340,7 @@ export const validateResourceOwnership = (resourceName: string, idField: string 
       const cachedOwner = await redisClient.get(cacheKey);
 
       let ownerId: string;
-      
+
       if (cachedOwner) {
         ownerId = cachedOwner;
       } else {
@@ -359,18 +348,15 @@ export const validateResourceOwnership = (resourceName: string, idField: string 
         const tableName = resourceName.toLowerCase();
         const resource = await (prisma as any)[tableName].findUnique({
           where: { id: resourceId },
-          select: { uploadedBy: true, userId: true, createdBy: true } // Try common owner fields
+          select: { uploadedBy: true, userId: true, createdBy: true }, // Try common owner fields
         });
 
         if (!resource) {
-          throw new ValidationError(
-            `${resourceName} not found`,
-            "RESOURCE_NOT_FOUND"
-          );
+          throw new ValidationError(`${resourceName} not found`, "RESOURCE_NOT_FOUND");
         }
 
         ownerId = resource.uploadedBy || resource.userId || resource.createdBy;
-        
+
         if (ownerId) {
           // Cache for 5 minutes
           await redisClient.setex(cacheKey, 300, ownerId);
@@ -408,16 +394,20 @@ export const logActivity = (action: string, sensitive: boolean = false) => {
         userAgent: req.get("user-agent"),
         method: req.method,
         path: req.originalUrl,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       // Log to Redis for real-time monitoring
       const activityKey = `activity:${userId}:${Date.now()}`;
-      await redisClient.setex(activityKey, 86400, JSON.stringify({
-        action,
-        sensitive,
-        ...metadata
-      })); // Keep for 24 hours
+      await redisClient.setex(
+        activityKey,
+        86400,
+        JSON.stringify({
+          action,
+          sensitive,
+          ...metadata,
+        })
+      ); // Keep for 24 hours
 
       // For sensitive actions, also log to database
       if (sensitive && userId) {
@@ -425,7 +415,7 @@ export const logActivity = (action: string, sensitive: boolean = false) => {
         logger.info("Sensitive action performed", {
           userId,
           action,
-          ...metadata
+          ...metadata,
         });
       }
 
@@ -448,7 +438,7 @@ export const detectAnomalies = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-    
+
     if (!userId) {
       return next();
     }
@@ -456,20 +446,20 @@ export const detectAnomalies = async (
     const now = Date.now();
     const windowMs = 60000; // 1 minute window
     const requestKey = `requests:${userId}:${Math.floor(now / windowMs)}`;
-    
+
     const requestCount = await redisClient.incr(requestKey);
     await redisClient.expire(requestKey, 60);
 
     // Threshold for suspicious activity (configurable)
     const suspiciousThreshold = parseInt(process.env.ANOMALY_THRESHOLD || "50");
-    
+
     if (requestCount > suspiciousThreshold) {
       logger.warn("Suspicious activity detected", {
         userId,
         requestCount,
         threshold: suspiciousThreshold,
         ip: req.ip,
-        userAgent: req.get("user-agent")
+        userAgent: req.get("user-agent"),
       });
 
       // Could trigger additional security measures here
@@ -497,23 +487,17 @@ export const validateApiKey = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const apiKey = req.headers['x-api-key'] as string;
-    
+    const apiKey = req.headers["x-api-key"] as string;
+
     if (!apiKey) {
-      throw new AuthorizationError(
-        "API key required",
-        "MISSING_API_KEY"
-      );
+      throw new AuthorizationError("API key required", "MISSING_API_KEY");
     }
 
     // In production, you'd validate against a secure store
-    const validApiKeys = process.env.VALID_API_KEYS?.split(',') || [];
-    
+    const validApiKeys = process.env.VALID_API_KEYS?.split(",") || [];
+
     if (!validApiKeys.includes(apiKey)) {
-      throw new AuthorizationError(
-        "Invalid API key",
-        "INVALID_API_KEY"
-      );
+      throw new AuthorizationError("Invalid API key", "INVALID_API_KEY");
     }
 
     // Mark request as API-authenticated
@@ -546,7 +530,7 @@ export const createSecureEndpoint = (options: {
   }
 
   // Authentication is handled by authMiddleware separately
-  
+
   // Content validation
   if (options.validateContent) {
     middleware.push(validateContent({ maxLength: 10000 }));
@@ -576,7 +560,7 @@ export const createProjectSecurityStack = (requireOwnership: boolean = false) =>
     apiRateLimit,
     requireOwnership ? validateProjectOwnership : validateProjectCollaboration,
     logActivity("project_access"),
-    detectAnomalies
+    detectAnomalies,
   ];
 };
 
@@ -595,5 +579,5 @@ export default {
   detectAnomalies,
   validateApiKey,
   createSecureEndpoint,
-  createProjectSecurityStack
+  createProjectSecurityStack,
 };

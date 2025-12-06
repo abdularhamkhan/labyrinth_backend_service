@@ -14,17 +14,21 @@ export const userRecommendationSchema = z.object({
   lastName: z.string().nullable(),
   education: z.string().nullable(),
   gitHubProfile: z.string().nullable(),
-  techStack: z.object({
-    id: z.string().uuid(),
-    frameworks: z.array(z.string()),
-    languages: z.array(z.string()),
-    tools: z.array(z.string()),
-  }).nullable(),
-  demographic: z.object({
-    id: z.string().uuid(),
-    country: z.string(),
-    languages: z.array(z.string()),
-  }).nullable(),
+  techStack: z
+    .object({
+      id: z.string().uuid(),
+      frameworks: z.array(z.string()),
+      languages: z.array(z.string()),
+      tools: z.array(z.string()),
+    })
+    .nullable(),
+  demographic: z
+    .object({
+      id: z.string().uuid(),
+      country: z.string(),
+      languages: z.array(z.string()),
+    })
+    .nullable(),
   compatibilityScore: z.number().min(0).max(100),
   projectsCount: z.number().int(),
   workspacesCount: z.number().int(),
@@ -47,12 +51,14 @@ export const projectRecommendationSchema = z.object({
   }),
   collaboratorsCount: z.number().int(),
   tasksCount: z.number().int(),
-  techStacks: z.array(z.object({
-    id: z.string().uuid(),
-    frameworks: z.array(z.string()),
-    languages: z.array(z.string()),
-    tools: z.array(z.string()),
-  })),
+  techStacks: z.array(
+    z.object({
+      id: z.string().uuid(),
+      frameworks: z.array(z.string()),
+      languages: z.array(z.string()),
+      tools: z.array(z.string()),
+    })
+  ),
   compatibilityScore: z.number().min(0).max(100),
   createdAt: z.date(),
 });
@@ -63,7 +69,7 @@ export type ProjectRecommendation = z.infer<typeof projectRecommendationSchema>;
  * SWIPE ACTION SCHEMA
  */
 export const swipeActionSchema = z.object({
-  targetType: z.enum(['user', 'project']),
+  targetType: z.enum(["user", "project"]),
   targetId: z.string().uuid(),
   isRightSwipe: z.boolean(),
 });
@@ -75,24 +81,30 @@ export type SwipeAction = z.infer<typeof swipeActionSchema>;
  */
 export const matchSchema = z.object({
   matchId: z.string().uuid(),
-  matchedUser: z.object({
-    id: z.string().uuid(),
-    username: z.string(),
-    firstName: z.string().nullable(),
-    lastName: z.string().nullable(),
-    lastActive: z.date().nullable(),
-    techStack: z.object({
+  matchedUser: z
+    .object({
       id: z.string().uuid(),
-      frameworks: z.array(z.string()),
-      languages: z.array(z.string()),
-      tools: z.array(z.string()),
-    }).nullable(),
-    demographic: z.object({
-      id: z.string().uuid(),
-      country: z.string(),
-      languages: z.array(z.string()),
-    }).nullable(),
-  }).nullable(),
+      username: z.string(),
+      firstName: z.string().nullable(),
+      lastName: z.string().nullable(),
+      lastActive: z.date().nullable(),
+      techStack: z
+        .object({
+          id: z.string().uuid(),
+          frameworks: z.array(z.string()),
+          languages: z.array(z.string()),
+          tools: z.array(z.string()),
+        })
+        .nullable(),
+      demographic: z
+        .object({
+          id: z.string().uuid(),
+          country: z.string(),
+          languages: z.array(z.string()),
+        })
+        .nullable(),
+    })
+    .nullable(),
   matchedAt: z.date(),
 });
 

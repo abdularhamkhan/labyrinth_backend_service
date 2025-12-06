@@ -9,6 +9,7 @@ import {
   ConflictError,
 } from "../constants/error";
 import { kafkaProducer } from "./kafka-producer.service";
+import { getOrSetCache, CacheKeys, CACHE_TTL, deleteCache } from "../utils/cache.util";
 
 // =============================================================================
 // PROJECT MANAGEMENT SERVICE - LABYRINTH PLATFORM
@@ -32,7 +33,7 @@ export const createProject = async (
     const workspace = await prisma.workspace.create({
       data: {
         name: projectData.workspaceName,
-        description: projectData.workspaceDescription || '',
+        description: projectData.workspaceDescription || "",
         user: {
           connect: { id: creatorId },
         },
@@ -54,7 +55,7 @@ export const createProject = async (
     // Link tech stacks if provided
     if (projectData.techStackIds && projectData.techStackIds.length > 0) {
       await prisma.projectTechStack.createMany({
-        data: projectData.techStackIds.map(techStackId => ({
+        data: projectData.techStackIds.map((techStackId) => ({
           projectId: project.id,
           techStackId,
         })),
@@ -64,9 +65,9 @@ export const createProject = async (
     // Create project role for creator
     await prisma.role.create({
       data: {
-        name: 'Project Owner',
+        name: "Project Owner",
         roleName: "Owner",
-        permissions: ['READ', 'WRITE', 'DELETE', 'MANAGE_USERS'],
+        permissions: ["READ", "WRITE", "DELETE", "MANAGE_USERS"],
         projectId: project.id,
         userRoles: {
           create: {
@@ -106,12 +107,13 @@ export const createProject = async (
 /**
  * Get project details with collaborators and tasks
  */
-export const getProjectDetails = async (
-  projectId: string,
-  userId: string
-): Promise<any> => {
+export const getProjectDetails = async (projectId: string, userId: string): Promise<any> => {
   try {
-    const project = await prisma.project.findFirst({
+    // Try to get from cache first
+    return await getOrSetCache(
+      CacheKeys.projectDetails(projectId),
+      async () => {
+        const project = await prisma.project.findFirst({
       where: {
         id: projectId,
         collaborators: {
@@ -188,7 +190,7 @@ export const getProjectDetails = async (
             createdAt: true,
             updatedAt: true,
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 10, // Latest 10 tasks
         },
         _count: {
@@ -204,10 +206,13 @@ export const getProjectDetails = async (
       throw new NotFoundError("Project not found or access denied", "PROJECT_NOT_FOUND");
     }
 
-    return {
-      ...project,
-      techStacks: project.techLinks.map(link => link.techStack),
-    };
+        return {
+          ...project,
+          techStacks: project.techLinks.map((link) => link.techStack),
+        };
+      },
+      CACHE_TTL.PROJECT_DETAILS
+    );
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
       throw error;
@@ -257,14 +262,18 @@ export const updateProject = async (
     }
 
     // Check if user has write permissions
-    const hasWritePermission = project.roles.some(role =>
-      role.userRoles.length > 0 && 
-      (role.permissions.includes('WRITE') || role.permissions.includes('MANAGE_USERS'))
+    const hasWritePermission = project.roles.some(
+      (role) =>
+        role.userRoles.length > 0 &&
+        (role.permissions.includes("WRITE") || role.permissions.includes("MANAGE_USERS"))
     );
 
     if (!hasWritePermission) {
       throw new ValidationError("Insufficient permissions to update project");
     }
+
+    // Invalidate project cache
+    await deleteCache(CacheKeys.projectDetails(projectId));
 
     // Update project
     const updatedProject = await prisma.project.update({
@@ -285,7 +294,7 @@ export const updateProject = async (
       // Add new tech stack links
       if (updateData.techStackIds.length > 0) {
         await prisma.projectTechStack.createMany({
-          data: updateData.techStackIds.map(techStackId => ({
+          data: updateData.techStackIds.map((techStackId) => ({
             projectId,
             techStackId,
           })),
@@ -324,7 +333,7 @@ export const addCollaborator = async (
   projectId: string,
   userId: string,
   collaboratorId: string,
-  rolePermissions: string[] = ['READ', 'WRITE']
+  rolePermissions: string[] = ["READ", "WRITE"]
 ): Promise<any> => {
   try {
     // Verify user has permission to add collaborators
@@ -337,7 +346,7 @@ export const addCollaborator = async (
               some: { userId },
             },
             permissions: {
-              has: 'MANAGE_USERS',
+              has: "MANAGE_USERS",
             },
           },
         },
@@ -375,8 +384,8 @@ export const addCollaborator = async (
     // Create role for the new collaborator
     const collaboratorRole = await prisma.role.create({
       data: {
-        name: 'Collaborator',
-        roleName: 'Collaborator',
+        name: "Collaborator",
+        roleName: "Collaborator",
         permissions: rolePermissions,
         projectId,
         userRoles: {
@@ -437,7 +446,7 @@ export const removeCollaborator = async (
               some: { userId },
             },
             permissions: {
-              has: 'MANAGE_USERS',
+              has: "MANAGE_USERS",
             },
           },
         },
@@ -452,7 +461,7 @@ export const removeCollaborator = async (
     const ownerRole = await prisma.role.findFirst({
       where: {
         projectId,
-        name: 'Project Owner',
+        name: "Project Owner",
         userRoles: {
           some: { userId: collaboratorId },
         },
@@ -516,7 +525,7 @@ export const createTask = async (
     description?: string;
     assignedToId?: string;
     dueDate?: Date;
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+    status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED";
   }
 ): Promise<any> => {
   try {
@@ -556,7 +565,7 @@ export const createTask = async (
         title: taskData.title,
         taskName: taskData.title,
         description: taskData.description,
-        status: taskData.status || 'PENDING',
+        status: taskData.status || "PENDING",
         dueDate: taskData.dueDate,
         projectId: projectId,
         assignedToId: taskData.assignedToId,
@@ -616,7 +625,7 @@ export const updateTask = async (
   updateData: {
     title?: string;
     description?: string;
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+    status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED";
     assignedToId?: string;
     dueDate?: Date;
   }
@@ -718,7 +727,7 @@ export const getUserProjects = async (userId: string): Promise<any[]> => {
         },
         tasks: {
           where: {
-            status: { not: 'COMPLETED' },
+            status: { not: "COMPLETED" },
           },
           take: 3,
           select: {
@@ -727,7 +736,7 @@ export const getUserProjects = async (userId: string): Promise<any[]> => {
             status: true,
             dueDate: true,
           },
-          orderBy: { dueDate: 'asc' },
+          orderBy: { dueDate: "asc" },
         },
         roles: {
           where: {
@@ -741,10 +750,10 @@ export const getUserProjects = async (userId: string): Promise<any[]> => {
           },
         },
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
     });
 
-    return projects.map(project => ({
+    return projects.map((project) => ({
       ...project,
       userRole: project.roles[0] || null,
       pendingTasks: project.tasks,
@@ -765,12 +774,12 @@ export const getProjectTasks = async (
   projectId: string,
   userId: string,
   filters: {
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+    status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED";
     assignedToId?: string;
     page?: number;
     limit?: number;
   } = {}
-): Promise<{ tasks: any[], totalCount: number, hasMore: boolean }> => {
+): Promise<{ tasks: any[]; totalCount: number; hasMore: boolean }> => {
   try {
     // Verify user has access to project
     const project = await prisma.project.findFirst({
@@ -807,7 +816,7 @@ export const getProjectTasks = async (
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -818,6 +827,237 @@ export const getProjectTasks = async (
       tasks,
       totalCount,
       hasMore: skip + tasks.length < totalCount,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name.includes("Error")) {
+      throw error;
+    }
+    throw new DatabaseError(
+      DATABASE_ERRORS.QUERY_FAILED.message,
+      DATABASE_ERRORS.QUERY_FAILED.code,
+      { originalError: error }
+    );
+  }
+};
+
+/**
+ * Search projects by keyword and tech stack
+ */
+export const searchProjects = async (
+  query?: string,
+  techStacks?: string[],
+  limit: number = 20
+): Promise<any[]> => {
+  try {
+    const where: any = {};
+
+    // Add keyword search if provided
+    if (query && query.trim()) {
+      where.OR = [
+        { title: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
+      ];
+    }
+
+    // Add tech stack filtering if provided
+    if (techStacks && techStacks.length > 0) {
+      where.techLinks = {
+        some: {
+          techStack: {
+            OR: [
+              { languages: { hasSome: techStacks } },
+              { frameworks: { hasSome: techStacks } },
+              { tools: { hasSome: techStacks } },
+            ],
+          },
+        },
+      };
+    }
+
+    const projects = await prisma.project.findMany({
+      where,
+      include: {
+        workspace: {
+          select: {
+            name: true,
+          },
+        },
+        techLinks: {
+          include: {
+            techStack: {
+              select: {
+                frameworks: true,
+                languages: true,
+                tools: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            collaborators: true,
+            tasks: true,
+          },
+        },
+      },
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+    });
+
+    return projects.map((project) => ({
+      ...project,
+      techStacks: project.techLinks.map((link) => link.techStack),
+    }));
+  } catch (error) {
+    throw new DatabaseError(
+      DATABASE_ERRORS.QUERY_FAILED.message,
+      DATABASE_ERRORS.QUERY_FAILED.code,
+      { originalError: error }
+    );
+  }
+};
+
+/**
+ * Get project activity feed (recent events)
+ */
+export const getProjectActivity = async (
+  projectId: string,
+  userId: string,
+  limit: number = 20
+): Promise<any[]> => {
+  try {
+    // Verify user has access to project
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        collaborators: {
+          some: { id: userId },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundError("Project not found or access denied", "PROJECT_NOT_FOUND");
+    }
+
+    // Get recent tasks created/updated
+    const recentTasks = await prisma.task.findMany({
+      where: { projectId },
+      include: {
+        assignedTo: {
+          select: {
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    });
+
+    // Transform to activity feed format
+    const activities = recentTasks.map((task) => ({
+      type: task.createdAt.getTime() === task.updatedAt.getTime() ? "TASK_CREATED" : "TASK_UPDATED",
+      entityId: task.id,
+      entityType: "TASK",
+      title: task.title,
+      description: `Task "${task.title}" was ${task.createdAt.getTime() === task.updatedAt.getTime() ? "created" : "updated"}`,
+      status: task.status,
+      assignedTo: task.assignedTo,
+      timestamp: task.updatedAt,
+    }));
+
+    return activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  } catch (error) {
+    if (error instanceof Error && error.name.includes("Error")) {
+      throw error;
+    }
+    throw new DatabaseError(
+      DATABASE_ERRORS.QUERY_FAILED.message,
+      DATABASE_ERRORS.QUERY_FAILED.code,
+      { originalError: error }
+    );
+  }
+};
+
+/**
+ * Get project analytics and metrics
+ */
+export const getProjectAnalytics = async (projectId: string, userId: string): Promise<any> => {
+  try {
+    // Verify user has access to project
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        collaborators: {
+          some: { id: userId },
+        },
+      },
+      include: {
+        tasks: {
+          select: {
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        _count: {
+          select: {
+            collaborators: true,
+            tasks: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundError("Project not found or access denied", "PROJECT_NOT_FOUND");
+    }
+
+    // Calculate task statistics
+    const totalTasks = project.tasks.length;
+    const completedTasks = project.tasks.filter((t) => t.status === "COMPLETED").length;
+    const pendingTasks = project.tasks.filter((t) => t.status === "PENDING").length;
+    const inProgressTasks = project.tasks.filter((t) => t.status === "IN_PROGRESS").length;
+    const blockedTasks = project.tasks.filter((t) => t.status === "BLOCKED").length;
+
+    const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+    // Calculate average task completion time (completed tasks only)
+    const completedTasksWithTime = project.tasks.filter((t) => t.status === "COMPLETED");
+    const avgCompletionTime =
+      completedTasksWithTime.length > 0
+        ? completedTasksWithTime.reduce((sum, task) => {
+            const timeToComplete = task.updatedAt.getTime() - task.createdAt.getTime();
+            return sum + timeToComplete;
+          }, 0) / completedTasksWithTime.length
+        : 0;
+
+    // Convert to days
+    const avgCompletionDays = avgCompletionTime / (1000 * 60 * 60 * 24);
+
+    return {
+      projectId,
+      overview: {
+        totalTasks,
+        totalCollaborators: project._count.collaborators,
+        completionRate: Math.round(completionRate * 100) / 100,
+      },
+      taskBreakdown: {
+        pending: pendingTasks,
+        inProgress: inProgressTasks,
+        completed: completedTasks,
+        blocked: blockedTasks,
+      },
+      performance: {
+        avgCompletionTimeDays: Math.round(avgCompletionDays * 100) / 100,
+        tasksCompletedThisWeek: project.tasks.filter(
+          (t) =>
+            t.status === "COMPLETED" &&
+            t.updatedAt.getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+        ).length,
+      },
     };
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {

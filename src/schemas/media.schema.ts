@@ -8,12 +8,12 @@ import z from "zod";
  * MEDIA CATEGORY ENUM SCHEMA
  */
 export const mediaCategorySchema = z.enum([
-  'user_avatar',
-  'project_image',
-  'chat_media',
-  'project_file',
-  'workspace_banner',
-  'system_asset'
+  "user_avatar",
+  "project_image",
+  "chat_media",
+  "project_file",
+  "workspace_banner",
+  "system_asset",
 ]);
 
 export type MediaCategory = z.infer<typeof mediaCategorySchema>;
@@ -21,14 +21,7 @@ export type MediaCategory = z.infer<typeof mediaCategorySchema>;
 /**
  * MEDIA TYPE ENUM SCHEMA
  */
-export const mediaTypeSchema = z.enum([
-  'image',
-  'video',
-  'audio',
-  'document',
-  'archive',
-  'other'
-]);
+export const mediaTypeSchema = z.enum(["image", "video", "audio", "document", "archive", "other"]);
 
 export type MediaType = z.infer<typeof mediaTypeSchema>;
 
@@ -36,7 +29,7 @@ export type MediaType = z.infer<typeof mediaTypeSchema>;
  * MEDIA TRANSFORMATION SCHEMA
  */
 export const mediaTransformationSchema = z.object({
-  type: z.enum(['resize', 'crop', 'rotate', 'filter', 'format', 'quality']),
+  type: z.enum(["resize", "crop", "rotate", "filter", "format", "quality"]),
   params: z.record(z.string(), z.any()),
 });
 
@@ -73,7 +66,7 @@ export const mediaMetadataSchema = z.object({
   url: z.string().url(),
   thumbnailUrl: z.string().url().optional(),
   cdnUrl: z.string().url().optional(),
-  storageProvider: z.enum(['CLOUDINARY', 'AWS_S3', 'LOCAL']),
+  storageProvider: z.enum(["CLOUDINARY", "AWS_S3", "LOCAL"]),
   storageKey: z.string().min(1),
   uploadedBy: z.string().uuid(),
   createdAt: z.date(),
@@ -135,8 +128,8 @@ export const mediaQuerySchema = z.object({
   dateTo: z.string().datetime().optional(),
   limit: z.number().int().positive().max(100).default(20),
   offset: z.number().int().nonnegative().default(0),
-  sortBy: z.enum(['createdAt', 'size', 'filename']).default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  sortBy: z.enum(["createdAt", "size", "filename"]).default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export type MediaQuery = z.infer<typeof mediaQuerySchema>;
@@ -174,7 +167,7 @@ export type MediaStats = z.infer<typeof mediaStatsSchema>;
 export const processingJobSchema = z.object({
   id: z.string().uuid(),
   mediaId: z.string().uuid(),
-  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+  status: z.enum(["pending", "processing", "completed", "failed"]),
   transformations: z.array(mediaTransformationSchema),
   progress: z.number().min(0).max(100),
   error: z.string().optional(),
@@ -192,7 +185,7 @@ export const cloudinaryConfigSchema = z.object({
   apiKey: z.string().min(1),
   apiSecret: z.string().min(1),
   secure: z.boolean().default(true),
-  folder: z.string().default('labyrinth'),
+  folder: z.string().default("labyrinth"),
 });
 
 export type CloudinaryConfig = z.infer<typeof cloudinaryConfigSchema>;
@@ -242,10 +235,14 @@ export const multipleMediaUploadResponseSchema = z.object({
   message: z.string(),
   data: z.object({
     media: z.array(mediaUploadResultSchema),
-    failed: z.array(z.object({
-      filename: z.string(),
-      error: z.string(),
-    })).optional(),
+    failed: z
+      .array(
+        z.object({
+          filename: z.string(),
+          error: z.string(),
+        })
+      )
+      .optional(),
     processingJobs: z.array(z.string()).optional(),
   }),
 });
@@ -275,10 +272,14 @@ export const mediaDeletionResponseSchema = z.object({
   message: z.string(),
   data: z.object({
     deleted: z.array(z.string()),
-    failed: z.array(z.object({
-      id: z.string(),
-      error: z.string(),
-    })).optional(),
+    failed: z
+      .array(
+        z.object({
+          id: z.string(),
+          error: z.string(),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -299,7 +300,7 @@ export const mediaStatsResponseSchema = z.object({
 export const avatarUploadSchema = z.object({
   generateThumbnail: z.boolean().default(true),
   quality: z.number().min(60).max(100).default(85),
-  size: z.enum(['small', 'medium', 'large']).default('medium'),
+  size: z.enum(["small", "medium", "large"]).default("medium"),
 });
 
 export type AvatarUploadRequest = z.infer<typeof avatarUploadSchema>;
@@ -321,10 +322,9 @@ export type ProjectImageUploadRequest = z.infer<typeof projectImageUploadSchema>
  */
 export const chatMediaUploadSchema = z.object({
   chatId: z.string().uuid(),
-  messageType: z.enum(['IMAGE', 'VIDEO', 'AUDIO', 'FILE']).default('IMAGE'),
+  messageType: z.enum(["IMAGE", "VIDEO", "AUDIO", "FILE"]).default("IMAGE"),
   generateThumbnail: z.boolean().default(true),
   quality: z.number().min(60).max(95).default(80),
 });
 
 export type ChatMediaUploadRequest = z.infer<typeof chatMediaUploadSchema>;
-

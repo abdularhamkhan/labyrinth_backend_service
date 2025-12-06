@@ -12,6 +12,9 @@ import {
   updateTaskController,
   getProjectTasksController,
   getProjectDashboard,
+  searchProjectsController,
+  getProjectActivityController,
+  getProjectAnalyticsController,
 } from "../controllers/project.controller";
 
 // =============================================================================
@@ -31,6 +34,11 @@ router.use(authenticateUser);
 // Usage: GET /api/projects
 // Headers: Authorization: Bearer <jwt_token>
 router.get("/", asyncHandler(getUserProjectsController));
+
+// Search projects by keyword and tech stack
+// Usage: GET /api/projects/search?q=keyword&techStacks=JavaScript,React&limit=20
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/search", asyncHandler(searchProjectsController));
 
 // Create new project
 // Usage: POST /api/projects
@@ -54,6 +62,16 @@ router.put("/:projectId", asyncHandler(updateProjectController));
 // Headers: Authorization: Bearer <jwt_token>
 router.get("/:projectId/dashboard", asyncHandler(getProjectDashboard));
 
+// Get project activity feed
+// Usage: GET /api/projects/:projectId/activity?limit=20
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/:projectId/activity", asyncHandler(getProjectActivityController));
+
+// Get project analytics
+// Usage: GET /api/projects/:projectId/analytics
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/:projectId/analytics", asyncHandler(getProjectAnalyticsController));
+
 // =============================================================================
 // COLLABORATOR MANAGEMENT
 // =============================================================================
@@ -67,7 +85,10 @@ router.post("/:projectId/collaborators", asyncHandler(addCollaboratorController)
 // Remove collaborator from project
 // Usage: DELETE /api/projects/:projectId/collaborators/:collaboratorId
 // Headers: Authorization: Bearer <jwt_token>
-router.delete("/:projectId/collaborators/:collaboratorId", asyncHandler(removeCollaboratorController));
+router.delete(
+  "/:projectId/collaborators/:collaboratorId",
+  asyncHandler(removeCollaboratorController)
+);
 
 // =============================================================================
 // TASK MANAGEMENT

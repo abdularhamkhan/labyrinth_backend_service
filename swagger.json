@@ -1,303 +1,2180 @@
 {
-	"openapi": "3.0.3",
-	"info": {
-		"title": "Labyrinth Backend Service API",
-		"version": "1.0.0",
-		"description": "Production-ready API documentation for Labyrinth platform. All endpoints, request/response schemas, and error handling are documented."
-	},
-	"servers": [
-        { "url": "http://localhost:3001/api", "description": "Development server" },
-        { "url": "https://api.labyrinth.com/v1", "description": "Production server" }
-	],
-	"tags": [
-		{ "name": "Auth", "description": "Authentication and user management" },
-		{ "name": "Chat", "description": "Chat and messaging" },
-		{ "name": "Friends", "description": "Friendship and social features" },
-		{ "name": "Matchmaking", "description": "User and project recommendations" },
-		{ "name": "Media", "description": "Media upload and management" },
-		{ "name": "Project", "description": "Project and collaboration" },
-		{ "name": "User", "description": "User profile and preferences" }
-	],
-	"paths": {
-		"/auth/signup": {
-			"post": {
-				"tags": ["Auth"],
-				"summary": "Register a new user",
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": { "$ref": "#/components/schemas/Signup" }
-						}
-					}
-				},
-				"responses": {
-					"201": {
-						"description": "User registered successfully",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } }
-					},
-					"400": { "description": "Validation error" }
-				}
-			}
-		},
-		"/auth/login": {
-			"post": {
-				"tags": ["Auth"],
-				"summary": "Login user",
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": { "$ref": "#/components/schemas/Login" }
-						}
-					}
-				},
-				"responses": {
-					"200": { "description": "Login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
-					"401": { "description": "Invalid credentials" }
-				}
-			}
-		},
-		"/chat/direct": {
-			"post": {
-				"tags": ["Chat"],
-				"summary": "Create direct chat",
-				"requestBody": {
-					"required": true,
-					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateDirectChat" } } }
-				},
-				"responses": {
-					"201": { "description": "Chat created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Chat" } } } }
-				}
-			}
-		},
-		"/chat/{chatId}/messages": {
-			"get": {
-				"tags": ["Chat"],
-				"summary": "Get chat messages",
-				"parameters": [
-					{ "name": "chatId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
-					{ "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-					{ "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 100 } }
-				],
-				"responses": {
-					"200": { "description": "List of messages", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } } } } }
-				}
-			},
-			"post": {
-				"tags": ["Chat"],
-				"summary": "Send message",
-				"parameters": [ { "name": "chatId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ],
-				"requestBody": {
-					"required": true,
-					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendMessage" } } }
-				},
-				"responses": {
-					"201": { "description": "Message sent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Message" } } } }
-				}
-			}
-		},
-		"/friends/request": {
-			"post": {
-				"tags": ["Friends"],
-				"summary": "Send friend request",
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendFriendRequest" } } } },
-				"responses": { "201": { "description": "Request sent" }, "400": { "description": "Validation error" } }
-			}
-		},
-		"/matchmaking/user-recommendations": {
-			"get": {
-				"tags": ["Matchmaking"],
-				"summary": "Get user recommendations",
-				"parameters": [ { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } } ],
-				"responses": { "200": { "description": "List of recommendations", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/UserRecommendation" } } } } } }
-			}
-		},
-		"/media/init": {
-			"post": {
-				"tags": ["Media"],
-				"summary": "Initialize media storage",
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MediaInit" } } } },
-				"responses": { "201": { "description": "Storage initialized" } }
-			}
-		},
-		"/project": {
-			"post": {
-				"tags": ["Project"],
-				"summary": "Create project",
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateProject" } } } },
-				"responses": { "201": { "description": "Project created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } } } }
-			}
-		},
-		"/user/profile": {
-			"get": {
-				"tags": ["User"],
-				"summary": "Get user profile",
-				"responses": { "200": { "description": "User profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserProfile" } } } } }
-			},
-			"put": {
-				"tags": ["User"],
-				"summary": "Update user profile",
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateUserProfile" } } } },
-				"responses": { "200": { "description": "Profile updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserProfile" } } } } }
-			}
-		}
-    
-	},
-	"components": {
-		"schemas": {
-			"Signup": {
-				"type": "object",
-				"properties": {
-					"userEmail": { "type": "string", "format": "email" },
-					"username": { "type": "string" },
-					"password": { "type": "string", "format": "password" },
-					"firstName": { "type": "string" },
-					"lastName": { "type": "string" },
-					"phone": { "type": "string" }
-				},
-				"required": ["userEmail", "username", "password", "firstName", "lastName"]
-			},
-			"Login": {
-				"type": "object",
-				"properties": {
-					"userEmail": { "type": "string", "format": "email" },
-					"password": { "type": "string", "format": "password" }
-				},
-				"required": ["userEmail", "password"]
-			},
-			"AuthResponse": {
-				"type": "object",
-				"properties": {
-					"token": { "type": "string" },
-					"user": { "$ref": "#/components/schemas/UserProfile" }
-				}
-			},
-			"CreateDirectChat": {
-				"type": "object",
-				"properties": {
-					"targetUserId": { "type": "string", "format": "uuid" }
-				},
-				"required": ["targetUserId"]
-			},
-			"Chat": {
-				"type": "object",
-				"properties": {
-					"id": { "type": "string", "format": "uuid" },
-					"participants": { "type": "array", "items": { "$ref": "#/components/schemas/ChatParticipant" } },
-					"createdAt": { "type": "string", "format": "date-time" }
-				}
-			},
-			"ChatParticipant": {
-				"type": "object",
-				"properties": {
-					"userId": { "type": "string", "format": "uuid" },
-					"chatId": { "type": "string", "format": "uuid" },
-					"user": { "$ref": "#/components/schemas/UserProfile" }
-				}
-			},
-			"Message": {
-				"type": "object",
-				"properties": {
-					"id": { "type": "string", "format": "uuid" },
-					"content": { "type": "string" },
-					"messageType": { "type": "string", "enum": ["TEXT", "IMAGE", "FILE"] },
-					"mediaUrl": { "type": "string", "format": "url" },
-					"senderId": { "type": "string", "format": "uuid" },
-					"chatId": { "type": "string", "format": "uuid" },
-					"createdAt": { "type": "string", "format": "date-time" },
-					"updatedAt": { "type": "string", "format": "date-time" },
-					"deletedAt": { "type": "string", "format": "date-time" },
-					"sender": { "$ref": "#/components/schemas/UserProfile" }
-				}
-			},
-			"SendMessage": {
-				"type": "object",
-				"properties": {
-					"content": { "type": "string" },
-					"messageType": { "type": "string", "enum": ["TEXT", "IMAGE", "FILE"] },
-					"mediaUrl": { "type": "string", "format": "url" }
-				},
-				"required": ["content"]
-			},
-			"SendFriendRequest": {
-				"type": "object",
-				"properties": {
-					"recipientId": { "type": "string", "format": "uuid" }
-				},
-				"required": ["recipientId"]
-			},
-			"UserRecommendation": {
-				"type": "object",
-				"properties": {
-					"id": { "type": "string", "format": "uuid" },
-					"username": { "type": "string" },
-					"firstName": { "type": "string" },
-					"lastName": { "type": "string" },
-					"education": { "type": "string" },
-					"gitHubProfile": { "type": "string" },
-					"techStack": { "type": "object" },
-					"demographic": { "type": "object" },
-					"compatibilityScore": { "type": "number" },
-					"projectsCount": { "type": "integer" },
-					"workspacesCount": { "type": "integer" },
-					"swipesCount": { "type": "integer" },
-					"lastActive": { "type": "string", "format": "date-time" }
-				}
-			},
-			"MediaInit": {
-				"type": "object",
-				"properties": {
-					"folder": { "type": "string" },
-					"quality": { "type": "integer", "minimum": 1, "maximum": 100 }
-				}
-			},
-			"CreateProject": {
-				"type": "object",
-				"properties": {
-					"title": { "type": "string" },
-					"description": { "type": "string" },
-					"workspaceName": { "type": "string" },
-					"workspaceDescription": { "type": "string" },
-					"techStackIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }
-				},
-				"required": ["title", "description", "workspaceName"]
-			},
-			"Project": {
-				"type": "object",
-				"properties": {
-					"id": { "type": "string", "format": "uuid" },
-					"title": { "type": "string" },
-					"description": { "type": "string" },
-					"workspaceName": { "type": "string" },
-					"createdAt": { "type": "string", "format": "date-time" }
-				}
-			},
-			"UserProfile": {
-				"type": "object",
-				"properties": {
-					"id": { "type": "string", "format": "uuid" },
-					"email": { "type": "string", "format": "email" },
-					"username": { "type": "string" },
-					"firstName": { "type": "string" },
-					"lastName": { "type": "string" },
-					"dateOfBirth": { "type": "string", "format": "date" },
-					"lastActive": { "type": "string", "format": "date-time" },
-					"gitHubProfile": { "type": "string" },
-					"education": { "type": "string" },
-					"createdAt": { "type": "string", "format": "date-time" },
-					"updatedAt": { "type": "string", "format": "date-time" }
-				}
-			},
-			"UpdateUserProfile": {
-				"type": "object",
-				"properties": {
-					"firstName": { "type": "string" },
-					"lastName": { "type": "string" },
-					"username": { "type": "string" }
-				}
-			}
-      
-		}
-	}
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Labyrinth Backend API - Complete Documentation",
+    "version": "3.0.0",
+    "description": "Complete API documentation for Labyrinth collaborative developer platform with 83 endpoints across 8 modules: Authentication (8), User Profile (17), Matchmaking (6), Chat (11), Projects (13), Friends (9), Media (13), Presence (6)",
+    "contact": {
+      "name": "Labyrinth Team",
+      "email": "support@labyrinth.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001/api",
+      "description": "Development Server"
+    },
+    {
+      "url": "https://api.labyrinth.com/v1",
+      "description": "Production Server"
+    }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "User authentication and account management (8 endpoints)" },
+    { "name": "User Profile", "description": "User profile, demographics, tech stack, and workspace management (17 endpoints)" },
+    { "name": "Matchmaking", "description": "AI-powered user and project recommendations, swipes, matches (6 endpoints)" },
+    { "name": "Chat", "description": "Real-time messaging, chat management, Pusher integration (11 endpoints)" },
+    { "name": "Projects", "description": "Project CRUD, collaborators, tasks, analytics (13 endpoints)" },
+    { "name": "Friends", "description": "Friend requests, friendship management, user search (9 endpoints)" },
+    { "name": "Media", "description": "File upload, media management, signed URLs (13 endpoints)" },
+    { "name": "Presence", "description": "User online status, heartbeat, activity tracking (6 endpoints)" }
+  ],
+  "paths": {
+    "/auth/signup": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register new user",
+        "description": "Create a new user account and send OTP for verification. Rate limited: 3 attempts per hour per IP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userEmail", "password", "username", "firstName", "lastName"],
+                "properties": {
+                  "userEmail": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8, "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\W_]).{8,128}$" },
+                  "username": { "type": "string", "minLength": 3 },
+                  "firstName": { "type": "string" },
+                  "lastName": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created successfully, OTP sent to email" },
+          "400": { "description": "Validation error" },
+          "409": { "description": "Email or username already exists" }
+        }
+      }
+    },
+    "/auth/verify-otp": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Verify email OTP",
+        "description": "Verify OTP sent during signup and return JWT token. Rate limited: 5 attempts per 10 minutes",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "otp"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "otp": { "type": "string", "minLength": 6, "maxLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string" },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string" },
+                            "username": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid OTP" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Login user",
+        "description": "Authenticate user with email/username and password. Rate limited: 10 attempts per 5 minutes",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["emailOrUsername", "password"],
+                "properties": {
+                  "emailOrUsername": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string" },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string" },
+                            "username": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Request password reset OTP",
+        "description": "Send password reset OTP to email. Rate limited: 3 attempts per hour",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OTP sent to email (if exists)" }
+        }
+      }
+    },
+    "/auth/verify-otp-reset": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Verify OTP for password reset",
+        "description": "Step 2 of password reset: Verify OTP and return verification token. Rate limited: 5 attempts per 10 minutes",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "otp"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "otp": { "type": "string", "minLength": 6, "maxLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified, verification token returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "verificationToken": { "type": "string" },
+                    "expiresIn": { "type": "number" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid OTP" }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Reset password",
+        "description": "Step 3 of password reset: Set new password using verification token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "verificationToken"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "verificationToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully" },
+          "400": { "description": "Invalid token or password" }
+        }
+      }
+    },
+    "/auth/forgot-username": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Recover username",
+        "description": "Send username to email. Rate limited: 3 attempts per hour",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Username sent to email (if exists)" }
+        }
+      }
+    },
+    "/auth/resend-otp": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Resend OTP",
+        "description": "Resend verification OTP to email. Rate limited: 3 attempts per hour",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OTP resent successfully" }
+        }
+      }
+    },
+    "/user/profile": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Get own profile",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Profile retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "email": { "type": "string" },
+                    "username": { "type": "string" },
+                    "firstName": { "type": "string" },
+                    "lastName": { "type": "string" },
+                    "avatar": { "type": "string" },
+                    "totalScore": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["User Profile"],
+        "summary": "Update own profile",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": { "type": "string" },
+                  "lastName": { "type": "string" },
+                  "bio": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated" }
+        }
+      }
+    },
+    "/user/account": {
+      "delete": {
+        "tags": ["User Profile"],
+        "summary": "Delete user account",
+        "description": "Permanently delete user account and all associated data",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Account deleted successfully" }
+        }
+      }
+    },
+    "/user/avatar": {
+      "post": {
+        "tags": ["User Profile"],
+        "summary": "Upload user avatar",
+        "description": "Upload profile avatar image. Max size: 5MB. Supports: JPG, PNG, WebP",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Avatar uploaded successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["User Profile"],
+        "summary": "Remove user avatar",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Avatar removed" }
+        }
+      }
+    },
+    "/user/labyrinth-profile": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Get comprehensive Labyrinth profile",
+        "description": "Includes user details, tech stack, demographics, and statistics",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Labyrinth profile retrieved" }
+        }
+      },
+      "put": {
+        "tags": ["User Profile"],
+        "summary": "Update Labyrinth profile",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": { "type": "string" },
+                  "lastName": { "type": "string" },
+                  "dateOfBirth": { 
+                    "type": "string", 
+                    "format": "date",
+                    "description": "Date of birth in YYYY-MM-DD format (will be converted to DateTime internally)",
+                    "example": "2000-01-15"
+                  },
+                  "gitHubProfile": { "type": "string" },
+                  "education": { "type": "string" },
+                  "maxDailySwipes": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Labyrinth profile updated" }
+        }
+      }
+    },
+    "/user/tech-stack": {
+      "put": {
+        "tags": ["User Profile"],
+        "summary": "Update user tech stack",
+        "description": "Update programming languages, frameworks, and tools",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "frameworks": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "languages": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "tools": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Tech stack updated" }
+        }
+      }
+    },
+    "/user/demographic": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Get own demographic information",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Demographics retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "country": { "type": "string" },
+                    "languages": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["User Profile"],
+        "summary": "Update demographic information",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "country": { "type": "string" },
+                  "languages": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Demographics updated" }
+        }
+      }
+    },
+    "/user/{userId}/demographics": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Get user demographic by ID",
+        "description": "Read-only access to another user's demographics",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "User demographics retrieved" }
+        }
+      }
+    },
+    "/user/preferences": {
+      "put": {
+        "tags": ["User Profile"],
+        "summary": "Update matchmaking preferences",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preferredTechStackId": { "type": "string" },
+                  "preferredDemographicId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Preferences updated" }
+        }
+      }
+    },
+    "/user/workspaces": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Get user workspaces and projects",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Workspaces retrieved" }
+        }
+      }
+    },
+    "/user/collaboration-stats": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Get user collaboration statistics",
+        "description": "Project count, active collaborations, contribution metrics",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Collaboration stats retrieved" }
+        }
+      }
+    },
+    "/user/full-profile": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Get full user profile",
+        "description": "Complete profile with all related data: demographics, tech stack, workspaces, stats",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Full profile retrieved" }
+        }
+      }
+    },
+    "/matchmaking/user-recommendations": {
+      "get": {
+        "tags": ["Matchmaking"],
+        "summary": "Get user recommendations",
+        "description": "AI-powered recommendations based on tech stack, demographics, and collaboration preferences",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User recommendations retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recommendations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "username": { "type": "string" },
+                          "avatar": { "type": "string" },
+                          "matchScore": { "type": "number" },
+                          "techStack": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matchmaking/project-recommendations": {
+      "get": {
+        "tags": ["Matchmaking"],
+        "summary": "Get project recommendations",
+        "description": "Recommended projects to join based on user skills and interests",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Project recommendations retrieved" }
+        }
+      }
+    },
+    "/matchmaking/swipe": {
+      "post": {
+        "tags": ["Matchmaking"],
+        "summary": "Swipe on user or project",
+        "description": "Like (right swipe) or dislike (left swipe). Creates match if mutual right swipe",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["targetType", "targetId", "isRightSwipe"],
+                "properties": {
+                  "targetType": {
+                    "type": "string",
+                    "enum": ["user", "project"]
+                  },
+                  "targetId": { "type": "string", "format": "uuid" },
+                  "isRightSwipe": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Swipe recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "isMatch": { "type": "boolean" },
+                    "matchId": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matchmaking/matches": {
+      "get": {
+        "tags": ["Matchmaking"],
+        "summary": "Get user matches",
+        "description": "List of mutual right swipes (matches)",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Matches retrieved" }
+        }
+      }
+    },
+    "/matchmaking/swipe-count": {
+      "get": {
+        "tags": ["Matchmaking"],
+        "summary": "Get daily swipe count",
+        "description": "Current daily swipe count and limit",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Swipe count retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dailySwipeCount": { "type": "integer" },
+                    "maxDailySwipes": { "type": "integer" },
+                    "remainingSwipes": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matchmaking/dashboard": {
+      "get": {
+        "tags": ["Matchmaking"],
+        "summary": "Get matchmaking dashboard",
+        "description": "Comprehensive dashboard: swipe stats, matches, pending recommendations",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Dashboard data retrieved" }
+        }
+      }
+    },
+    "/chat": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get all user chats",
+        "description": "List of all direct and project chats for the user",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "User chats retrieved" }
+        }
+      }
+    },
+    "/chat/{chatId}": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get specific chat details",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "chatId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Chat details retrieved" }
+        }
+      }
+    },
+    "/chat/direct": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Create or get direct chat",
+        "description": "Create new direct chat or return existing chat between two users",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["targetUserId"],
+                "properties": {
+                  "targetUserId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Direct chat created or retrieved" }
+        }
+      }
+    },
+    "/chat/project": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Create project chat",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["projectId"],
+                "properties": {
+                  "projectId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Project chat created" }
+        }
+      }
+    },
+    "/chat/unread-count": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get unread message count",
+        "description": "Total unread messages across all chats",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Unread count retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "unreadCount": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/pusher/auth": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Authenticate Pusher channel",
+        "description": "Required for subscribing to private/presence channels",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["socket_id", "channel_name"],
+                "properties": {
+                  "socket_id": { "type": "string" },
+                  "channel_name": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pusher auth signature returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "auth": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/{chatId}/messages": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get chat messages",
+        "description": "Paginated list of messages in a chat",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "chatId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Messages retrieved with pagination" }
+        }
+      },
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Send message",
+        "description": "Send text, image, or file message in chat. Real-time delivery via Pusher",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "chatId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": { "type": "string" },
+                  "messageType": {
+                    "type": "string",
+                    "enum": ["TEXT", "IMAGE", "FILE"],
+                    "default": "TEXT"
+                  },
+                  "mediaUrl": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Message sent successfully" }
+        }
+      }
+    },
+    "/chat/messages/{messageId}": {
+      "delete": {
+        "tags": ["Chat"],
+        "summary": "Delete message",
+        "description": "Delete a message from chat (only message sender can delete)",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Message deleted" }
+        }
+      }
+    },
+    "/chat/{chatId}/typing": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Set typing indicator",
+        "description": "Real-time typing indicator broadcast via Pusher",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "chatId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["isTyping"],
+                "properties": {
+                  "isTyping": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Typing indicator sent" }
+        }
+      }
+    },
+    "/chat/project/{projectId}/add-user": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Add user to project chat",
+        "description": "Add collaborator to project chat",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": {
+                  "userId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User added to project chat" }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get user's projects",
+        "description": "List of projects where user is owner or collaborator",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "User projects retrieved" }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create new project",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "description", "workspaceName"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "workspaceName": { "type": "string" },
+                  "workspaceDescription": { "type": "string" },
+                  "techStackIds": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Project created successfully" }
+        }
+      }
+    },
+    "/projects/search": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Search projects",
+        "description": "Full-text search by keyword and tech stack filter",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "techStacks",
+            "in": "query",
+            "description": "Comma-separated tech stack names",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Search results retrieved" }
+        }
+      }
+    },
+    "/projects/{projectId}": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project details",
+        "description": "Complete project information with collaborators and tech stack",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Project details retrieved" }
+        }
+      },
+      "put": {
+        "tags": ["Projects"],
+        "summary": "Update project",
+        "description": "Update project details (owner only)",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "techStackIds": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Project updated" }
+        }
+      }
+    },
+    "/projects/{projectId}/dashboard": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project dashboard",
+        "description": "Overview with stats, recent activity, and collaborators",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Dashboard data retrieved" }
+        }
+      }
+    },
+    "/projects/{projectId}/activity": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project activity feed",
+        "description": "Recent activities and events in the project",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Activity feed retrieved" }
+        }
+      }
+    },
+    "/projects/{projectId}/analytics": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project analytics",
+        "description": "Member count, task completion, engagement metrics",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "memberCount": { "type": "integer" },
+                    "taskCount": { "type": "integer" },
+                    "completedTaskCount": { "type": "integer" },
+                    "completionRate": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{projectId}/collaborators": {
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Add collaborator",
+        "description": "Add user to project as collaborator",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["collaboratorId"],
+                "properties": {
+                  "collaboratorId": { "type": "string", "format": "uuid" },
+                  "permissions": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Collaborator added" }
+        }
+      }
+    },
+    "/projects/{projectId}/collaborators/{collaboratorId}": {
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Remove collaborator",
+        "description": "Remove user from project",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "collaboratorId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Collaborator removed" }
+        }
+      }
+    },
+    "/projects/{projectId}/tasks": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project tasks",
+        "description": "List tasks with filtering by status and assignee",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING", "IN_PROGRESS", "COMPLETED"]
+            }
+          },
+          {
+            "name": "assignedToId",
+            "in": "query",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Tasks retrieved" }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create task",
+        "description": "Create new task in project",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "assignedToId": { "type": "string", "format": "uuid" },
+                  "dueDate": { "type": "string", "format": "date-time" },
+                  "status": {
+                    "type": "string",
+                    "enum": ["PENDING", "IN_PROGRESS", "COMPLETED"],
+                    "default": "PENDING"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Task created" }
+        }
+      }
+    },
+    "/projects/tasks/{taskId}": {
+      "put": {
+        "tags": ["Projects"],
+        "summary": "Update task",
+        "description": "Update task details and status",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "status": {
+                    "type": "string",
+                    "enum": ["PENDING", "IN_PROGRESS", "COMPLETED"]
+                  },
+                  "assignedToId": { "type": "string", "format": "uuid" },
+                  "dueDate": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Task updated" }
+        }
+      }
+    },
+    "/friends/request": {
+      "post": {
+        "tags": ["Friends"],
+        "summary": "Send friend request",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["recipientId"],
+                "properties": {
+                  "recipientId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Friend request sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "friendshipId": { "type": "string" },
+                        "status": { "type": "string", "enum": ["PENDING"] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/requests": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "Get friend requests",
+        "description": "Sent and received friend requests with pagination",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Friend requests retrieved" }
+        }
+      }
+    },
+    "/friends/{friendshipId}": {
+      "put": {
+        "tags": ["Friends"],
+        "summary": "Manage friendship",
+        "description": "Accept, decline, or remove friendship",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "friendshipId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": ["accept", "decline", "remove"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Friendship action completed" }
+        }
+      }
+    },
+    "/friends/list": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "Get friends list",
+        "description": "Paginated list of accepted friends",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Friends list retrieved" }
+        }
+      }
+    },
+    "/friends/block/{targetUserId}": {
+      "put": {
+        "tags": ["Friends"],
+        "summary": "Block or unblock user",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "targetUserId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": ["block", "unblock"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User blocked/unblocked" }
+        }
+      }
+    },
+    "/friends/search": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "Search users",
+        "description": "Search by username/name with friendship status context",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Search results retrieved" }
+        }
+      }
+    },
+    "/friends/profile/{userId}": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "Get user profile with friendship status",
+        "description": "Public profile with relationship status (NONE, PENDING_SENT, PENDING_RECEIVED, ACCEPTED, BLOCKED)",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "User profile retrieved" }
+        }
+      }
+    },
+    "/friends/stats": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "Get friendship statistics",
+        "description": "Total friends, pending requests, blocked users count",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Friendship stats retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalFriends": { "type": "integer" },
+                    "pendingSent": { "type": "integer" },
+                    "pendingReceived": { "type": "integer" },
+                    "blockedUsers": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/activity": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "Get friend activity status",
+        "description": "Online status and current activities of friends",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "friendIds",
+            "in": "query",
+            "description": "Comma-separated friend IDs (optional - defaults to all friends)",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Friend activity retrieved" }
+        }
+      }
+    },
+    "/media/init": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Initialize media storage",
+        "description": "Admin endpoint to initialize storage buckets",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Storage initialized" }
+        }
+      }
+    },
+    "/media/avatar": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Upload avatar",
+        "description": "Single file upload for user avatar. Max: 5MB. Supports: JPG, PNG, WebP",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Avatar uploaded" }
+        }
+      }
+    },
+    "/media/project-image": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Upload project image",
+        "description": "Project cover image. Max: 10MB. Supports: JPG, PNG, WebP, GIF",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["projectId"],
+                "properties": {
+                  "projectId": { "type": "string", "format": "uuid" },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Project image uploaded" }
+        }
+      }
+    },
+    "/media/chat": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Upload chat media",
+        "description": "Multiple files for chat. Max: 5 files, 20MB each. Supports: Images, Videos, Audio",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["chatId"],
+                "properties": {
+                  "chatId": { "type": "string", "format": "uuid" },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Chat media uploaded" }
+        }
+      }
+    },
+    "/media/project-files": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Upload project files",
+        "description": "Multiple documents/assets. Max: 10 files, 100MB each",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Project files uploaded" }
+        }
+      }
+    },
+    "/media/workspace-banner": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Upload workspace banner",
+        "description": "Workspace banner image. Max: 8MB. Min dimensions: 800x300",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "banner": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Workspace banner uploaded" }
+        }
+      }
+    },
+    "/media/stats": {
+      "get": {
+        "tags": ["Media"],
+        "summary": "Get media statistics",
+        "description": "Total files, storage usage, files by category and type",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Media statistics retrieved" }
+        }
+      }
+    },
+    "/media": {
+      "get": {
+        "tags": ["Media"],
+        "summary": "Get media list",
+        "description": "Paginated list with filtering by category, type, tags, date range",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "description": "Comma-separated tags",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Media list retrieved" }
+        }
+      },
+      "delete": {
+        "tags": ["Media"],
+        "summary": "Delete media files",
+        "description": "Delete multiple media files by IDs",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["mediaIds"],
+                "properties": {
+                  "mediaIds": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uuid" }
+                  },
+                  "deleteFromStorage": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Media files deleted" }
+        }
+      }
+    },
+    "/media/{id}": {
+      "get": {
+        "tags": ["Media"],
+        "summary": "Get specific media by ID",
+        "description": "Detailed metadata including URLs and processing status",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Media details retrieved" }
+        }
+      }
+    },
+    "/media/{id}/signed-url": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Generate signed URL",
+        "description": "Temporary signed URL for secure media access",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expiresIn": {
+                    "type": "integer",
+                    "description": "Expiration time in seconds",
+                    "default": 3600
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed URL generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signedUrl": { "type": "string" },
+                    "expiresAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/media/upload/single": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Generic single file upload",
+        "description": "Generic endpoint for custom implementations (NOT_IMPLEMENTED)",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "501": { "description": "Not implemented" }
+        }
+      }
+    },
+    "/media/upload/multiple": {
+      "post": {
+        "tags": ["Media"],
+        "summary": "Generic multiple file upload",
+        "description": "Generic endpoint for custom implementations (NOT_IMPLEMENTED)",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "501": { "description": "Not implemented" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Presence"],
+        "summary": "Get users with presence status",
+        "description": "Hybrid smart pagination: filter by online/offline status. Redis + Database architecture",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["online", "offline"],
+              "default": "online"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "description": "Include 'stats' for additional data",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Users retrieved with presence status" }
+        }
+      }
+    },
+    "/users/online/count": {
+      "get": {
+        "tags": ["Presence"],
+        "summary": "Get online users count",
+        "description": "Lightweight endpoint for dashboards. Rate limit: 120/min",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Online count retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "onlineCount": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/heartbeat": {
+      "post": {
+        "tags": ["Presence"],
+        "summary": "Send heartbeat",
+        "description": "Keep-alive mechanism. Call every 2 minutes to maintain online status",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "device_info": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Heartbeat recorded" }
+        }
+      }
+    },
+    "/users/me/presence": {
+      "get": {
+        "tags": ["Presence"],
+        "summary": "Get my presence status",
+        "description": "Current user's presence information. Rate limit: 120/min",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Presence status retrieved" }
+        }
+      }
+    },
+    "/users/presence/stats": {
+      "get": {
+        "tags": ["Presence"],
+        "summary": "Get presence statistics",
+        "description": "Platform-wide presence analytics for admin dashboards. Rate limit: 30/min",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Presence statistics retrieved" }
+        }
+      }
+    },
+    "/users/search": {
+      "get": {
+        "tags": ["Presence"],
+        "summary": "Search users by username",
+        "description": "Case-insensitive username search with presence status",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 50 }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10, "maximum": 50 }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "description": "Include 'stats' for game statistics",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Search results with presence status" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token from login endpoint. Format: Authorization: Bearer {token}"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" },
+              "code": { "type": "string" },
+              "status": { "type": "integer" }
+            }
+          }
+        }
+      }
+    }
+  }
 }

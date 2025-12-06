@@ -18,13 +18,13 @@
 
 import { cacheRedis } from "../config/redis.production.config";
 import { prisma } from "../../config/prisma";
-import { 
-  CACHE_KEYS, 
-  CACHE_TTL, 
-  USER_REDIS_KEYS, 
-  PROJECT_REDIS_KEYS, 
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  USER_REDIS_KEYS,
+  PROJECT_REDIS_KEYS,
   MATCHMAKING_REDIS_KEYS,
-  CHAT_REDIS_KEYS 
+  CHAT_REDIS_KEYS,
 } from "../../constants/redisKeys";
 
 // Export the constants for other modules
@@ -68,7 +68,7 @@ export class WriteThroughCache {
       try {
         await kafkaProducer.publishUserProfileUpdated(userId, profileUpdate);
       } catch (kafkaError) {
-        console.error('Failed to publish profile update event:', kafkaError);
+        console.error("Failed to publish profile update event:", kafkaError);
       }
 
       console.log(`✅ Write-through cache: Updated user profile for ${userId}`);
@@ -101,7 +101,11 @@ export class WriteThroughCache {
 
       // 2. Write to cache immediately
       const cacheKey = CACHE_KEYS.USER_PREFERENCES(userId);
-      await cacheRedis.setex(cacheKey, CACHE_TTL.USER_PREFERENCES, JSON.stringify(updatedPreferences));
+      await cacheRedis.setex(
+        cacheKey,
+        CACHE_TTL.USER_PREFERENCES,
+        JSON.stringify(updatedPreferences)
+      );
 
       // 3. Invalidate recommendation cache
       const recsKey = MATCHMAKING_REDIS_KEYS.USER_RECOMMENDATIONS(userId);
@@ -147,7 +151,7 @@ export class WriteThroughCache {
       try {
         await kafkaProducer.publishProjectUpdated(projectId, projectUpdate);
       } catch (kafkaError) {
-        console.error('Failed to publish project update event:', kafkaError);
+        console.error("Failed to publish project update event:", kafkaError);
       }
 
       console.log(`✅ Write-through cache: Updated project ${projectId}`);
@@ -191,7 +195,7 @@ export class CacheAsideStrategy {
             include: {
               projects: {
                 take: 5, // Limit recent projects
-                orderBy: { createdAt: 'desc' },
+                orderBy: { createdAt: "desc" },
               },
             },
           },
@@ -299,7 +303,7 @@ export class CacheAsideStrategy {
             },
           },
           tasks: {
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
             take: 10, // Limit recent tasks
           },
         },
@@ -364,7 +368,7 @@ export class CacheAsideStrategy {
           },
         },
         orderBy: {
-          updatedAt: 'desc',
+          updatedAt: "desc",
         },
       });
 
@@ -391,13 +395,13 @@ export class MatchmakingCache {
     try {
       const cacheKey = MATCHMAKING_REDIS_KEYS.USER_RECOMMENDATIONS(userId);
       await cacheRedis.setex(
-        cacheKey, 
-        CACHE_TTL.USER_RECOMMENDATIONS, 
+        cacheKey,
+        CACHE_TTL.USER_RECOMMENDATIONS,
         JSON.stringify(recommendations)
       );
       console.log(`✅ Cached recommendations for user ${userId}`);
     } catch (error) {
-      console.error('❌ Failed to cache recommendations:', error);
+      console.error("❌ Failed to cache recommendations:", error);
     }
   }
 
@@ -408,15 +412,15 @@ export class MatchmakingCache {
     try {
       const cacheKey = MATCHMAKING_REDIS_KEYS.USER_RECOMMENDATIONS(userId);
       const cached = await cacheRedis.get(cacheKey);
-      
+
       if (cached) {
         console.log(`🎯 Cache hit: User recommendations for ${userId}`);
         return JSON.parse(cached);
       }
-      
+
       return null;
     } catch (error) {
-      console.error('❌ Failed to get cached recommendations:', error);
+      console.error("❌ Failed to get cached recommendations:", error);
       return null;
     }
   }
@@ -427,27 +431,23 @@ export class MatchmakingCache {
   static async cacheProjectRecommendations(userId: string, projects: any[]): Promise<void> {
     try {
       const cacheKey = MATCHMAKING_REDIS_KEYS.PROJECT_RECOMMENDATIONS(userId);
-      await cacheRedis.setex(
-        cacheKey, 
-        CACHE_TTL.PROJECT_RECOMMENDATIONS, 
-        JSON.stringify(projects)
-      );
+      await cacheRedis.setex(cacheKey, CACHE_TTL.PROJECT_RECOMMENDATIONS, JSON.stringify(projects));
       console.log(`✅ Cached project recommendations for user ${userId}`);
     } catch (error) {
-      console.error('❌ Failed to cache project recommendations:', error);
+      console.error("❌ Failed to cache project recommendations:", error);
     }
   }
 
   /**
    * Track user swipes for daily limits
    */
-  static async trackUserSwipe(userId: string): Promise<{ remaining: number, resetTime: Date }> {
+  static async trackUserSwipe(userId: string): Promise<{ remaining: number; resetTime: Date }> {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       const cacheKey = MATCHMAKING_REDIS_KEYS.DAILY_SWIPES(userId, today);
-      
+
       const current = await cacheRedis.incr(cacheKey);
-      
+
       if (current === 1) {
         // Set expiration to end of day
         const tomorrow = new Date();
@@ -455,14 +455,14 @@ export class MatchmakingCache {
         tomorrow.setHours(0, 0, 0, 0);
         await cacheRedis.expireat(cacheKey, Math.floor(tomorrow.getTime() / 1000));
       }
-      
+
       const maxSwipes = 50; // Default from schema
       return {
         remaining: Math.max(0, maxSwipes - current),
-        resetTime: new Date(new Date().setHours(23, 59, 59, 999))
+        resetTime: new Date(new Date().setHours(23, 59, 59, 999)),
       };
     } catch (error) {
-      console.error('❌ Failed to track user swipe:', error);
+      console.error("❌ Failed to track user swipe:", error);
       throw error;
     }
   }
@@ -475,7 +475,7 @@ export class MatchmakingCache {
       const cacheKey = MATCHMAKING_REDIS_KEYS.USER_VECTOR(userId);
       await cacheRedis.setex(cacheKey, CACHE_TTL.MATCH_SCORES, JSON.stringify(vector));
     } catch (error) {
-      console.error('❌ Failed to cache user vector:', error);
+      console.error("❌ Failed to cache user vector:", error);
     }
   }
 }
@@ -491,27 +491,27 @@ export class ChatCache {
   static async cacheRecentMessages(chatId: string, messages: any[]): Promise<void> {
     try {
       const cacheKey = CHAT_REDIS_KEYS.CHAT_MESSAGES(chatId);
-      await cacheRedis.setex(
-        cacheKey,
-        CACHE_TTL.UNREAD_MESSAGES,
-        JSON.stringify(messages)
-      );
+      await cacheRedis.setex(cacheKey, CACHE_TTL.UNREAD_MESSAGES, JSON.stringify(messages));
     } catch (error) {
-      console.error('❌ Failed to cache chat messages:', error);
+      console.error("❌ Failed to cache chat messages:", error);
     }
   }
 
   /**
    * Update unread message count
    */
-  static async updateUnreadCount(userId: string, chatId: string, increment: number = 1): Promise<number> {
+  static async updateUnreadCount(
+    userId: string,
+    chatId: string,
+    increment: number = 1
+  ): Promise<number> {
     try {
       const cacheKey = CHAT_REDIS_KEYS.UNREAD_COUNT(userId, chatId);
       const count = await cacheRedis.incrby(cacheKey, increment);
       await cacheRedis.expire(cacheKey, CACHE_TTL.UNREAD_MESSAGES);
       return count;
     } catch (error) {
-      console.error('❌ Failed to update unread count:', error);
+      console.error("❌ Failed to update unread count:", error);
       return 0;
     }
   }
@@ -524,7 +524,7 @@ export class ChatCache {
       const cacheKey = CHAT_REDIS_KEYS.UNREAD_COUNT(userId, chatId);
       await cacheRedis.del(cacheKey);
     } catch (error) {
-      console.error('❌ Failed to clear unread count:', error);
+      console.error("❌ Failed to clear unread count:", error);
     }
   }
 
@@ -534,9 +534,9 @@ export class ChatCache {
   static async setTypingIndicator(chatId: string, userId: string): Promise<void> {
     try {
       const cacheKey = CHAT_REDIS_KEYS.TYPING_INDICATOR(chatId, userId);
-      await cacheRedis.setex(cacheKey, CACHE_TTL.TYPING_INDICATOR, 'typing');
+      await cacheRedis.setex(cacheKey, CACHE_TTL.TYPING_INDICATOR, "typing");
     } catch (error) {
-      console.error('❌ Failed to set typing indicator:', error);
+      console.error("❌ Failed to set typing indicator:", error);
     }
   }
 
@@ -545,11 +545,11 @@ export class ChatCache {
    */
   static async getTypingUsers(chatId: string): Promise<string[]> {
     try {
-      const pattern = CHAT_REDIS_KEYS.TYPING_INDICATOR(chatId, '*');
+      const pattern = CHAT_REDIS_KEYS.TYPING_INDICATOR(chatId, "*");
       const keys = await cacheRedis.keys(pattern);
-      return keys.map(key => key.split(':').pop() || '');
+      return keys.map((key) => key.split(":").pop() || "");
     } catch (error) {
-      console.error('❌ Failed to get typing users:', error);
+      console.error("❌ Failed to get typing users:", error);
       return [];
     }
   }
@@ -628,14 +628,14 @@ export class WriteBehindCache {
             where: { id: data.userId },
             data: { lastActive: new Date(data.timestamp) },
           });
-          
+
           // Publish activity event via Kafka
           try {
             await kafkaProducer.publishUserActivity(data.userId, data.activity, data.metadata);
           } catch (kafkaError) {
-            console.error('Failed to publish activity event:', kafkaError);
+            console.error("Failed to publish activity event:", kafkaError);
           }
-          
+
           console.log(`📝 Activity flushed for user ${data.userId}: ${data.activity}`);
         }
       } catch (error) {
@@ -672,7 +672,7 @@ export class AnalyticsCache {
       await cacheRedis.setex(cacheKey, CACHE_TTL.COLLABORATION_STATS, JSON.stringify(stats));
       console.log(`📊 Cached collaboration stats for user ${userId}`);
     } catch (error) {
-      console.error('❌ Failed to cache collaboration stats:', error);
+      console.error("❌ Failed to cache collaboration stats:", error);
     }
   }
 
@@ -683,15 +683,15 @@ export class AnalyticsCache {
     try {
       const cacheKey = USER_REDIS_KEYS.COLLABORATION_STATS(userId);
       const cached = await cacheRedis.get(cacheKey);
-      
+
       if (cached) {
         console.log(`🎯 Cache hit: Collaboration stats for ${userId}`);
         return JSON.parse(cached);
       }
-      
+
       return null;
     } catch (error) {
-      console.error('❌ Failed to get cached collaboration stats:', error);
+      console.error("❌ Failed to get cached collaboration stats:", error);
       return null;
     }
   }
@@ -705,22 +705,26 @@ export class AnalyticsCache {
       await cacheRedis.setex(cacheKey, CACHE_TTL.ANALYTICS_DATA, JSON.stringify(analytics));
       console.log(`📊 Cached analytics for project ${projectId}`);
     } catch (error) {
-      console.error('❌ Failed to cache project analytics:', error);
+      console.error("❌ Failed to cache project analytics:", error);
     }
   }
 
   /**
    * Track platform usage metrics
    */
-  static async trackPlatformMetric(metric: string, value: number, date: string = new Date().toISOString().split('T')[0]): Promise<void> {
+  static async trackPlatformMetric(
+    metric: string,
+    value: number,
+    date: string = new Date().toISOString().split("T")[0]
+  ): Promise<void> {
     try {
       const cacheKey = `analytics:platform:${metric}:${date}`;
       await cacheRedis.incrby(cacheKey, value);
       await cacheRedis.expire(cacheKey, CACHE_TTL.ANALYTICS_DATA);
-      
+
       console.log(`📊 Tracked platform metric ${metric}: +${value}`);
     } catch (error) {
-      console.error('❌ Failed to track platform metric:', error);
+      console.error("❌ Failed to track platform metric:", error);
     }
   }
 }
@@ -764,7 +768,7 @@ export class CacheInvalidation {
 
       // Chat related caches (using existing keys)
       pipeline.del(CHAT_REDIS_KEYS.USER_CHATS(userId));
-      
+
       // Cache keys that use CACHE_KEYS format
       pipeline.del(CACHE_KEYS.USER_PROFILE(userId));
       pipeline.del(CACHE_KEYS.USER_PREFERENCES(userId));
@@ -785,12 +789,12 @@ export class CacheInvalidation {
           },
         });
       } catch (kafkaError) {
-        console.error('Failed to publish cache invalidation event:', kafkaError);
+        console.error("Failed to publish cache invalidation event:", kafkaError);
       }
 
       console.log(`✅ Invalidated all caches for user: ${userId}`);
     } catch (error) {
-      console.error('❌ Cache invalidation error:', error);
+      console.error("❌ Cache invalidation error:", error);
       // Don't throw error to prevent breaking main functionality
     }
   }
@@ -832,12 +836,12 @@ export class CacheInvalidation {
           },
         });
       } catch (kafkaError) {
-        console.error('Failed to publish cache invalidation event:', kafkaError);
+        console.error("Failed to publish cache invalidation event:", kafkaError);
       }
 
       console.log(`✅ Invalidated all caches for project: ${projectId}`);
     } catch (error) {
-      console.error('❌ Cache invalidation error:', error);
+      console.error("❌ Cache invalidation error:", error);
       // Don't throw error to prevent breaking main functionality
     }
   }
@@ -863,7 +867,7 @@ export class CacheInvalidation {
 
       console.log(`✅ Invalidated chat caches for: ${chatId}`);
     } catch (error) {
-      console.error('❌ Chat cache invalidation error:', error);
+      console.error("❌ Chat cache invalidation error:", error);
       // Don't throw error to prevent breaking main functionality
     }
   }
@@ -876,17 +880,17 @@ export class CacheInvalidation {
       console.log(`🧽 Invalidating user-chat caches for user: ${userId}, chat: ${chatId}`);
 
       const pipeline = cacheRedis.pipeline();
-      
+
       // User-specific chat caches
       pipeline.del(CHAT_REDIS_KEYS.UNREAD_COUNT(userId, chatId));
       pipeline.del(CHAT_REDIS_KEYS.LAST_READ(userId, chatId));
       pipeline.del(CHAT_REDIS_KEYS.TYPING_INDICATOR(chatId, userId));
-      
+
       await pipeline.exec();
-      
+
       console.log(`✅ Invalidated user-chat caches for user: ${userId}, chat: ${chatId}`);
     } catch (error) {
-      console.error('❌ User-chat cache invalidation error:', error);
+      console.error("❌ User-chat cache invalidation error:", error);
     }
   }
 
@@ -906,7 +910,7 @@ export class CacheInvalidation {
 
       console.log(`✅ Batch invalidated ${userIds.length} users`);
     } catch (error) {
-      console.error('❌ Batch invalidation error:', error);
+      console.error("❌ Batch invalidation error:", error);
     }
   }
 
@@ -918,18 +922,18 @@ export class CacheInvalidation {
       console.log(`🧽 Invalidating matchmaking caches for user: ${userId}`);
 
       const pipeline = cacheRedis.pipeline();
-      
+
       // Matchmaking caches (using existing keys)
       pipeline.del(MATCHMAKING_REDIS_KEYS.USER_RECOMMENDATIONS(userId));
       pipeline.del(MATCHMAKING_REDIS_KEYS.PROJECT_RECOMMENDATIONS(userId));
       pipeline.del(MATCHMAKING_REDIS_KEYS.USER_VECTOR(userId));
       pipeline.del(MATCHMAKING_REDIS_KEYS.RECOMMENDATION_CACHE(userId));
-      
+
       await pipeline.exec();
 
       console.log(`✅ Invalidated matchmaking caches for user: ${userId}`);
     } catch (error) {
-      console.error('❌ Matchmaking cache invalidation error:', error);
+      console.error("❌ Matchmaking cache invalidation error:", error);
     }
   }
 
@@ -941,15 +945,15 @@ export class CacheInvalidation {
       console.log(`🧽 Invalidating workspace caches for: ${workspaceId}`);
 
       const pipeline = cacheRedis.pipeline();
-      
+
       // Workspace caches
       pipeline.del(PROJECT_REDIS_KEYS.WORKSPACE_PROJECTS(workspaceId));
-      
+
       await pipeline.exec();
-      
+
       console.log(`✅ Invalidated workspace caches for: ${workspaceId}`);
     } catch (error) {
-      console.error('❌ Workspace cache invalidation error:', error);
+      console.error("❌ Workspace cache invalidation error:", error);
     }
   }
 
@@ -958,18 +962,18 @@ export class CacheInvalidation {
    */
   static async invalidateAllCollaborationCaches(): Promise<void> {
     try {
-      console.log('🧹 Starting emergency cache invalidation...');
-      
+      console.log("🧹 Starting emergency cache invalidation...");
+
       const patterns = [
-        "user:*", 
-        "project:*", 
-        "chat:*", 
-        "match:*", 
-        "cache:*", 
+        "user:*",
+        "project:*",
+        "chat:*",
+        "match:*",
+        "cache:*",
         "analytics:*",
-        "session:*"
+        "session:*",
       ];
-      
+
       let totalKeys = 0;
 
       for (const pattern of patterns) {
@@ -991,7 +995,7 @@ export class CacheInvalidation {
 
       console.log(`🧹 Emergency invalidation complete: ${totalKeys} keys removed`);
     } catch (error) {
-      console.error('❌ Emergency cache invalidation error:', error);
+      console.error("❌ Emergency cache invalidation error:", error);
       throw error;
     }
   }
@@ -1018,7 +1022,7 @@ export class CacheWarming {
 
       console.log(`✅ Cache warmed for user ${userId}`);
     } catch (error) {
-      console.error('❌ Cache warming error:', error);
+      console.error("❌ Cache warming error:", error);
       // Don't throw error to prevent breaking main functionality
     }
   }
@@ -1031,13 +1035,11 @@ export class CacheWarming {
       console.log(`🔥 Warming matchmaking cache for user ${userId}`);
 
       // Pre-load matchmaking data using available cache methods
-      await Promise.all([
-        AnalyticsCache.getCollaborationStats(userId),
-      ]);
+      await Promise.all([AnalyticsCache.getCollaborationStats(userId)]);
 
       console.log(`✅ Matchmaking cache warmed for user ${userId}`);
     } catch (error) {
-      console.error('❌ Matchmaking cache warming error:', error);
+      console.error("❌ Matchmaking cache warming error:", error);
       // Don't throw error to prevent breaking main functionality
     }
   }
@@ -1057,7 +1059,7 @@ export class CacheWarming {
 
       console.log(`✅ Cache warmed for project ${projectId}`);
     } catch (error) {
-      console.error('❌ Project cache warming error:', error);
+      console.error("❌ Project cache warming error:", error);
       // Don't throw error to prevent breaking main functionality
     }
   }
@@ -1067,19 +1069,19 @@ export class CacheWarming {
    */
   static async warmPlatformCriticalData(): Promise<void> {
     try {
-      console.log('🔥 Warming critical platform caches');
+      console.log("🔥 Warming critical platform caches");
 
       // Pre-load platform-wide metrics and frequently accessed data
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       await Promise.all([
-        AnalyticsCache.trackPlatformMetric('active_users', 0, today),
-        AnalyticsCache.trackPlatformMetric('daily_matches', 0, today),
-        AnalyticsCache.trackPlatformMetric('daily_collaborations', 0, today),
+        AnalyticsCache.trackPlatformMetric("active_users", 0, today),
+        AnalyticsCache.trackPlatformMetric("daily_matches", 0, today),
+        AnalyticsCache.trackPlatformMetric("daily_collaborations", 0, today),
       ]);
 
-      console.log('✅ Critical platform caches warmed');
+      console.log("✅ Critical platform caches warmed");
     } catch (error) {
-      console.error('❌ Platform cache warming error:', error);
+      console.error("❌ Platform cache warming error:", error);
       // Don't throw error to prevent breaking main functionality
     }
   }

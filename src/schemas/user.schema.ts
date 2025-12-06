@@ -217,17 +217,21 @@ export const workspaceSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   description: z.string(),
-  projects: z.array(z.object({
-    id: z.string().uuid(),
-    title: z.string(),
-    description: z.string(),
-    collaborators: z.array(z.object({
+  projects: z.array(
+    z.object({
       id: z.string().uuid(),
-      username: z.string(),
-      firstName: z.string().nullable(),
-      lastName: z.string().nullable(),
-    })),
-  })),
+      title: z.string(),
+      description: z.string(),
+      collaborators: z.array(
+        z.object({
+          id: z.string().uuid(),
+          username: z.string(),
+          firstName: z.string().nullable(),
+          lastName: z.string().nullable(),
+        })
+      ),
+    })
+  ),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -252,11 +256,13 @@ export const labyrinthUserProfileSchema = z.object({
   demographic: demographicSchema.nullable(),
   preferences: preferencesSchema.nullable(),
   workspaces: z.array(workspaceSchema),
-  projects: z.array(z.object({
-    id: z.string().uuid(),
-    title: z.string(),
-    description: z.string(),
-  })),
+  projects: z.array(
+    z.object({
+      id: z.string().uuid(),
+      title: z.string(),
+      description: z.string(),
+    })
+  ),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -266,17 +272,24 @@ export type LabyrinthUserProfile = z.infer<typeof labyrinthUserProfileSchema>;
 /**
  * UPDATE LABYRINTH PROFILE SCHEMA
  */
-export const updateLabyrinthProfileSchema = z.object({
-  firstName: z.string().min(1).max(50).optional(),
-  lastName: z.string().min(1).max(50).optional(),
-  username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_-]+$/).optional(),
-  dateOfBirth: z.string().datetime().or(z.date()).optional(),
-  gitHubProfile: z.string().url().or(z.literal("")).nullable().optional(),
-  education: z.string().max(500).nullable().optional(),
-  maxDailySwipes: z.number().int().min(10).max(200).optional(),
-}).refine((data) => Object.keys(data).length > 0, {
-  message: "At least one field must be provided for update",
-});
+export const updateLabyrinthProfileSchema = z
+  .object({
+    firstName: z.string().min(1).max(50).optional(),
+    lastName: z.string().min(1).max(50).optional(),
+    username: z
+      .string()
+      .min(3)
+      .max(50)
+      .regex(/^[a-zA-Z0-9_-]+$/)
+      .optional(),
+    dateOfBirth: z.string().datetime().or(z.date()).optional(),
+    gitHubProfile: z.string().url().or(z.literal("")).nullable().optional(),
+    education: z.string().max(500).nullable().optional(),
+    maxDailySwipes: z.number().int().min(10).max(200).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  });
 
 export type UpdateLabyrinthProfileInput = z.infer<typeof updateLabyrinthProfileSchema>;
 

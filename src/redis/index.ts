@@ -21,7 +21,7 @@ import {
   cacheRedis,
   pubsubRedis,
   queueRedis,
-  gameStateRedis,
+  projectStateRedis,
   checkRedisHealth,
   getRedisStats,
   getRedisMetrics,
@@ -66,8 +66,12 @@ export {
   QueueManager,
   queueManager,
   addNotificationJob,
-  addLeaderboardUpdateJob,
-  addGameResultJob,
+  addEmailJob,
+  addMatchProcessingJob,
+  addRecommendationUpdateJob,
+  addProjectUpdateJob,
+  addProjectAnalyticsJob,
+  addChatMessageJob,
 } from "./messageQueue/queueManager";
 
 // =============================================================================
@@ -167,7 +171,7 @@ export {
   cacheRedis,
   pubsubRedis,
   queueRedis,
-  gameStateRedis,
+  projectStateRedis,
   ProductionRedisManager,
   checkRedisHealth,
   getRedisStats,

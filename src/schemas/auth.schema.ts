@@ -92,6 +92,14 @@ export const signupSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+
+  // Optional demographic-related fields captured at signup
+  dateOfBirth: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date format")
+    .optional(),
+  country: z.string().min(2).max(100).optional(),
+  preferredLanguage: z.string().min(1).max(50).optional(),
 });
 
 export type signupInputTypes = z.infer<typeof signupSchema>;
@@ -164,3 +172,46 @@ export const forgotUsernameSchema = z.object({
 });
 
 export type forgotUsernameInputTypes = z.infer<typeof forgotUsernameSchema>;
+
+/**
+ * VERIFY OTP FOR PASSWORD RESET SCHEMA
+ *
+ * Validates OTP verification data for password reset flow.
+ * Used by: verifyOtpResetController
+ *
+ * Required fields:
+ * - email: Email address for OTP verification
+ * - otp: 6-digit OTP code
+ */
+export const verifyOtpResetSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Please provide a valid email address"),
+  otp: z.string().length(6, "OTP must be exactly 6 digits"),
+});
+
+export type verifyOtpResetInputTypes = z.infer<typeof verifyOtpResetSchema>;
+
+/**
+ * NEW RESET PASSWORD SCHEMA (3-step secure flow)
+ *
+ * Validates new password for the final password reset step.
+ * Used by: resetPasswordController (updated)
+ *
+ * Required fields:
+ * - email: Email address
+ * - password: New password with strength requirements
+ * - verificationToken: Token from OTP verification step (ensures 3-step security)
+ */
+export const newResetPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Please provide a valid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password must not exceed 128 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, VALIDATION_ERRORS.INVALID_PASSWORD_FORMAT.message),
+  verificationToken: z
+    .string()
+    .min(1, "Verification token is required")
+    .trim(),
+});
+
+export type newResetPasswordInputTypes = z.infer<typeof newResetPasswordSchema>;

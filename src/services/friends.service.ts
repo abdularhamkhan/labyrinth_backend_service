@@ -289,9 +289,9 @@ export const manageFriendshipService = async (
           status: "ACCEPTED",
           friend: {
             id: isReceiver ? friendship.requesterId : friendship.recipientId,
-            username: 'Unknown',
-            avatar: null
-          }
+            username: "Unknown",
+            avatar: null,
+          },
         };
 
       case "decline":
@@ -608,16 +608,17 @@ export const getFriendsListService = async (
     // Build enhanced friends list with online status and ranks
     const friends = friendships.map((friendship) => {
       // TODO: Need to fetch user data - using mock for now
-      const friendId = friendship.requesterId === userId ? friendship.recipientId : friendship.requesterId;
-      const friend = { 
-        id: friendId, 
-        username: 'Unknown', 
-        firstName: 'Unknown', 
-        lastName: 'Unknown', 
+      const friendId =
+        friendship.requesterId === userId ? friendship.recipientId : friendship.requesterId;
+      const friend = {
+        id: friendId,
+        username: "Unknown",
+        firstName: "Unknown",
+        lastName: "Unknown",
         avatar: null,
         totalScore: 0,
         lastActive: null,
-        leaderboardEntry: null 
+        leaderboardEntry: null,
       };
       const onlineStatus = onlineStatusMap.get(friend.id);
 
@@ -743,14 +744,26 @@ export const getFriendRequestsService = async (
 
     const sent = sentRequests.map((request) => ({
       friendshipId: request.id,
-      user: { id: request.recipientId, username: 'Unknown', firstName: '', lastName: '', avatar: null },
+      user: {
+        id: request.recipientId,
+        username: "Unknown",
+        firstName: "",
+        lastName: "",
+        avatar: null,
+      },
       createdAt: request.createdAt,
       status: "PENDING" as const,
     }));
 
     const received = receivedRequests.map((request) => ({
       friendshipId: request.id,
-      user: { id: request.requesterId, username: 'Unknown', firstName: '', lastName: '', avatar: null },
+      user: {
+        id: request.requesterId,
+        username: "Unknown",
+        firstName: "",
+        lastName: "",
+        avatar: null,
+      },
       createdAt: request.createdAt,
       status: "PENDING" as const,
     }));
@@ -892,8 +905,8 @@ export const searchUsersService = async (
     return {
       users: searchResults.map((user: any) => ({
         ...user,
-        firstName: user.firstName || '',
-        lastName: user.lastName || ''
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
       })),
       totalCount,
       query,

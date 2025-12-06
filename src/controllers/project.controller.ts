@@ -10,6 +10,9 @@ import {
   updateTask,
   getUserProjects,
   getProjectTasks,
+  searchProjects,
+  getProjectActivity,
+  getProjectAnalytics,
 } from "../services/project.service";
 import { ValidationError } from "../constants/error";
 
@@ -136,7 +139,7 @@ export const addCollaboratorController = async (
 ): Promise<void> => {
   const userId = req.user!.id;
   const { projectId } = req.params;
-  const { collaboratorId, permissions = ['READ', 'WRITE'] } = req.body;
+  const { collaboratorId, permissions = ["READ", "WRITE"] } = req.body;
 
   if (!collaboratorId) {
     throw new ValidationError("Collaborator ID is required");
@@ -299,10 +302,10 @@ export const getProjectDashboard = async (
   // Calculate task statistics
   const taskStats = {
     total: project._count.tasks,
-    pending: project.tasks.filter((task: Task) => task.status === 'PENDING').length,
-    inProgress: project.tasks.filter((task: Task) => task.status === 'IN_PROGRESS').length,
-    completed: project.tasks.filter((task: Task) => task.status === 'COMPLETED').length,
-    blocked: project.tasks.filter((task: Task) => task.status === 'BLOCKED').length,
+    pending: project.tasks.filter((task: Task) => task.status === "PENDING").length,
+    inProgress: project.tasks.filter((task: Task) => task.status === "IN_PROGRESS").length,
+    completed: project.tasks.filter((task: Task) => task.status === "COMPLETED").length,
+    blocked: project.tasks.filter((task: Task) => task.status === "BLOCKED").length,
   };
 
   res.status(200).json({
@@ -314,5 +317,82 @@ export const getProjectDashboard = async (
       recentTasks: tasksResult.tasks,
       collaboratorCount: project._count.collaborators,
     },
+  });
+};
+
+/**
+ * SEARCH PROJECTS
+ * Route: GET /api/projects/search
+ * Auth: Required
+ * Query: ?q=keyword&techStacks=JavaScript,React&limit=20
+ */
+export const searchProjectsController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const { q, techStacks, limit = 20 } = req.query;
+
+  const techStackArray = techStacks
+    ? (techStacks as string).split(",").map((s) => s.trim())
+    : undefined;
+
+  const projects = await searchProjects(q as string, techStackArray, parseInt(limit as string));
+
+  res.status(200).json({
+    success: true,
+    message: "Projects search completed successfully",
+    data: {
+      projects,
+      count: projects.length,
+      query: q || null,
+      techStacks: techStackArray || null,
+    },
+  });
+};
+
+/**
+ * GET PROJECT ACTIVITY FEED
+ * Route: GET /api/projects/:projectId/activity
+ * Auth: Required
+ * Query: ?limit=20
+ */
+export const getProjectActivityController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { projectId } = req.params;
+  const { limit = 20 } = req.query;
+
+  const activities = await getProjectActivity(projectId, userId, parseInt(limit as string));
+
+  res.status(200).json({
+    success: true,
+    message: "Project activity feed retrieved successfully",
+    data: {
+      activities,
+      count: activities.length,
+    },
+  });
+};
+
+/**
+ * GET PROJECT ANALYTICS
+ * Route: GET /api/projects/:projectId/analytics
+ * Auth: Required
+ */
+export const getProjectAnalyticsController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { projectId } = req.params;
+
+  const analytics = await getProjectAnalytics(projectId, userId);
+
+  res.status(200).json({
+    success: true,
+    message: "Project analytics retrieved successfully",
+    data: { analytics },
   });
 };

@@ -59,13 +59,13 @@ console.log("WebSocket server initialized for collaboration features");
 
 async function startServer() {
   let kafkaConnected = false;
-  
+
   try {
     // Try to initialize Kafka (optional in development)
     console.log("🚀 Initializing Kafka topics...");
     try {
       await initializeKafkaTopics();
-      
+
       // Setup Kafka consumers
       console.log("🚀 Setting up Kafka consumers...");
       kafkaConsumer.setupDefaultHandlers();
@@ -80,7 +80,10 @@ async function startServer() {
       kafkaConnected = true;
       console.log("✅ Kafka initialized successfully");
     } catch (kafkaError) {
-      console.warn("⚠️  Kafka connection failed (running without Kafka):", kafkaError instanceof Error ? kafkaError.message : kafkaError);
+      console.warn(
+        "⚠️  Kafka connection failed (running without Kafka):",
+        kafkaError instanceof Error ? kafkaError.message : kafkaError
+      );
       console.warn("ℹ️  Server will continue without event streaming");
     }
 
@@ -91,9 +94,9 @@ async function startServer() {
       console.log(`📡 REST API: http://localhost:${PORT}/api`);
       console.log(`🔗 WebSocket: ws://localhost:${PORT}/ws`);
       console.log(`🏗️ Environment: ${ENV.nodeEnv}`);
-      console.log(`⚡ Kafka: ${kafkaConnected ? 'Connected' : 'Disabled'}`);
+      console.log(`⚡ Kafka: ${kafkaConnected ? "Connected" : "Disabled"}`);
       console.log(`📊 Redis: Connected`);
-      if (!kafkaConnected && ENV.nodeEnv === 'development') {
+      if (!kafkaConnected && ENV.nodeEnv === "development") {
         console.log(`💡 To enable Kafka: Start Kafka on localhost:9092`);
       }
     });
@@ -127,7 +130,10 @@ const gracefulShutdown = async () => {
       console.log("🔌 Disconnecting Kafka consumers...");
       await kafkaConsumer.disconnect();
     } catch (kafkaError) {
-      console.warn("⚠️  Kafka disconnect failed (was not connected):", kafkaError instanceof Error ? kafkaError.message : kafkaError);
+      console.warn(
+        "⚠️  Kafka disconnect failed (was not connected):",
+        kafkaError instanceof Error ? kafkaError.message : kafkaError
+      );
     }
 
     // Close HTTP server

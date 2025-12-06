@@ -9,14 +9,14 @@
  * =============================================================================
  */
 
-export type LogLevel = 'error' | 'warn' | 'info' | 'http' | 'debug';
+export type LogLevel = "error" | "warn" | "info" | "http" | "debug";
 
 export const LOG_LEVELS = {
-  ERROR: 'error' as const,
-  WARN: 'warn' as const,
-  INFO: 'info' as const,
-  HTTP: 'http' as const,
-  DEBUG: 'debug' as const,
+  ERROR: "error" as const,
+  WARN: "warn" as const,
+  INFO: "info" as const,
+  HTTP: "http" as const,
+  DEBUG: "debug" as const,
 };
 
 export interface LogData {
@@ -38,7 +38,7 @@ export function isError(value: unknown): value is Error {
 class Logger {
   private serviceName: string;
 
-  constructor(serviceName: string = 'labyrinth-backend') {
+  constructor(serviceName: string = "labyrinth-backend") {
     this.serviceName = serviceName;
   }
 
@@ -56,7 +56,7 @@ class Logger {
     // In production, you might want to use a proper logging library like Winston
     // For now, we'll use console methods with structured output
     const logString = JSON.stringify(logData, null, 2);
-    
+
     switch (logData.level) {
       case LOG_LEVELS.ERROR:
         console.error(logString);
@@ -144,8 +144,8 @@ class Logger {
   }
 
   databaseQuery(query: string, params?: any, duration?: number): void {
-    this.debug('Database query executed', {
-      query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
+    this.debug("Database query executed", {
+      query: query.substring(0, 100) + (query.length > 100 ? "..." : ""),
       params,
       duration,
     });
@@ -159,7 +159,7 @@ class Logger {
     });
   }
 
-  securityEvent(event: string, severity: 'low' | 'medium' | 'high', data?: any): void {
+  securityEvent(event: string, severity: "low" | "medium" | "high", data?: any): void {
     this.warn(`Security event: ${event}`, {
       event,
       severity,
