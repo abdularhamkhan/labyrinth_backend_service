@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Labyrinth Backend API - Complete Documentation",
-    "version": "3.0.0",
-    "description": "Complete API documentation for Labyrinth collaborative developer platform with 83 endpoints across 8 modules: Authentication (8), User Profile (17), Matchmaking (6), Chat (11), Projects (13), Friends (9), Media (13), Presence (6)",
+    "version": "3.0.1",
+    "description": "Complete API documentation for Labyrinth collaborative developer platform with 84 endpoints across 8 modules: Authentication (8), User Profile (17), Matchmaking (6), Chat (12), Projects (13), Friends (9), Media (13), Presence (6)",
     "contact": {
       "name": "Labyrinth Team",
       "email": "support@labyrinth.com"
@@ -23,7 +23,7 @@
     { "name": "Authentication", "description": "User authentication and account management (8 endpoints)" },
     { "name": "User Profile", "description": "User profile, demographics, tech stack, and workspace management (17 endpoints)" },
     { "name": "Matchmaking", "description": "AI-powered user and project recommendations, swipes, matches (6 endpoints)" },
-    { "name": "Chat", "description": "Real-time messaging, chat management, Pusher integration (11 endpoints)" },
+    { "name": "Chat", "description": "Real-time messaging, chat management, DM member search, Pusher integration (12 endpoints)" },
     { "name": "Projects", "description": "Project CRUD, collaborators, tasks, analytics (13 endpoints)" },
     { "name": "Friends", "description": "Friend requests, friendship management, user search (9 endpoints)" },
     { "name": "Media", "description": "File upload, media management, signed URLs (13 endpoints)" },
@@ -854,6 +854,61 @@
               }
             }
           }
+        }
+      }
+    },
+    "/chat/dmmembers": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get DM chat members",
+        "description": "Get all users that the authenticated user has started DM chats with. Supports optional partial search by username, first name, or last name",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Optional search query to filter users by username, firstName, or lastName (case-insensitive partial match)",
+            "schema": { "type": "string" },
+            "example": "john"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DM members retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "DM members retrieved successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "string", "format": "uuid" },
+                              "username": { "type": "string" },
+                              "firstName": { "type": "string", "nullable": true },
+                              "lastName": { "type": "string", "nullable": true },
+                              "avatar": { "type": "string", "nullable": true },
+                              "lastActive": { "type": "string", "format": "date-time", "nullable": true }
+                            }
+                          }
+                        },
+                        "count": { "type": "integer", "example": 5 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized - Authentication required" }
         }
       }
     },
