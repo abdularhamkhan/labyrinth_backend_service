@@ -15,7 +15,7 @@
       "description": "Development Server"
     },
     {
-      "url": "https://api.labyrinth.com/v1",
+      "url": "https://labyrinth-backend-api-production.up.railway.app/api",
       "description": "Production Server"
     }
   ],

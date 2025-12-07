@@ -10,6 +10,7 @@ import {
   deleteMessage,
   getUnreadMessageCount,
   addUserToProjectChat,
+  getDMMembers,
 } from "../services/chat.service";
 import { ValidationError } from "../constants/error";
 import { authenticateChannel } from "../services/pusher.service";
@@ -325,5 +326,30 @@ export const getChatDetails = async (req: AuthenticatedRequest, res: Response): 
     success: true,
     message: "Chat details retrieved successfully",
     data: { chat },
+  });
+};
+
+/**
+ * GET DM MEMBERS
+ * Route: GET /api/chat/dmmembers
+ * Auth: Required
+ * Query: ?search=<query>
+ */
+export const getDMMembersController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const searchQuery = req.query.search as string | undefined;
+
+  const dmMembers = await getDMMembers(userId, searchQuery);
+
+  res.status(200).json({
+    success: true,
+    message: "DM members retrieved successfully",
+    data: {
+      users: dmMembers,
+      count: dmMembers.length,
+    },
   });
 };

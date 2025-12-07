@@ -13,6 +13,7 @@ import {
   addUserToProjectChatController,
   getChatDetails,
   pusherAuthController,
+  getDMMembersController,
 } from "../controllers/chat.controller";
 
 // =============================================================================
@@ -33,10 +34,15 @@ router.use(authenticateUser);
 // Headers: Authorization: Bearer <jwt_token>
 router.get("/", asyncHandler(getUserChatsController));
 
-// Get specific chat details
-// Usage: GET /api/chat/:chatId
+// Get unread message count for user
+// Usage: GET /api/chat/unread-count
 // Headers: Authorization: Bearer <jwt_token>
-router.get("/:chatId", asyncHandler(getChatDetails));
+router.get("/unread-count", asyncHandler(getUnreadCountController));
+
+// Get DM members (users with whom authenticated user has DM chats)
+// Usage: GET /api/chat/dmmembers?search=<query>
+// Headers: Authorization: Bearer <jwt_token>
+router.get("/dmmembers", asyncHandler(getDMMembersController));
 
 // Create or get direct chat between two users
 // Usage: POST /api/chat/direct
@@ -50,10 +56,10 @@ router.post("/direct", asyncHandler(createDirectChat));
 // Body: { projectId: string }
 router.post("/project", asyncHandler(createProjectChatController));
 
-// Get unread message count for user
-// Usage: GET /api/chat/unread-count
+// Get specific chat details
+// Usage: GET /api/chat/:chatId
 // Headers: Authorization: Bearer <jwt_token>
-router.get("/unread-count", asyncHandler(getUnreadCountController));
+router.get("/:chatId", asyncHandler(getChatDetails));
 
 // =============================================================================
 // PUSHER REAL-TIME AUTHENTICATION

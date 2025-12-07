@@ -298,7 +298,7 @@ export const authenticateJWT = async (
       // Log authentication failure
       AuthAudit.loginFailure(req, "token_validation", error.message);
 
-      return res.status(error.statusCode).json({
+      res.status(error.statusCode).json({
         success: false,
         error: {
           message: error.message,
@@ -307,11 +307,12 @@ export const authenticateJWT = async (
           timestamp: new Date().toISOString(),
         },
       });
+      return;
     }
 
     // Unexpected error
     console.error("Unexpected error in JWT middleware:", error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: {
         message: "Authentication service error.",

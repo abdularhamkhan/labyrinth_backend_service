@@ -122,4 +122,113 @@ describe('Chat API Tests', () => {
       expect(response.body.success).toBe(true);
     });
   });
+
+  describe('GET /api/chat/dmmembers', () => {
+    it('should get all DM members without search query', async () => {
+      const response = await request(BASE_URL)
+        .get('/api/chat/dmmembers')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('users');
+      expect(response.body.data).toHaveProperty('count');
+      expect(Array.isArray(response.body.data.users)).toBe(true);
+      expect(typeof response.body.data.count).toBe('number');
+      expect(response.body.data.count).toBe(response.body.data.users.length);
+
+      // Check user object structure if users exist
+      if (response.body.data.users.length > 0) {
+        const user = response.body.data.users[0];
+        expect(user).toHaveProperty('id');
+        expect(user).toHaveProperty('username');
+        expect(user).toHaveProperty('firstName');
+        expect(user).toHaveProperty('lastName');
+        expect(user).toHaveProperty('avatar');
+        expect(user).toHaveProperty('lastActive');
+      }
+    });
+
+    it('should filter DM members by search query (username)', async () => {
+      // First get all DM members
+      const allMembersResponse = await request(BASE_URL)
+        .get('/api/chat/dmmembers')
+        .set('Authorization', `Bearer ${token}`);
+
+      if (allMembersResponse.body.data.users.length > 0) {
+        // Get first user's username to search
+        const firstUser = allMembersResponse.body.data.users[0];
+        const searchQuery = firstUser.username.substring(0, 3);
+
+        const searchResponse = await request(BASE_URL)
+          .get(`/api/chat/dmmembers?search=${searchQuery}`)
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(searchResponse.status).toBe(200);
+        expect(searchResponse.body.success).toBe(true);
+        expect(Array.isArray(searchResponse.body.data.users)).toBe(true);
+
+        // Verify results contain the search query
+        if (searchResponse.body.data.users.length > 0) {
+          const matchedUser = searchResponse.body.data.users.find(
+            (u: any) => u.username.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+          expect(matchedUser).toBeDefined();
+        }
+      }
+    });
+
+    it('should filter DM members by search query (first name)', async () => {
+      const allMembersResponse = await request(BASE_URL)
+        .get('/api/chat/dmmembers')
+        .set('Authorization', `Bearer ${token}`);
+
+      if (allMembersResponse.body.data.users.length > 0) {
+        // Find a user with firstName
+        const userWithName = allMembersResponse.body.data.users.find(
+          (u: any) => u.firstName && u.firstName.length > 2
+        );
+
+        if (userWithName) {
+          const searchQuery = userWithName.firstName.substring(0, 3);
+
+          const searchResponse = await request(BASE_URL)
+            .get(`/api/chat/dmmembers?search=${searchQuery}`)
+            .set('Authorization', `Bearer ${token}`);
+
+          expect(searchResponse.status).toBe(200);
+          expect(searchResponse.body.success).toBe(true);
+          expect(Array.isArray(searchResponse.body.data.users)).toBe(true);
+        }
+      }
+    });
+
+    it('should return empty array for non-matching search query', async () => {
+      const response = await request(BASE_URL)
+        .get('/api/chat/dmmembers?search=xyznonexistentuser12345')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.users).toEqual([]);
+      expect(response.body.data.count).toBe(0);
+    });
+
+    it('should require authentication', async () => {
+      const response = await request(BASE_URL)
+        .get('/api/chat/dmmembers');
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should handle empty search query gracefully', async () => {
+      const response = await request(BASE_URL)
+        .get('/api/chat/dmmembers?search=')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data.users)).toBe(true);
+    });
+  });
 });

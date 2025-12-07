@@ -776,3 +776,80 @@ export const addUserToProjectChat = async (
 ): Promise<void> => {
   return addUserToChat(chatId, userId, addedBy);
 };
+
+/**
+ * Get all users that the authenticated user has started DM chats with
+ */
+export const getDMMembers = async (
+  userId: string,
+  searchQuery?: string
+): Promise<any[]> => {
+  try {
+    // Get all DIRECT chats for the user
+    const directChats = await prisma.chat.findMany({
+      where: {
+        type: "DIRECT",
+        participants: {
+          some: { userId },
+        },
+      },
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                lastActive: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Extract unique users (excluding the requesting user)
+    const dmUsersMap = new Map();
+    for (const chat of directChats) {
+      for (const participant of chat.participants) {
+        if (participant.userId !== userId && !dmUsersMap.has(participant.userId)) {
+          dmUsersMap.set(participant.userId, participant.user);
+        }
+      }
+    }
+
+    let dmUsers = Array.from(dmUsersMap.values());
+
+    // Apply search filter if provided
+    if (searchQuery && searchQuery.trim().length > 0) {
+      const lowerQuery = searchQuery.toLowerCase().trim();
+      dmUsers = dmUsers.filter((user) => {
+        const username = user.username?.toLowerCase() || "";
+        const firstName = user.firstName?.toLowerCase() || "";
+        const lastName = user.lastName?.toLowerCase() || "";
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        return (
+          username.includes(lowerQuery) ||
+          firstName.includes(lowerQuery) ||
+          lastName.includes(lowerQuery) ||
+          fullName.includes(lowerQuery)
+        );
+      });
+    }
+
+    return dmUsers;
+  } catch (error) {
+    if (error instanceof Error && error.name.includes("Error")) {
+      throw error;
+    }
+    throw new DatabaseError(
+      DATABASE_ERRORS.QUERY_FAILED.message,
+      DATABASE_ERRORS.QUERY_FAILED.code,
+      { originalError: error }
+    );
+  }
+};
