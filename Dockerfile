@@ -21,24 +21,32 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy minimal files first for caching
+# Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install production deps
-RUN npm ci --only=production && npm cache clean --force
+# Copy prisma schema BEFORE installing deps (critical!)
+COPY prisma ./prisma/
 
-# Copy source
+# Install ALL dependencies (including devDependencies for build)
+RUN npm ci && npm cache clean --force
+
+# Copy source code
 COPY . .
 
-# Build TypeScript (ignore TS errors safely for now)
-RUN npm run build || echo "Neglecting TypeScript errors for Docker build"
+# Generate Prisma Client during build
+RUN npx prisma generate
+
+# Build TypeScript
+RUN npm run build
+
+# Remove dev dependencies to reduce image size
+RUN npm prune --production
 
 EXPOSE $PORT
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:$PORT/ || exit 1
+  CMD curl -f http://localhost:$PORT/health || exit 1
 
-# Generate Prisma client at runtime when DATABASE_URL is available
-# Then start the server
-CMD sh -c "npx prisma generate && npm run start:prod"
+# Start the server (Prisma client already generated)
+CMD ["npm", "start"]
