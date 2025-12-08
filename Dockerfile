@@ -40,4 +40,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:$PORT/ || exit 1
 
 # Generate Prisma client at runtime when DATABASE_URL is available
-CMD npx prisma generate && npm run start:prod
+# Then start the server
+CMD sh -c "npx prisma generate && npm run start:prod"

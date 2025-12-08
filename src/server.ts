@@ -79,14 +79,17 @@ async function startServer() {
         KAFKA_TOPICS.NOTIFICATION_EVENTS,
         KAFKA_TOPICS.ANALYTICS_EVENTS,
       ]);
-      kafkaConnected = true;
-      console.log("✅ Kafka initialized successfully");
-    } catch (kafkaError) {
-      console.warn(
-        "⚠️  Kafka connection failed (running without Kafka):",
-        kafkaError instanceof Error ? kafkaError.message : kafkaError
-      );
-      console.warn("ℹ️  Server will continue without event streaming");
+        kafkaConnected = true;
+        console.log("✅ Kafka initialized successfully");
+      } catch (kafkaError) {
+        console.warn(
+          "⚠️  Kafka connection failed (running without Kafka):",
+          kafkaError instanceof Error ? kafkaError.message : kafkaError
+        );
+        console.warn("ℹ️  Server will continue without event streaming");
+      }
+    } else {
+      console.log("⚠️  Kafka disabled - not configured for production");
     }
 
     // Start HTTP server
