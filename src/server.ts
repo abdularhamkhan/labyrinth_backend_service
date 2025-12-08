@@ -62,9 +62,11 @@ async function startServer() {
 
   try {
     // Try to initialize Kafka (optional in development)
-    console.log("🚀 Initializing Kafka topics...");
-    try {
-      await initializeKafkaTopics();
+    // Skip if KAFKA_BROKERS not configured
+    if (ENV.kafkaBrokers && ENV.kafkaBrokers.length > 0 && ENV.kafkaBrokers[0] !== "localhost:9092") {
+      console.log("🚀 Initializing Kafka topics...");
+      try {
+        await initializeKafkaTopics();
 
       // Setup Kafka consumers
       console.log("🚀 Setting up Kafka consumers...");

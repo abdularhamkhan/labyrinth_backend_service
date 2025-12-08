@@ -31,13 +31,13 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy source
 COPY . .
 
-# Generate Prisma client and build (ignore TS errors safely)
-RUN npx prisma generate \
- && (npm run build || echo "Neglecting TypeScript errors for Docker build")
+# Build TypeScript (ignore TS errors safely for now)
+RUN npm run build || echo "Neglecting TypeScript errors for Docker build"
 
 EXPOSE $PORT
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:$PORT/ || exit 1
 
-CMD ["npm", "run", "start:prod"]
+# Generate Prisma client at runtime when DATABASE_URL is available
+CMD npx prisma generate && npm run start:prod
