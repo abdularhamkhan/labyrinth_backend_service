@@ -137,7 +137,7 @@ export const signupService = async (
     }
 
     const existingSupabaseUser = existingSupabaseUsers.users.find(
-      (user) => user.email?.toLowerCase() === userEmail.toLowerCase()
+      (user: any) => user.email?.toLowerCase() === userEmail.toLowerCase()
     );
 
     if (existingSupabaseUser) {

@@ -10,7 +10,7 @@
  * =============================================================================
  */
 
-import { FriendshipStatus } from "../../prisma/generated/prisma";
+import type { FriendshipStatus } from "@prisma/client";
 
 /**
  * Friends List Response Structure

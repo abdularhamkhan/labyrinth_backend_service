@@ -237,7 +237,7 @@ export const getUserEngagementMetrics = async (userId: string): Promise<UserEnga
           where: { createdAt: { gte: oneMonthAgo } },
         },
         messages: {
-          where: { sentAt: { gte: oneMonthAgo } },
+          where: { createdAt: { gte: oneMonthAgo } },
         },
         matchUsers: {
           where: { match: { createdAt: { gte: oneMonthAgo } } },
@@ -357,7 +357,7 @@ export const getProjectProgressMetrics = async (
     // Calculate activity score based on recent activity
     const recentMessages =
       project.chat?.messages.filter(
-        (msg) => Date.now() - msg.sentAt.getTime() < 7 * 24 * 60 * 60 * 1000
+        (msg) => Date.now() - msg.createdAt.getTime() < 7 * 24 * 60 * 60 * 1000
       ).length || 0;
 
     const recentTasks = project.tasks.filter(
@@ -415,7 +415,7 @@ const getProjectFilesCount = async (projectId: string): Promise<number> => {
 const getLastProjectActivity = (project: any): Date => {
   const dates = [
     project.updatedAt,
-    project.chat?.messages?.[0]?.sentAt,
+    project.chat?.messages?.[0]?.createdAt,
     ...project.tasks.map((task: any) => task.updatedAt),
   ].filter(Boolean);
 
@@ -468,7 +468,7 @@ export const getPlatformMetrics = async (): Promise<PlatformMetrics> => {
         OR: [
           { updatedAt: { gte: sevenDaysAgo } },
           { tasks: { some: { updatedAt: { gte: sevenDaysAgo } } } },
-          { chat: { messages: { some: { sentAt: { gte: sevenDaysAgo } } } } },
+          { chat: { messages: { some: { createdAt: { gte: sevenDaysAgo } } } } },
         ],
       },
     });

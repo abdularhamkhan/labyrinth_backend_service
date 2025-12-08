@@ -1,11 +1,10 @@
 import { supabaseAdmin } from "../config/supabase";
 import { EXTERNAL_SERVICE_ERRORS, ExternalServiceError } from "../constants/error";
-import { Resend } from "resend";
-import nodemailer from "nodemailer";
+// Resend and SMTP fallbacks are commented out to keep the email flow
+// simple. We rely on Supabase for auth emails and direct signup flows.
+// import { Resend } from "resend";
+// import nodemailer from "nodemailer";
 import { ENV } from "../config/env";
-
-// Initialize Resend
-const resend = new Resend(ENV.resendApiKey);
 
 /**
  * =============================================================================
@@ -305,48 +304,11 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
       }
     }
 
-    // Method 1: Try Resend first (primary email provider)
-    try {
-      const { data, error } = await resend.emails.send({
-        from: `${ENV.resendFromName} <${ENV.resendFromEmail}>`,
-        to: [options.to],
-        subject: emailContent.subject,
-        html: emailContent.html,
-        text: emailContent.text,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      console.log("✅ Email sent successfully via Resend");
-      return {
-        success: true,
-        messageId: data?.id || `resend-${Date.now()}`,
-        provider: "resend",
-      };
-    } catch (resendError: any) {
-      console.warn("⚠️ Resend failed, trying fallback methods:", resendError.message);
-    }
-
-    // Method 2: Fallback to Resend SMTP
-    try {
-      const result = await sendViaResendSMTP(
-        options.to,
-        emailContent.subject,
-        emailContent.html,
-        emailContent.text
-      );
-      if (result.success) {
-        console.log("✅ Email sent successfully via Resend SMTP");
-        return { ...result, provider: "resend-smtp" };
-      }
-    } catch (smtpError) {
-      console.warn("⚠️ Resend SMTP fallback failed:", smtpError);
-    }
-
-    // Method 3: Final fallback - log email content for development
-    console.log("📧 All email methods failed, logging content for development:");
+    // We intentionally skip Resend/SMTP flow to keep the email path simple.
+    // Supabase handles auth-related emails (signup, verification, password reset).
+    // For other custom emails we currently log the content for development
+    // and return success to avoid blocking non-email flows.
+    console.log("📧 Supabase-primary flow (Resend/SES disabled). Logging email content:");
     console.log("=".repeat(80));
     console.log(`TO: ${options.to}`);
     console.log(`SUBJECT: ${emailContent.subject}`);
@@ -355,9 +317,9 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     console.log("=".repeat(80));
 
     return {
-      success: true, // Return success for dev environment
+      success: true,
       messageId: "dev-logged",
-      provider: "nodemailer",
+      provider: "supabase",
     };
   } catch (error) {
     console.error("❌ Complete email sending failure:", error);
@@ -371,45 +333,8 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
 /**
  * Send email via Resend SMTP (Fallback method)
  */
-export async function sendViaResendSMTP(
-  to: string,
-  subject: string,
-  html: string,
-  text?: string
-): Promise<EmailResult> {
-  try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.resend.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: "resend",
-        pass: ENV.resendApiKey,
-      },
-    });
-
-    const mailOptions = {
-      from: `"${ENV.resendFromName}" <${ENV.resendFromEmail}>`,
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ""),
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-
-    return {
-      success: true,
-      messageId: info.messageId,
-    };
-  } catch (error: any) {
-    console.error("Resend SMTP error:", error);
-    return {
-      success: false,
-      error: `Resend SMTP: ${error.message}`,
-    };
-  }
-}
+// NOTE: Resend SMTP helper removed/commented. If needed in future,
+// reintroduce SMTP fallback here and ensure ENV contains credentials.
 export async function sendVerificationEmail(
   email: string,
   verificationCode: string

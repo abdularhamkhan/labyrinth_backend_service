@@ -40,8 +40,8 @@ RUN npx prisma generate
 # Build TypeScript
 RUN npm run build
 
-# Remove dev dependencies to reduce image size
-RUN npm prune --production
+# Keep Prisma client - DO NOT prune @prisma/client
+# npm prune would remove generated client
 
 EXPOSE $PORT
 

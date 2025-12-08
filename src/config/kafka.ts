@@ -23,39 +23,35 @@ import { ENV } from "./env";
 // Kafka Client Configuration
 // =============================================================================
 const kafkaConfig: KafkaConfig = {
-  // Client identifier for this service in the Kafka cluster
-  // Used for tracking and debugging in Kafka logs
-  clientId: "labyrinth-backend",
-  
-  // Kafka broker addresses - supports multiple brokers for high availability
-  // Falls back to localhost for local development
+  clientId: ENV.kafkaClientId || "labyrinth-backend",
   brokers: ENV.kafkaBrokers || ["localhost:9092"],
-  
-  // Log level configuration: WARN for production (less verbose), ERROR for dev (minimal noise)
-  // Helps maintain clean logs without losing critical error information
   logLevel: ENV.nodeEnv === "production" ? logLevel.WARN : logLevel.ERROR,
-  
-  // Retry configuration for handling transient network failures
   retry: {
-    // Initial wait time before first retry attempt (milliseconds)
     initialRetryTime: 100,
-    
-    // Maximum number of retry attempts
-    // Production: 8 retries for resilience against temporary outages
-    // Development: 2 retries for faster feedback during debugging
     retries: ENV.nodeEnv === "production" ? 8 : 2,
   },
-  
-  // Connection timeout: max time to establish initial connection
-  // Production: 3 seconds for stable networks
-  // Development: 1 second for quick failure feedback
   connectionTimeout: ENV.nodeEnv === "production" ? 3000 : 1000,
-  
-  // Request timeout: max time to wait for broker response
-  // Production: 25 seconds for large payloads and network variability
-  // Development: 5 seconds for rapid iteration
   requestTimeout: ENV.nodeEnv === "production" ? 25000 : 5000,
 };
+
+// Optional SSL/SASL support
+if (ENV.kafkaSsl) {
+  // `ssl` can be boolean or TLS options; using boolean for simple enable
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  kafkaConfig.ssl = true;
+}
+
+if (ENV.kafkaSaslUsername && ENV.kafkaSaslPassword && ENV.kafkaSaslMechanism) {
+  // Provide SASL configuration when username/password/mechanism are set
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  kafkaConfig.sasl = {
+    mechanism: ENV.kafkaSaslMechanism as any,
+    username: ENV.kafkaSaslUsername,
+    password: ENV.kafkaSaslPassword,
+  };
+}
 
 // =============================================================================
 // Kafka Client Instance
@@ -63,6 +59,9 @@ const kafkaConfig: KafkaConfig = {
 // Create the main Kafka client using the configuration above
 // This instance is used to create producers, consumers, and admin clients
 export const kafka = new Kafka(kafkaConfig);
+
+// Whether Kafka is considered enabled (useful for graceful degradation)
+export const kafkaEnabled = Array.isArray(ENV.kafkaBrokers) && ENV.kafkaBrokers.length > 0;
 
 // =============================================================================
 // Topic Names - Centralized Constants
@@ -174,12 +173,14 @@ export const kafkaAdmin = kafka.admin();
  */
 export async function initializeKafkaTopics(): Promise<void> {
   try {
-    // Set shorter timeout for development
+    if (!kafkaEnabled) {
+      console.log("Kafka disabled via configuration; skipping topic initialization");
+      return;
+    }
+
+    // Create an admin client with slightly more conservative retries for initialization
     const adminClient = kafka.admin({
-      retry: {
-        initialRetryTime: 100,
-        retries: 2,
-      },
+      retry: { initialRetryTime: 200, retries: 3 },
     });
 
     await adminClient.connect();
@@ -211,6 +212,9 @@ export async function initializeKafkaTopics(): Promise<void> {
       return; // Don't throw in development
     } else {
       console.error("Failed to initialize Kafka topics:", error);
+      // In production, bubbling this up may prevent the app from starting if Kafka is required.
+      // Throwing here signals a misconfiguration. If Kafka is optional for your setup,
+      // consider catching this earlier and allowing the app to start without Kafka.
       throw error;
     }
   }
@@ -221,6 +225,7 @@ export async function initializeKafkaTopics(): Promise<void> {
  */
 export async function disconnectKafka(): Promise<void> {
   try {
+    if (!kafkaEnabled) return;
     await kafkaAdmin.disconnect();
     console.log("Kafka disconnected gracefully");
   } catch (error) {

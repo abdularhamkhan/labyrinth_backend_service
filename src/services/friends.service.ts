@@ -11,7 +11,8 @@ import {
   DatabaseError,
   BadRequestError,
 } from "../constants/error";
-import { FriendshipStatus } from "../../prisma/generated/prisma";
+// FriendshipStatus enum values are stored as strings in the database (see prisma/schema.prisma)
+type FriendshipStatusLiteral = 'PENDING' | 'ACCEPTED' | 'BLOCKED' | 'REJECTED';
 import {
   SendFriendRequestInput,
   ManageFriendshipInput,
@@ -110,13 +111,13 @@ export const sendFriendRequestService = async (
 
       // Handle different existing friendship statuses
       switch (existingFriendship.status) {
-        case FriendshipStatus.ACCEPTED:
+        case 'ACCEPTED':
           throw new ConflictError(
             FRIENDSHIP_ERRORS.ALREADY_FRIENDS.message,
             FRIENDSHIP_ERRORS.ALREADY_FRIENDS.code
           );
 
-        case FriendshipStatus.PENDING:
+        case 'PENDING':
           if (existingFriendship.requesterId === requesterId) {
             throw new ConflictError(
               FRIENDSHIP_ERRORS.REQUEST_ALREADY_SENT.message,
@@ -129,20 +130,20 @@ export const sendFriendRequestService = async (
             );
           }
 
-        case FriendshipStatus.BLOCKED:
+        case 'BLOCKED':
           const blocker = existingFriendship.requesterId === requesterId ? "you" : "them";
           throw new BadRequestError(
             `Cannot send friend request - ${blocker === "you" ? "you have blocked this user" : "this user has blocked you"}`,
             FRIENDSHIP_ERRORS.USER_BLOCKED.code
           );
 
-        case FriendshipStatus.REJECTED:
+        case 'REJECTED':
           // Allow reactivating rejected requests
           console.log("Reactivating rejected friend request...");
           const reactivatedFriendship = await prisma.friendship.update({
             where: { id: existingFriendship.id },
-            data: {
-              status: FriendshipStatus.PENDING,
+              data: {
+              status: 'PENDING',
               requesterId,
               recipientId: recipientId,
               updatedAt: new Date(),
@@ -168,7 +169,7 @@ export const sendFriendRequestService = async (
       data: {
         requesterId,
         recipientId: recipientId,
-        status: FriendshipStatus.PENDING,
+        status: 'PENDING',
       },
     });
 
@@ -263,7 +264,7 @@ export const manageFriendshipService = async (
     switch (action) {
       case "accept":
         // Only receiver can accept pending requests
-        if (friendship.status !== FriendshipStatus.PENDING) {
+        if (friendship.status !== 'PENDING') {
           throw new BadRequestError(
             FRIENDSHIP_ERRORS.INVALID_STATUS_TRANSITION.message,
             FRIENDSHIP_ERRORS.INVALID_STATUS_TRANSITION.code
@@ -278,7 +279,7 @@ export const manageFriendshipService = async (
 
         const acceptedFriendship = await prisma.friendship.update({
           where: { id: friendshipId },
-          data: { status: FriendshipStatus.ACCEPTED, updatedAt: new Date() },
+          data: { status: 'ACCEPTED', updatedAt: new Date() },
         });
 
         console.log("Friend request accepted successfully");
@@ -296,7 +297,7 @@ export const manageFriendshipService = async (
 
       case "decline":
         // Only receiver can decline pending requests
-        if (friendship.status !== FriendshipStatus.PENDING) {
+        if (friendship.status !== 'PENDING') {
           throw new BadRequestError(
             FRIENDSHIP_ERRORS.INVALID_STATUS_TRANSITION.message,
             FRIENDSHIP_ERRORS.INVALID_STATUS_TRANSITION.code
@@ -311,7 +312,7 @@ export const manageFriendshipService = async (
 
         const declinedFriendship = await prisma.friendship.update({
           where: { id: friendshipId },
-          data: { status: FriendshipStatus.REJECTED, updatedAt: new Date() },
+          data: { status: 'REJECTED', updatedAt: new Date() },
         });
 
         console.log("Friend request declined successfully");
@@ -324,7 +325,7 @@ export const manageFriendshipService = async (
 
       case "remove":
         // Only accepted friendships can be removed
-        if (friendship.status !== FriendshipStatus.ACCEPTED) {
+        if (friendship.status !== 'ACCEPTED') {
           throw new BadRequestError(
             "Can only remove active friendships",
             FRIENDSHIP_ERRORS.INVALID_STATUS_TRANSITION.code
@@ -424,7 +425,7 @@ export const blockUserService = async (
         await prisma.friendship.update({
           where: { id: existingFriendship.id },
           data: {
-            status: FriendshipStatus.BLOCKED,
+            status: 'BLOCKED',
             requesterId: blockerId, // Ensure blocker is the requester
             recipientId: targetUserId,
             updatedAt: new Date(),
@@ -437,7 +438,7 @@ export const blockUserService = async (
           data: {
             requesterId: blockerId,
             recipientId: targetUserId,
-            status: FriendshipStatus.BLOCKED,
+            status: 'BLOCKED',
           },
         });
         console.log("Created new blocked relationship");
@@ -455,7 +456,7 @@ export const blockUserService = async (
     } else if (action === "unblock") {
       console.log("Processing unblock action...");
 
-      if (!existingFriendship || existingFriendship.status !== FriendshipStatus.BLOCKED) {
+      if (!existingFriendship || existingFriendship.status !== 'BLOCKED') {
         throw new BadRequestError(
           "User is not currently blocked",
           FRIENDSHIP_ERRORS.USER_NOT_BLOCKED.code
@@ -474,7 +475,7 @@ export const blockUserService = async (
       await prisma.friendship.update({
         where: { id: existingFriendship.id },
         data: {
-          status: FriendshipStatus.REJECTED,
+          status: 'REJECTED',
           updatedAt: new Date(),
         },
       });
@@ -529,8 +530,8 @@ export const getFriendsListService = async (
     const totalCount = await prisma.friendship.count({
       where: {
         OR: [
-          { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-          { recipientId: userId, status: FriendshipStatus.ACCEPTED },
+          { requesterId: userId, status: 'ACCEPTED' },
+          { recipientId: userId, status: 'ACCEPTED' },
         ],
       },
     });
@@ -539,8 +540,8 @@ export const getFriendsListService = async (
     const friendships = await prisma.friendship.findMany({
       where: {
         OR: [
-          { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-          { recipientId: userId, status: FriendshipStatus.ACCEPTED },
+          { requesterId: userId, status: 'ACCEPTED' },
+          { recipientId: userId, status: 'ACCEPTED' },
         ],
       },
       include: {
@@ -687,7 +688,7 @@ export const getFriendRequestsService = async (
       prisma.friendship.findMany({
         where: {
           requesterId: userId,
-          status: FriendshipStatus.PENDING,
+          status: 'PENDING',
         },
         include: {
           recipient: {
@@ -707,7 +708,7 @@ export const getFriendRequestsService = async (
       prisma.friendship.count({
         where: {
           requesterId: userId,
-          status: FriendshipStatus.PENDING,
+          status: 'PENDING',
         },
       }),
     ]);
@@ -717,7 +718,7 @@ export const getFriendRequestsService = async (
       prisma.friendship.findMany({
         where: {
           recipientId: userId,
-          status: FriendshipStatus.PENDING,
+          status: 'PENDING',
         },
         include: {
           requester: {
@@ -737,7 +738,7 @@ export const getFriendRequestsService = async (
       prisma.friendship.count({
         where: {
           recipientId: userId,
-          status: FriendshipStatus.PENDING,
+          status: 'PENDING',
         },
       }),
     ]);
@@ -858,13 +859,13 @@ export const searchUsersService = async (
       let relationStatus: FriendshipRelationStatus;
 
       switch (friendship.status) {
-        case FriendshipStatus.ACCEPTED:
+        case 'ACCEPTED':
           relationStatus = "ACCEPTED";
           break;
-        case FriendshipStatus.BLOCKED:
+        case 'BLOCKED':
           relationStatus = "BLOCKED";
           break;
-        case FriendshipStatus.PENDING:
+        case 'PENDING':
           relationStatus =
             friendship.requesterId === currentUserId ? "PENDING_SENT" : "PENDING_RECEIVED";
           break;
@@ -941,8 +942,8 @@ export const getFriendshipStatsService = async (userId: string): Promise<Friends
       prisma.friendship.count({
         where: {
           OR: [
-            { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-            { recipientId: userId, status: FriendshipStatus.ACCEPTED },
+            { requesterId: userId, status: 'ACCEPTED' },
+            { recipientId: userId, status: 'ACCEPTED' },
           ],
         },
       }),
@@ -950,21 +951,21 @@ export const getFriendshipStatsService = async (userId: string): Promise<Friends
       prisma.friendship.count({
         where: {
           requesterId: userId,
-          status: FriendshipStatus.PENDING,
+          status: 'PENDING',
         },
       }),
       // Pending requests received by user
       prisma.friendship.count({
         where: {
           recipientId: userId,
-          status: FriendshipStatus.PENDING,
+          status: 'PENDING',
         },
       }),
       // Users blocked by this user
       prisma.friendship.count({
         where: {
           requesterId: userId,
-          status: FriendshipStatus.BLOCKED,
+          status: 'BLOCKED',
         },
       }),
     ]);
@@ -1012,8 +1013,8 @@ export const getFriendActivityService = async (
       const friendships = await prisma.friendship.findMany({
         where: {
           OR: [
-            { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-            { recipientId: userId, status: FriendshipStatus.ACCEPTED },
+            { requesterId: userId, status: 'ACCEPTED' },
+            { recipientId: userId, status: 'ACCEPTED' },
           ],
         },
         select: {

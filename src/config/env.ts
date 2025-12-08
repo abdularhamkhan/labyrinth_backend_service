@@ -15,6 +15,12 @@ export const ENV = {
   kafkaBrokers: process.env.KAFKA_BROKERS?.split(",") || ["kafka:9092"],
   kafkaClientId: process.env.KAFKA_CLIENT_ID || "labyrinth-backend",
   kafkaGroupId: process.env.KAFKA_GROUP_ID || "labyrinth-backend-group",
+  // Kafka TLS/SASL (optional)
+  // If your Kafka cluster requires SSL or SASL authentication, set these in the environment.
+  kafkaSsl: (process.env.KAFKA_SSL || "false").toLowerCase() === "true",
+  kafkaSaslMechanism: process.env.KAFKA_SASL_MECHANISM || undefined,
+  kafkaSaslUsername: process.env.KAFKA_SASL_USERNAME || undefined,
+  kafkaSaslPassword: process.env.KAFKA_SASL_PASSWORD || undefined,
 
   // Pusher Configuration (for real-time features)
   pusherAppId: process.env.PUSHER_APP_ID,
@@ -33,12 +39,18 @@ export const ENV = {
   awsRegion: process.env.AWS_REGION || "us-east-1",
   awsS3Bucket: process.env.AWS_S3_BUCKET,
 
-  // Email Configuration (Amazon SES)
+  // Email Configuration
+  // We currently rely on Supabase for auth-related emails and direct signup flows.
+  // SES and Resend configuration are optional and disabled/commented to keep the flow simple.
   sesSmtpHost: process.env.SES_SMTP_HOST || "email-smtp.us-east-1.amazonaws.com",
   sesSmtpPort: parseInt(process.env.SES_SMTP_PORT || "587"),
-  sesSmtpUser: process.env.SES_SMTP_USER!,
-  sesSmtpPassword: process.env.SES_SMTP_PASSWORD!,
+  sesSmtpUser: process.env.SES_SMTP_USER || undefined,
+  sesSmtpPassword: process.env.SES_SMTP_PASSWORD || undefined,
   sesFromEmail: process.env.SES_FROM_EMAIL || "noreply@labyrinth-platform.com",
   sesFromName: process.env.SES_FROM_NAME || "Labyrinth Platform",
   sesRegion: process.env.SES_REGION || "us-east-1",
+  // Resend (optional) - disabled by default
+  resendApiKey: process.env.RESEND_API_KEY || undefined,
+  resendFromEmail: process.env.RESEND_FROM_EMAIL || undefined,
+  resendFromName: process.env.RESEND_FROM_NAME || undefined,
 };
