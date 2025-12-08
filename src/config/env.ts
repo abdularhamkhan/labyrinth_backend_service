@@ -1,5 +1,8 @@
 import { configDotenv } from "dotenv";
-configDotenv();
+// Only load .env file in development (Railway provides env vars directly)
+if (process.env.NODE_ENV !== "production") {
+  configDotenv();
+}
 
 export const ENV = {
   nodeEnv: process.env.NODE_ENV || "development",

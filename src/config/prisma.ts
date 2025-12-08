@@ -1,5 +1,8 @@
 import * as dotenv from "dotenv";
-dotenv.config();
+// Only load .env file in development (Railway provides env vars directly)
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 import { PrismaClient } from "@prisma/client";
 import { URL } from "url";
