@@ -61,36 +61,9 @@ async function startServer() {
   let kafkaConnected = false;
 
   try {
-    // Try to initialize Kafka (optional in development)
-    // Skip if KAFKA_BROKERS not configured
-    if (ENV.kafkaBrokers && ENV.kafkaBrokers.length > 0 && ENV.kafkaBrokers[0] !== "localhost:9092") {
-      console.log("🚀 Initializing Kafka topics...");
-      try {
-        await initializeKafkaTopics();
-
-      // Setup Kafka consumers
-      console.log("🚀 Setting up Kafka consumers...");
-      kafkaConsumer.setupDefaultHandlers();
-      await kafkaConsumer.startConsuming([
-        KAFKA_TOPICS.USER_EVENTS,
-        KAFKA_TOPICS.CHAT_EVENTS,
-        KAFKA_TOPICS.MATCH_EVENTS,
-        KAFKA_TOPICS.PROJECT_EVENTS,
-        KAFKA_TOPICS.NOTIFICATION_EVENTS,
-        KAFKA_TOPICS.ANALYTICS_EVENTS,
-      ]);
-        kafkaConnected = true;
-        console.log("✅ Kafka initialized successfully");
-      } catch (kafkaError) {
-        console.warn(
-          "⚠️  Kafka connection failed (running without Kafka):",
-          kafkaError instanceof Error ? kafkaError.message : kafkaError
-        );
-        console.warn("ℹ️  Server will continue without event streaming");
-      }
-    } else {
-      console.log("⚠️  Kafka disabled - not configured for production");
-    }
+    // KAFKA DISABLED - Not required for current production deployment
+    // Re-enable when proper Kafka infrastructure is available
+    console.log("ℹ️  Kafka disabled in production (not required)");
 
     // Start HTTP server
     server.listen(PORT, () => {
@@ -130,16 +103,8 @@ const gracefulShutdown = async () => {
   console.log("=== LABYRINTH PLATFORM GRACEFUL SHUTDOWN ===");
 
   try {
-    // Disconnect Kafka consumers (if connected)
-    try {
-      console.log("🔌 Disconnecting Kafka consumers...");
-      await kafkaConsumer.disconnect();
-    } catch (kafkaError) {
-      console.warn(
-        "⚠️  Kafka disconnect failed (was not connected):",
-        kafkaError instanceof Error ? kafkaError.message : kafkaError
-      );
-    }
+    // Kafka disabled - skip disconnect
+    console.log("ℹ️  Kafka was disabled (skipping disconnect)");
 
     // Close HTTP server
     server.close(() => {
