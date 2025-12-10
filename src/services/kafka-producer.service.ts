@@ -1,5 +1,5 @@
 import { Producer, ProducerRecord } from "kafkajs";
-import { kafka, KAFKA_TOPICS } from "../config/kafka";
+import { kafka, KAFKA_TOPICS, kafkaEnabled } from "../config/kafka";
 
 /**
  * =============================================================================
@@ -71,6 +71,12 @@ class KafkaProducerService {
     // Guard: Skip if already connected to avoid duplicate connections
     if (this.isConnected) return;
 
+    // If Kafka is disabled via configuration, skip connect and treat as no-op
+    if (!kafkaEnabled) {
+      console.log("⚠️  Kafka is disabled via configuration; skipping producer connect");
+      return;
+    }
+
     try {
       // Establish TCP connection to Kafka broker(s)
       // Uses brokers from config (supports multiple for HA)
@@ -109,6 +115,9 @@ class KafkaProducerService {
   async disconnect(): Promise<void> {
     // Guard: Skip if not connected
     if (!this.isConnected) return;
+
+    // If Kafka is disabled, nothing to disconnect
+    if (!kafkaEnabled) return;
 
     try {
       // Send graceful disconnect to broker
@@ -155,6 +164,15 @@ class KafkaProducerService {
    * @throws Error in production if send fails
    */
   async sendMessage(topic: string, message: any, key?: string): Promise<void> {
+    // If Kafka is disabled, log and return early (graceful degradation)
+    if (!kafkaEnabled) {
+      // Avoid filling logs in high-throughput code paths; use debug-level message
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`(kafka disabled) skipping send to ${topic}`);
+      }
+      return;
+    }
+
     try {
       // Ensure connection is established before sending
       // Auto-connects if not already connected
