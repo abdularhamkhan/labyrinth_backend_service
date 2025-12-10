@@ -20,7 +20,7 @@ import {
   UserProfileWithRelations,
 } from "../schemas/user.schema";
 import { FileUpload } from "../schemas/avatar.schema";
-import kafkaProducer from "./kafka-producer.service";
+import { kafkaProducer } from "./kafka-producer.service";
 import { getOrSetCache, CacheKeys, CACHE_TTL, deleteCache } from "../utils/cache.util";
 
 /**

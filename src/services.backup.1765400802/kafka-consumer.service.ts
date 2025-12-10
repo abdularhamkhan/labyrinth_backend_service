@@ -1,5 +1,5 @@
 import { Consumer, EachMessagePayload } from "kafkajs";
-import { kafka, KAFKA_TOPICS, kafkaEnabled } from "../config/kafka";
+import { kafka, KAFKA_TOPICS } from "../config/kafka";
 
 /**
  * =============================================================================
@@ -31,7 +31,7 @@ type EventHandler = (payload: any) => Promise<void>;
  */
 class KafkaConsumerService {
   // Kafka consumer instance
-  private consumer: Consumer | null = null;
+  private consumer: Consumer;
   
   // Map of event types to their handler functions
   // Allows dynamic registration and routing of events
@@ -56,12 +56,7 @@ class KafkaConsumerService {
    */
   constructor(groupId: string = "labyrinth-backend-group") {
     const isDevelopment = process.env.NODE_ENV !== "production";
-    // If Kafka is disabled, skip creating the consumer instance
-    if (!kafkaEnabled) {
-      console.log("⚠️  Kafka is disabled via configuration; skipping consumer creation");
-      return;
-    }
-
+    
     this.consumer = kafka.consumer({
       // Consumer group ID: all consumers with same ID share workload
       groupId,
@@ -104,11 +99,6 @@ class KafkaConsumerService {
     // Guard: Skip if already connected
     if (this.isConnected) return;
 
-    if (!kafkaEnabled) {
-      console.log("⚠️  Kafka is disabled; skipping consumer connect");
-      return;
-    }
-
     try {
       // Connect to Kafka broker and join consumer group
       // Kafka assigns partitions based on group coordination protocol
@@ -132,12 +122,6 @@ class KafkaConsumerService {
   async disconnect(): Promise<void> {
     if (!this.isConnected) {
       console.log("Kafka Consumer already disconnected");
-      return;
-    }
-
-    if (!kafkaEnabled) {
-      console.log("⚠️  Kafka is disabled; skipping consumer disconnect");
-      this.isConnected = false;
       return;
     }
 
@@ -180,11 +164,6 @@ class KafkaConsumerService {
   async startConsuming(topics: string[]): Promise<void> {
     try {
       // Ensure connection established before subscribing
-      if (!kafkaEnabled) {
-        console.log("⚠️  Kafka disabled; skipping consumer startup");
-        return;
-      }
-
       await this.connect();
 
       // Subscribe to each topic in the list
