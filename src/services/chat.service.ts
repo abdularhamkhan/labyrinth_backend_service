@@ -9,7 +9,8 @@ import {
   DatabaseError,
   ConflictError,
 } from "../constants/error";
-import { kafkaProducer } from "./kafka-producer.service";
+// Kafka disabled - import commented out
+// import { kafkaProducer } from "./kafka-producer.service";
 import {
   broadcastMessage,
   broadcastTypingIndicator,
@@ -130,14 +131,14 @@ export const createOrGetDirectChat = async (user1Id: string, user2Id: string): P
     });
 
     // Publish chat created event
-    await kafkaProducer.publishEvent({
-      type: "DIRECT_CHAT_CREATED",
-      data: {
-        chatId: newChat.id,
-        participants: [user1Id, user2Id],
-        createdAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "DIRECT_CHAT_CREATED",
+    //   data: {
+    //     chatId: newChat.id,
+    //     participants: [user1Id, user2Id],
+    //     createdAt: new Date().toISOString(),
+    //   },
+    // });
 
     // Notify both users via Pusher about new chat
     const otherParticipants = newChat.participants.filter((p) => p.userId !== user1Id);
@@ -228,16 +229,16 @@ export const createProjectChat = async (projectId: string, creatorId: string): P
     });
 
     // Publish project chat created event
-    await kafkaProducer.publishEvent({
-      type: "PROJECT_CHAT_CREATED",
-      data: {
-        chatId: projectChat.id,
-        projectId: project.id,
-        participantCount: project.collaborators.length,
-        createdBy: creatorId,
-        createdAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "PROJECT_CHAT_CREATED",
+    //   data: {
+    //     chatId: projectChat.id,
+    //     projectId: project.id,
+    //     participantCount: project.collaborators.length,
+    //     createdBy: creatorId,
+    //     createdAt: new Date().toISOString(),
+    //   },
+    // });
 
     return projectChat;
   } catch (error) {
@@ -351,19 +352,20 @@ export const sendMessage = async (
     }
 
     // Publish message sent event to Kafka
-    await kafkaProducer.publishEvent({
-      type: "MESSAGE_SENT",
-      data: {
-        messageId: message.id,
-        chatId,
-        senderId,
-        content,
-        messageType,
-        mediaUrl,
-        recipients: otherParticipants.map((p) => p.userId),
-        sentAt: new Date().toISOString(),
-      },
-    });
+    // Kafka event disabled
+    // await kafkaProducer.publishEvent({
+    //   type: "MESSAGE_SENT",
+    //   data: {
+    //     messageId: message.id,
+    //     chatId,
+    //     senderId,
+    //     content,
+    //     messageType,
+    //     mediaUrl,
+    //     recipients: otherParticipants.map((p) => p.userId),
+    //     sentAt: new Date().toISOString(),
+    //   },
+    // });
 
     // Broadcast message to chat channel via Pusher for real-time delivery
     await broadcastMessage(chatId, {
@@ -618,14 +620,14 @@ export const deleteMessage = async (messageId: string, userId: string): Promise<
     await broadcastMessageDeleted(message.chatId, messageId);
 
     // Publish message deleted event to Kafka
-    await kafkaProducer.publishEvent({
-      type: "MESSAGE_DELETED",
-      data: {
-        messageId,
-        chatId: message.chatId,
-        deletedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "MESSAGE_DELETED",
+    //   data: {
+    //     messageId,
+    //     chatId: message.chatId,
+    //     deletedAt: new Date().toISOString(),
+    //   },
+    // });
 
     return deletedMessage;
   } catch (error) {
@@ -696,15 +698,15 @@ export const addUserToChat = async (
     await notifyUserAddedToChat(userId, chatId, addedBy);
 
     // Publish user added to chat event to Kafka
-    await kafkaProducer.publishEvent({
-      type: "USER_ADDED_TO_CHAT",
-      data: {
-        chatId,
-        userId,
-        addedBy,
-        addedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "USER_ADDED_TO_CHAT",
+    //   data: {
+    //     chatId,
+    //     userId,
+    //     addedBy,
+    //     addedAt: new Date().toISOString(),
+    //   },
+    // });
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
       throw error;
@@ -738,15 +740,15 @@ export const setTypingIndicator = async (
     }
 
     // Publish typing indicator event to Kafka
-    await kafkaProducer.publishEvent({
-      type: "TYPING_INDICATOR",
-      data: {
-        chatId,
-        userId,
-        isTyping,
-        timestamp: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "TYPING_INDICATOR",
+    //   data: {
+    //     chatId,
+    //     userId,
+    //     isTyping,
+    //     timestamp: new Date().toISOString(),
+    //   },
+    // });
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
       throw error;

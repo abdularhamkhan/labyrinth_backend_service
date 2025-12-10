@@ -20,7 +20,8 @@ import {
   UserProfileWithRelations,
 } from "../schemas/user.schema";
 import { FileUpload } from "../schemas/avatar.schema";
-import kafkaProducer from "./kafka-producer.service";
+// Kafka disabled - import commented out
+// import kafkaProducer from "./kafka-producer.service";
 import { getOrSetCache, CacheKeys, CACHE_TTL, deleteCache } from "../utils/cache.util";
 
 /**
@@ -458,9 +459,9 @@ export const getLabyrinthUserProfile = async (userId: string): Promise<Labyrinth
     }
 
     // Publish user profile viewed event
-    await kafkaProducer.publishUserActivity(userId, "profile_viewed", {
-      viewedAt: new Date().toISOString(),
-    });
+    // await kafkaProducer.publishUserActivity(userId, "profile_viewed", {
+    //   viewedAt: new Date().toISOString(),
+    // });
 
     return userProfile as LabyrinthUserProfile;
   } catch (error) {
@@ -523,13 +524,13 @@ export const upsertUserTechStack = async (
     }
 
     // Publish tech stack updated event
-    await kafkaProducer.publishUserActivity(userId, "tech_stack_updated", {
-      techStackId: techStack.id,
-      frameworks: techStack.frameworks,
-      languages: techStack.languages,
-      tools: techStack.tools,
-      updatedAt: new Date().toISOString(),
-    });
+    // await kafkaProducer.publishUserActivity(userId, "tech_stack_updated", {
+    //   techStackId: techStack.id,
+    //   frameworks: techStack.frameworks,
+    //   languages: techStack.languages,
+    //   tools: techStack.tools,
+    //   updatedAt: new Date().toISOString(),
+    // });
 
     return techStack;
   } catch (error) {
@@ -592,12 +593,12 @@ export const upsertUserDemographic = async (
     await deleteCache(CacheKeys.userDemographic(userId));
 
     // Publish demographic updated event
-    await kafkaProducer.publishUserActivity(userId, "demographic_updated", {
-      demographicId: demographic.id,
-      country: demographic.country,
-      languages: demographic.languages,
-      updatedAt: new Date().toISOString(),
-    });
+    // await kafkaProducer.publishUserActivity(userId, "demographic_updated", {
+    //   demographicId: demographic.id,
+    //   country: demographic.country,
+    //   languages: demographic.languages,
+    //   updatedAt: new Date().toISOString(),
+    // });
 
     return demographic;
   } catch (error) {
@@ -684,12 +685,12 @@ export const updateUserPreferences = async (
     }
 
     // Publish preferences updated event
-    await kafkaProducer.publishUserActivity(userId, "preferences_updated", {
-      preferencesId: preferences.id,
-      preferredTechStackId: preferences.preferredTechStackId,
-      preferredDemographicId: preferences.preferredDemographicId,
-      updatedAt: new Date().toISOString(),
-    });
+    // await kafkaProducer.publishUserActivity(userId, "preferences_updated", {
+    //   preferencesId: preferences.id,
+    //   preferredTechStackId: preferences.preferredTechStackId,
+    //   preferredDemographicId: preferences.preferredDemographicId,
+    //   updatedAt: new Date().toISOString(),
+    // });
 
     return preferences;
   } catch (error) {
@@ -765,10 +766,10 @@ export const updateLabyrinthUserProfile = async (userId: string, updateData: any
     await deleteCache(CacheKeys.userProfile(userId));
 
     // Publish user profile updated event
-    await kafkaProducer.publishUserProfileUpdated(userId, {
-      updatedFields: Object.keys(changedFields),
-      updatedAt: new Date().toISOString(),
-    });
+    // await kafkaProducer.publishUserProfileUpdated(userId, {
+    //   updatedFields: Object.keys(changedFields),
+    //   updatedAt: new Date().toISOString(),
+    // });
 
     return {
       user: updatedUser,
@@ -896,9 +897,9 @@ export const updateUserLastActive = async (userId: string): Promise<void> => {
     });
 
     // Publish user activity event
-    await kafkaProducer.publishUserActivity(userId, "profile_accessed", {
-      timestamp: new Date().toISOString(),
-    });
+    // await kafkaProducer.publishUserActivity(userId, "profile_accessed", {
+    //   timestamp: new Date().toISOString(),
+    // });
   } catch (error) {
     // Don't throw error for activity tracking to avoid breaking main flows
     console.error("Failed to update user last active:", error);

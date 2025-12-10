@@ -8,7 +8,8 @@ import {
   DatabaseError,
   ConflictError,
 } from "../constants/error";
-import { kafkaProducer } from "./kafka-producer.service";
+// Kafka disabled - import commented out
+// import { kafkaProducer } from "./kafka-producer.service";
 import { getOrSetCache, CacheKeys, CACHE_TTL, deleteCache } from "../utils/cache.util";
 
 // =============================================================================
@@ -78,18 +79,18 @@ export const createProject = async (
     });
 
     // Publish project created event
-    await kafkaProducer.publishEvent({
-      type: "PROJECT_CREATED",
-      data: {
-        projectId: project.id,
-        workspaceId: workspace.id,
-        creatorId,
-        title: project.title,
-        description: project.description,
-        techStackIds: projectData.techStackIds || [],
-        createdAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "PROJECT_CREATED",
+    //   data: {
+    //     projectId: project.id,
+    //     workspaceId: workspace.id,
+    //     creatorId,
+    //     title: project.title,
+    //     description: project.description,
+    //     techStackIds: projectData.techStackIds || [],
+    //     createdAt: new Date().toISOString(),
+    //   },
+    // });
 
     return await getProjectDetails(project.id, creatorId);
   } catch (error) {
@@ -303,15 +304,15 @@ export const updateProject = async (
     }
 
     // Publish project updated event
-    await kafkaProducer.publishEvent({
-      type: "PROJECT_UPDATED",
-      data: {
-        projectId,
-        updatedBy: userId,
-        changes: Object.keys(updateData),
-        updatedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "PROJECT_UPDATED",
+    //   data: {
+    //     projectId,
+    //     updatedBy: userId,
+    //     changes: Object.keys(updateData),
+    //     updatedAt: new Date().toISOString(),
+    //   },
+    // });
 
     return await getProjectDetails(projectId, userId);
   } catch (error) {
@@ -397,17 +398,17 @@ export const addCollaborator = async (
     });
 
     // Publish collaborator added event
-    await kafkaProducer.publishEvent({
-      type: "COLLABORATOR_ADDED",
-      data: {
-        projectId,
-        collaboratorId,
-        addedBy: userId,
-        roleId: collaboratorRole.id,
-        permissions: rolePermissions,
-        addedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "COLLABORATOR_ADDED",
+    //   data: {
+    //     projectId,
+    //     collaboratorId,
+    //     addedBy: userId,
+    //     roleId: collaboratorRole.id,
+    //     permissions: rolePermissions,
+    //     addedAt: new Date().toISOString(),
+    //   },
+    // });
 
     return {
       projectId,
@@ -493,15 +494,15 @@ export const removeCollaborator = async (
     });
 
     // Publish collaborator removed event
-    await kafkaProducer.publishEvent({
-      type: "COLLABORATOR_REMOVED",
-      data: {
-        projectId,
-        collaboratorId,
-        removedBy: userId,
-        removedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "COLLABORATOR_REMOVED",
+    //   data: {
+    //     projectId,
+    //     collaboratorId,
+    //     removedBy: userId,
+    //     removedAt: new Date().toISOString(),
+    //   },
+    // });
   } catch (error) {
     if (error instanceof Error && error.name.includes("Error")) {
       throw error;
@@ -590,18 +591,18 @@ export const createTask = async (
     });
 
     // Publish task created event
-    await kafkaProducer.publishEvent({
-      type: "TASK_CREATED",
-      data: {
-        taskId: task.id,
-        projectId,
-        createdBy: userId,
-        assignedToId: taskData.assignedToId,
-        title: task.title,
-        status: task.status,
-        createdAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "TASK_CREATED",
+    //   data: {
+    //     taskId: task.id,
+    //     projectId,
+    //     createdBy: userId,
+    //     assignedToId: taskData.assignedToId,
+    //     title: task.title,
+    //     status: task.status,
+    //     createdAt: new Date().toISOString(),
+    //   },
+    // });
 
     return task;
   } catch (error) {
@@ -675,17 +676,17 @@ export const updateTask = async (
     });
 
     // Publish task updated event
-    await kafkaProducer.publishEvent({
-      type: "TASK_UPDATED",
-      data: {
-        taskId,
-        projectId: task.project.id,
-        updatedBy: userId,
-        changes: Object.keys(updateData),
-        newStatus: updateData.status,
-        updatedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "TASK_UPDATED",
+    //   data: {
+    //     taskId,
+    //     projectId: task.project.id,
+    //     updatedBy: userId,
+    //     changes: Object.keys(updateData),
+    //     newStatus: updateData.status,
+    //     updatedAt: new Date().toISOString(),
+    //   },
+    // });
 
     return updatedTask;
   } catch (error) {

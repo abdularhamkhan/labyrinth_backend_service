@@ -171,3 +171,4 @@ prisma/generated/
 .DS_Store
 Thumbs.db
 node_modules
+node_modules

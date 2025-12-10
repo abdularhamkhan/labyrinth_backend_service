@@ -1,7 +1,8 @@
 import { prisma } from "../config/prisma";
 import { redis as redisClient } from "../config/redis";
 import { logger, isError } from "../utils/logger";
-import { kafkaProducer } from "./kafka-producer.service";
+// Kafka disabled - import commented out
+// import kafkaProducer from "./kafka-producer.service";
 
 /**
  * =============================================================================
@@ -131,10 +132,10 @@ export const trackEvent = async (event: AnalyticsEvent): Promise<void> => {
     await redisClient.setex(eventKey, 3600, JSON.stringify(event)); // Keep for 1 hour
 
     // Send to Kafka for batch processing
-    await kafkaProducer.sendMessage("analytics-events", {
-      ...event,
-      timestamp: event.timestamp.toISOString(),
-    });
+    // await kafkaProducer.sendMessage("analytics-events", {
+    //   ...event,
+    //   timestamp: event.timestamp.toISOString(),
+    // });
 
     // Update real-time counters
     await updateRealTimeCounters(event);

@@ -29,7 +29,8 @@ import {
 
 // Export the constants for other modules
 export { CACHE_KEYS, CACHE_TTL };
-import { kafkaProducer } from "../../services/kafka-producer.service";
+// Kafka disabled - import commented out
+// import { kafkaProducer } from "../../services/kafka-producer.service";
 
 // =============================================================================
 // LABYRINTH CACHING STRATEGIES
@@ -66,7 +67,7 @@ export class WriteThroughCache {
 
       // 3. Publish profile update event
       try {
-        await kafkaProducer.publishUserProfileUpdated(userId, profileUpdate);
+        // await kafkaProducer.publishUserProfileUpdated(userId, profileUpdate);
       } catch (kafkaError) {
         console.error("Failed to publish profile update event:", kafkaError);
       }
@@ -149,7 +150,7 @@ export class WriteThroughCache {
 
       // 3. Publish project update event
       try {
-        await kafkaProducer.publishProjectUpdated(projectId, projectUpdate);
+        // await kafkaProducer.publishProjectUpdated(projectId, projectUpdate);
       } catch (kafkaError) {
         console.error("Failed to publish project update event:", kafkaError);
       }
@@ -631,7 +632,7 @@ export class WriteBehindCache {
 
           // Publish activity event via Kafka
           try {
-            await kafkaProducer.publishUserActivity(data.userId, data.activity, data.metadata);
+            // await kafkaProducer.publishUserActivity(data.userId, data.activity, data.metadata);
           } catch (kafkaError) {
             console.error("Failed to publish activity event:", kafkaError);
           }
@@ -780,14 +781,14 @@ export class CacheInvalidation {
 
       // Publish cache invalidation event
       try {
-        await kafkaProducer.publishEvent({
-          type: "CACHE_INVALIDATED",
-          data: {
-            entity: "user",
-            entityId: userId,
-            invalidatedAt: new Date().toISOString(),
-          },
-        });
+        // await kafkaProducer.publishEvent({
+        //   type: "CACHE_INVALIDATED",
+        //   data: {
+        //     entity: "user",
+        //     entityId: userId,
+        //     invalidatedAt: new Date().toISOString(),
+        //   },
+        // });
       } catch (kafkaError) {
         console.error("Failed to publish cache invalidation event:", kafkaError);
       }
@@ -827,14 +828,14 @@ export class CacheInvalidation {
 
       // Publish cache invalidation event
       try {
-        await kafkaProducer.publishEvent({
-          type: "CACHE_INVALIDATED",
-          data: {
-            entity: "project",
-            entityId: projectId,
-            invalidatedAt: new Date().toISOString(),
-          },
-        });
+        // await kafkaProducer.publishEvent({
+        //   type: "CACHE_INVALIDATED",
+        //   data: {
+        //     entity: "project",
+        //     entityId: projectId,
+        //     invalidatedAt: new Date().toISOString(),
+        //   },
+        // });
       } catch (kafkaError) {
         console.error("Failed to publish cache invalidation event:", kafkaError);
       }

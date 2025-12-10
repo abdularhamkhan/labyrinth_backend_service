@@ -8,7 +8,8 @@ import {
   DatabaseError,
   ConflictError,
 } from "../constants/error";
-import { kafkaProducer } from "./kafka-producer.service";
+// Kafka disabled - import commented out
+// import { kafkaProducer } from "./kafka-producer.service";
 import { getOrSetCache, CacheKeys, CACHE_TTL } from "../utils/cache.util";
 
 // =============================================================================
@@ -462,17 +463,17 @@ export const getUserRecommendations = async (
       .slice(0, limit);
 
     // Publish recommendation generated event
-    await kafkaProducer.publishEvent({
-      type: "USER_RECOMMENDATIONS_GENERATED",
-      data: {
-        userId,
-        recommendationCount: scoredMatches.length,
-        averageCompatibility:
-          scoredMatches.reduce((sum, match) => sum + match.compatibilityScore, 0) /
-            scoredMatches.length || 0,
-        generatedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "USER_RECOMMENDATIONS_GENERATED",
+    //   data: {
+    //     userId,
+    //     recommendationCount: scoredMatches.length,
+    //     averageCompatibility:
+    //       scoredMatches.reduce((sum, match) => sum + match.compatibilityScore, 0) /
+    //         scoredMatches.length || 0,
+    //     generatedAt: new Date().toISOString(),
+    //   },
+    // });
 
         return scoredMatches.map((user) => ({
           id: user.id,
@@ -690,17 +691,17 @@ export const getProjectRecommendations = async (
       .slice(0, limit);
 
     // Publish project recommendations event
-    await kafkaProducer.publishEvent({
-      type: "PROJECT_RECOMMENDATIONS_GENERATED",
-      data: {
-        userId,
-        recommendationCount: scoredProjects.length,
-        averageCompatibility:
-          scoredProjects.reduce((sum, p) => sum + p.compatibilityScore, 0) /
-            scoredProjects.length || 0,
-        generatedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "PROJECT_RECOMMENDATIONS_GENERATED",
+    //   data: {
+    //     userId,
+    //     recommendationCount: scoredProjects.length,
+    //     averageCompatibility:
+    //       scoredProjects.reduce((sum, p) => sum + p.compatibilityScore, 0) /
+    //         scoredProjects.length || 0,
+    //     generatedAt: new Date().toISOString(),
+    //   },
+    // });
 
         return scoredProjects.map((project) => ({
           id: project.id,
@@ -890,32 +891,32 @@ export const handleSwipeAction = async (
         matchId = match.id;
 
         // Publish match event
-        await kafkaProducer.publishEvent({
-          type: "USER_MATCH_CREATED",
-          data: {
-            matchId: match.id,
-            user1Id: swiperId,
-            user2Id: targetId,
-            matchedAt: new Date().toISOString(),
-          },
-        });
+        // await kafkaProducer.publishEvent({
+        //   type: "USER_MATCH_CREATED",
+        //   data: {
+        //     matchId: match.id,
+        //     user1Id: swiperId,
+        //     user2Id: targetId,
+        //     matchedAt: new Date().toISOString(),
+        //   },
+        // });
       }
     }
 
     // Publish swipe event
-    await kafkaProducer.publishEvent({
-      type: "USER_SWIPE_ACTION",
-      data: {
-        swipeId: swipe.id,
-        swiperId,
-        targetType,
-        targetId,
-        isRightSwipe,
-        matched,
-        matchId,
-        swipedAt: new Date().toISOString(),
-      },
-    });
+    // await kafkaProducer.publishEvent({
+    //   type: "USER_SWIPE_ACTION",
+    //   data: {
+    //     swipeId: swipe.id,
+    //     swiperId,
+    //     targetType,
+    //     targetId,
+    //     isRightSwipe,
+    //     matched,
+    //     matchId,
+    //     swipedAt: new Date().toISOString(),
+    //   },
+    // });
 
     return { matched, matchId };
   } catch (error) {
