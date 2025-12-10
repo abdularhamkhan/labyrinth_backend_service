@@ -45,6 +45,10 @@ dotenv.config();
 
 // Initialize Express application
 const app = express();
+
+// Trust Railway proxy (required for rate limiting and IP detection)
+app.set("trust proxy", 1);
+
 // Serve Swagger UI at /api-docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
